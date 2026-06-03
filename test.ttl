@@ -1,0 +1,49 @@
+; TTL拡張機能テストファイル
+/* ブロックコメントのテスト */
+
+; 接続してログインを自動化するサンプルマクロ
+
+connect 'myserver /ssh /auth=password /user=admin /passwd=secret'
+
+; 接続確認
+testlink
+if result <> 2 then
+  messagebox 'Connection failed.' 'Error'
+  end
+endif
+
+wait '$'
+sendln 'ls -la'
+waitln 'total'
+
+; サブルーチンを呼び出す
+call show_status
+
+; ファイル操作
+fileopen fp 'log.txt' 1
+filewriteln fp 'Session started'
+fileclose fp
+
+; 文字列操作
+sprintf2 msg 'Host: %s' 'myserver'
+strlen msg
+; result には文字列長が入る
+
+; ループ例
+for i 1 10
+  mpause 500
+  recvln
+  strcompare inputstr 'OK'
+  if result = 0 then
+    break
+  endif
+next
+
+disconnect
+end
+
+:show_status
+statusbox 'Processing...' 'Status'
+pause 2
+closesbox
+return
