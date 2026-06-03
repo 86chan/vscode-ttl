@@ -1,48 +1,61 @@
 # TTL - Tera Term Language Support for VS Code
 
-VSCode extension providing language support for TTL (Tera Term Language), the macro language of [Tera Term](https://teratermproject.github.io/).
+[Tera Term](https://teratermproject.github.io/) のマクロ言語 TTL (Tera Term Language) に対応した VS Code 拡張機能です。
 
-## Features
+## 機能
+
+- **シンタックスハイライト** — キーワード・コマンド・文字列・コメント・ラベル・演算子・システム変数
+- **コード補完** — 201 個の組み込みコマンドをシグネチャ付きで補完
+- **ホバードキュメント** — コマンド上にカーソルを置くと日本語または英語のリファレンスを表示
+- **定義ジャンプ** — `goto`/`call` のラベル参照から `:label` 定義行へジャンプ (F12)
+
+---
+
+[Tera Term](https://teratermproject.github.io/) macro language (TTL) support extension for Visual Studio Code.
 
 - **Syntax Highlighting** — keywords, commands, strings, comments, labels, operators, system variables
 - **Code Completion** — 201 built-in commands with signatures and documentation
-- **Hover Documentation** — inline reference for commands in Japanese or English
-- **Go to Definition** — jump from `goto`/`call` to `:label` definitions
+- **Hover Documentation** — inline reference in Japanese or English
+- **Go to Definition** — jump from `goto`/`call` to `:label` definitions (F12)
 
-## Language Setting
+## 言語設定 / Language Setting
 
-By default the extension detects the VS Code UI language and shows Japanese or English documentation automatically. Override via settings:
+VS Code の UI 言語を自動検出して日本語・英語を切り替えます。設定で固定することも可能です。
+
+The extension auto-detects the VS Code UI language. Override in settings:
 
 ```json
 "ttl.language": "auto"  // "auto" | "ja" | "en"
 ```
 
-## Supported Syntax
+## 対応構文 / Supported Syntax
 
-| Syntax | Example |
-|--------|---------|
-| Line comment | `; this is a comment` |
-| Block comment | `/* ... */` |
-| String | `'hello'` |
-| Label definition | `:loop_start` |
-| Control flow | `if`, `for`, `while`, `do`, `goto`, `call`, `return` |
-| System variables | `result`, `inputstr`, `matchstr`, `param1`–`param9` |
+| 構文 | 例 |
+|------|----|
+| 行コメント / Line comment | `; コメント` |
+| ブロックコメント / Block comment | `/* ... */` |
+| 文字列 / String | `'hello'` |
+| ラベル定義 / Label definition | `:loop_start` |
+| 制御フロー / Control flow | `if`, `for`, `while`, `do`, `goto`, `call`, `return` |
+| システム変数 / System variables | `result`, `inputstr`, `matchstr`, `param1`–`param9` |
 
-## Requirements
+## 動作要件 / Requirements
 
-VS Code 1.85.0 or later.
+VS Code 1.85.0 以降 / VS Code 1.85.0 or later.
 
-## Development
+## 開発 / Development
 
 ```sh
 npm install
 npm run compile
-# Unit tests (Vitest, no VS Code required)
+
+# ユニットテスト (VS Code 不要) / Unit tests (no VS Code required)
 npm test
-# Integration tests (requires GUI / CI with xvfb)
+
+# 統合テスト (GUI / CI with xvfb が必要) / Integration tests (requires GUI or xvfb)
 npm run test:integration
 ```
 
-## License
+## ライセンス / License
 
 MIT
