@@ -192,18 +192,17 @@ describe('ホバープロバイダ', () => {
   });
 
   it('connect コマンド上でホバー情報が返る', async () => {
-    // Arrange: fixture の1行目は "connect 'myserver /ssh /user=admin'"
-    // "connect" は位置 (0, 0) から始まる
+    // Arrange: fixture の2行目（0-origin: 1）は "connect 'myserver /ssh /user=admin'"
     // When: connect の文字上（列 2）でホバーを要求する
-    const hovers = await getHovers(document.uri, new vscode.Position(0, 2));
+    const hovers = await getHovers(document.uri, new vscode.Position(1, 2));
 
     // Then: ホバー情報が返ること
     assert.ok(hovers.length > 0, 'Hover must return at least one item for "connect"');
   });
 
   it('ホバー内容にシグネチャが含まれる', async () => {
-    // Arrange: "sendln" は3行目（0-origin: 2）に存在
-    const sendlnLine = 3; // "sendln 'whoami'"
+    // Arrange: "sendln" は5行目（0-origin: 4）に存在
+    const sendlnLine = 4; // "sendln 'whoami'"
     const hovers = await getHovers(document.uri, new vscode.Position(sendlnLine, 2));
 
     // Then: ホバーのコンテンツに "sendln" の文字が含まれること
