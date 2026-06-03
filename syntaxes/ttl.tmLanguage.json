@@ -1,0 +1,89 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "TTL",
+  "scopeName": "source.ttl",
+  "patterns": [
+    { "include": "#block-comments" },
+    { "include": "#line-comments" },
+    { "include": "#strings" },
+    { "include": "#labels" },
+    { "include": "#numbers" },
+    { "include": "#system-variables" },
+    { "include": "#keywords-control" },
+    { "include": "#keywords-operator" },
+    { "include": "#commands" },
+    { "include": "#operators-comparison" },
+    { "include": "#operators-arithmetic" }
+  ],
+  "repository": {
+    "block-comments": {
+      "name": "comment.block.ttl",
+      "begin": "/\\*",
+      "end": "\\*/",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.comment.begin.ttl" }
+      },
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.comment.end.ttl" }
+      }
+    },
+    "line-comments": {
+      "name": "comment.line.semicolon.ttl",
+      "match": ";.*$"
+    },
+    "strings": {
+      "name": "string.quoted.single.ttl",
+      "begin": "'",
+      "end": "'|$",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.ttl" }
+      },
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.ttl" }
+      }
+    },
+    "labels": {
+      "match": "^\\s*(:)(\\w+)",
+      "captures": {
+        "1": { "name": "punctuation.definition.label.ttl" },
+        "2": { "name": "entity.name.label.ttl" }
+      }
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.hex.ttl",
+          "match": "\\$[0-9A-Fa-f]+"
+        },
+        {
+          "name": "constant.numeric.decimal.ttl",
+          "match": "(?<![\\w$])\\d+(?!\\w)"
+        }
+      ]
+    },
+    "system-variables": {
+      "name": "variable.language.ttl",
+      "match": "(?i)\\b(groupmatchstr[1-9]|inputstr|matchstr|mtimeout|paramcnt|param[1-9]|params|result|timeout)\\b"
+    },
+    "keywords-control": {
+      "name": "keyword.control.ttl",
+      "match": "(?i)\\b(break|call|continue|do|else(?:if)?|end(?:if|until|while)?|for|goto|if|loop|next|return|then|until|while)\\b"
+    },
+    "keywords-operator": {
+      "name": "keyword.operator.logical.ttl",
+      "match": "(?i)\\b(and|not|or|xor)\\b"
+    },
+    "commands": {
+      "name": "keyword.other.command.ttl",
+      "match": "(?i)\\b(basename|beep|bplusrecv|bplussend|bringupbox|callmenu|changedir|checksum(?:8|16|32)file|checksum(?:8|16|32)|clearscreen|clipb2var|closesbox|closett|code2str|connect|crc(?:16|32)file|crc(?:16|32)|cygconnect|delpassword2|delpassword|dirname|dirnamebox|disconnect|dispstr|enablekeyb|execcmnd|exec|exit|expandenv|fileclose|fileconcat|filecopy|filecreate|filedelete|filelock|filemarkptr|filenamebox|fileopen|filereadln|fileread|filerename|filesearch|fileseekback|fileseek|filestat|filestrseek2|filestrseek|filetruncate|fileunlock|filewriteln|filewrite|findclose|findfirst|findnext|flushrecv|foldercreate|folderdelete|foldersearch|getdate|getdir|getenv|getfileattr|gethostname|getipv4addr|getipv6addr|getmodemstatus|getpassword2|getpassword|getspecialfolder|gettime|gettitle|getttdir|getttpos|getver|ifdefined|include|inputbox|int2str|intdim|ispassword2|ispassword|kmtfinish|kmtget|kmtrecv|kmtsend|listbox|loadkeymap|logautoclosemode|logclose|loginfo|logopen|logpause|logrotate|logstart|logwrite|makepath|messagebox|mpause|passwordbox|pause|quickvanrecv|quickvansend|random|recvfile|recvln|regexoption|restoresetup|rotateleft|rotateright|scprecv|scpsend|sendbinary|sendbreak|sendbroadcast|sendfile|sendkcode|sendlnbroadcast|sendlnmulticast|sendln|sendmulticast|sendtext|send|setbaud|setdate|setdebug|setdir|setdlgpos|setdtr|setecho|setenv|setexitcode|setfileattr|setflowctrl|setmulticastname|setpassword2|setpassword|setrts|setserialdelaychar|setserialdelayline|setspeed|setsync|settime|settitle|showtt|show|sprintf2|sprintf|statusbox|str2code|str2int|strcompare|strconcat|strcopy|strdim|strinsert|strjoin|strlen|strmatch|strremove|strreplace|strscan|strspecial|strsplit|strtrim|testlink|tolower|toupper|unlink|uptime|var2clipb|wait4all|waitevent|waitln|waitn|waitrecv|waitregex|wait|xmodemrecv|xmodemsend|yesnobox|ymodemrecv|ymodemsend|zmodemrecv|zmodemsend)\\b"
+    },
+    "operators-comparison": {
+      "name": "keyword.operator.comparison.ttl",
+      "match": "<>|!=|==|<=|>=|<|>|="
+    },
+    "operators-arithmetic": {
+      "name": "keyword.operator.arithmetic.ttl",
+      "match": ">>>|>>|<<|[+\\-*/%&|^~!]"
+    }
+  }
+}

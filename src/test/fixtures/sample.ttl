@@ -1,0 +1,19 @@
+; Integration test fixture
+connect 'myserver /ssh /user=admin'
+
+wait '$'
+sendln 'whoami'
+waitln 'root'
+
+for i 1 5
+  mpause 500
+next
+
+call do_login
+end
+
+:do_login
+inputbox 'Enter password:' 'Login'
+sendln inputstr
+wait '$'
+return
