@@ -12,8 +12,8 @@ import * as path from 'node:path';
 import * as vscode from 'vscode';
 
 // fixtures は src/test/fixtures/ に存在する（tsc のコンパイル対象外）
-// __dirname は out/test/suite/ になるため、プロジェクトルートから辿る
-const FIXTURE_PATH = path.resolve(__dirname, '../../../../src/test/fixtures/sample.ttl');
+// __dirname は out/test/suite/ になるため、3段上がってプロジェクトルートへ
+const FIXTURE_PATH = path.resolve(__dirname, '../../../src/test/fixtures/sample.ttl');
 const LANGUAGE_ID = 'ttl';
 
 /** .ttl ファイルを開いてエディタを返す */
