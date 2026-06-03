@@ -2,6 +2,7 @@
  * TTL (Tera Term Language) VSCode拡張機能エントリポイント
  */
 
+import * as nodePath from 'node:path';
 import * as vscode from 'vscode';
 import {
   type TtlCommand,
@@ -17,6 +18,9 @@ const LABEL_DEFINITION_PATTERN = /^\s*:(\w+)/;
 
 /** ラベル参照行のパターン（goto/callの引数） */
 const LABEL_REFERENCE_PREFIX = /(?:goto|call)\s+$/i;
+
+/** include文のパターン（シングルクォート内のパス） */
+const INCLUDE_PATTERN = /\binclude\s+'([^']+)'/gi;
 
 /**
  * 設定またはVSCode UIの言語から表示言語を解決
@@ -195,6 +199,58 @@ class TtlDefinitionProvider implements vscode.DefinitionProvider {
 }
 
 /**
+ * ファイルリネーム時に include パスを更新する WorkspaceEdit を構築
+ *
+ * @param renames - リネーム対象ファイルのペア一覧
+ * @returns include パスを更新する WorkspaceEdit
+ */
+export async function buildIncludeRenameEdit(
+  renames: ReadonlyArray<{ readonly oldUri: vscode.Uri; readonly newUri: vscode.Uri }>,
+): Promise<vscode.WorkspaceEdit> {
+  const edit = new vscode.WorkspaceEdit();
+  const ttlRenames = renames.filter(r => r.oldUri.fsPath.endsWith('.ttl'));
+  if (ttlRenames.length === 0) return edit;
+
+  const ttlFiles = await vscode.workspace.findFiles('**/*.ttl');
+
+  for (const fileUri of ttlFiles) {
+    const document = await vscode.workspace.openTextDocument(fileUri);
+    const fileDir = nodePath.dirname(fileUri.fsPath);
+
+    for (let lineIndex = 0; lineIndex < document.lineCount; lineIndex++) {
+      const lineText = document.lineAt(lineIndex).text;
+      INCLUDE_PATTERN.lastIndex = 0;
+      let match: RegExpExecArray | null;
+
+      while ((match = INCLUDE_PATTERN.exec(lineText)) !== null) {
+        const includedRelative = match[1];
+        const includedAbsolute = nodePath.resolve(fileDir, includedRelative);
+
+        for (const rename of ttlRenames) {
+          if (includedAbsolute !== rename.oldUri.fsPath) continue;
+
+          const newRelative = nodePath
+            .relative(fileDir, rename.newUri.fsPath)
+            .replace(/\\/g, '/');
+
+          const pathStart = match.index + match[0].indexOf(match[1]);
+          edit.replace(
+            fileUri,
+            new vscode.Range(
+              new vscode.Position(lineIndex, pathStart),
+              new vscode.Position(lineIndex, pathStart + match[1].length),
+            ),
+            newRelative,
+          );
+        }
+      }
+    }
+  }
+
+  return edit;
+}
+
+/**
  * 拡張機能のアクティベーション
  *
  * @param context - 拡張機能コンテキスト
@@ -206,6 +262,9 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.languages.registerCompletionItemProvider(selector, new TtlCompletionProvider()),
     vscode.languages.registerHoverProvider(selector, new TtlHoverProvider()),
     vscode.languages.registerDefinitionProvider(selector, new TtlDefinitionProvider()),
+    vscode.workspace.onWillRenameFiles(event => {
+      event.waitUntil(buildIncludeRenameEdit(event.files));
+    }),
   );
 }
 
