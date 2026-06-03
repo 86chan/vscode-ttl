@@ -1,0 +1,2 @@
+; include_main.ttl からインクルードされるヘルパーファイル
+messagebox 'loaded' 'Info'

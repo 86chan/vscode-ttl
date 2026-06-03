@@ -1,0 +1,3 @@
+; include リネーム追従テスト用メインファイル
+include 'include_helper.ttl'
+sendln 'hello'
