@@ -16,7 +16,7 @@
     "tera term",
     "macro"
   ],
-  "activationEvents": [],
+  "activationEvents": ["onStartupFinished"],
   "main": "./out/extension.js",
   "contributes": {
     "languages": [
