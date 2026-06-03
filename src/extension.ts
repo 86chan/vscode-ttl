@@ -4,6 +4,7 @@
 
 import * as nodePath from 'node:path';
 import * as vscode from 'vscode';
+import { extractLabelDefinition, extractLabelReferences } from './labelUtils';
 import {
   type TtlCommand,
   TTL_COMMANDS_MAP,
@@ -199,6 +200,116 @@ class TtlDefinitionProvider implements vscode.DefinitionProvider {
 }
 
 /**
+ * カーソル位置がラベル定義または参照の名前部分なら、その Range を返す
+ *
+ * @param document - 対象ドキュメント
+ * @param position - カーソル位置
+ * @returns ラベル名の Range、またはラベル位置でない場合は undefined
+ */
+export function resolveLabelNameRange(
+  document: vscode.TextDocument,
+  position: vscode.Position,
+): vscode.Range | undefined {
+  const lineText = document.lineAt(position.line).text;
+
+  const def = extractLabelDefinition(lineText);
+  if (def !== null) {
+    const nameEnd = def.nameStart + def.name.length;
+    if (position.character >= def.nameStart && position.character <= nameEnd) {
+      return new vscode.Range(
+        new vscode.Position(position.line, def.nameStart),
+        new vscode.Position(position.line, nameEnd),
+      );
+    }
+  }
+
+  const refs = extractLabelReferences(lineText);
+  for (const ref of refs) {
+    const nameEnd = ref.nameStart + ref.name.length;
+    if (position.character >= ref.nameStart && position.character <= nameEnd) {
+      return new vscode.Range(
+        new vscode.Position(position.line, ref.nameStart),
+        new vscode.Position(position.line, nameEnd),
+      );
+    }
+  }
+
+  return undefined;
+}
+
+/**
+ * TTLラベルリネームプロバイダ
+ *
+ * @remarks F2 でラベル名を変更すると定義（:label）と参照（goto/call）を一括置換
+ */
+export class TtlRenameProvider implements vscode.RenameProvider {
+  /**
+   * リネーム可能な範囲の確認
+   *
+   * @param document - 対象ドキュメント
+   * @param position - カーソル位置
+   * @returns ラベル名の Range、またはリネーム不可な位置では undefined
+   */
+  prepareRename(
+    document: vscode.TextDocument,
+    position: vscode.Position,
+  ): vscode.Range | undefined {
+    return resolveLabelNameRange(document, position);
+  }
+
+  /**
+   * リネーム用 WorkspaceEdit の提供
+   *
+   * @param document - 対象ドキュメント
+   * @param position - カーソル位置
+   * @param newName - 新しいラベル名
+   * @returns 定義・参照を一括置換する WorkspaceEdit
+   */
+  provideRenameEdits(
+    document: vscode.TextDocument,
+    position: vscode.Position,
+    newName: string,
+  ): vscode.WorkspaceEdit | undefined {
+    const range = resolveLabelNameRange(document, position);
+    if (range === undefined) return undefined;
+
+    const oldName = document.getText(range).toLowerCase();
+    const edit = new vscode.WorkspaceEdit();
+
+    for (let lineIndex = 0; lineIndex < document.lineCount; lineIndex++) {
+      const lineText = document.lineAt(lineIndex).text;
+
+      const def = extractLabelDefinition(lineText);
+      if (def !== null && def.name === oldName) {
+        edit.replace(
+          document.uri,
+          new vscode.Range(
+            new vscode.Position(lineIndex, def.nameStart),
+            new vscode.Position(lineIndex, def.nameStart + def.name.length),
+          ),
+          newName,
+        );
+        continue;
+      }
+
+      for (const ref of extractLabelReferences(lineText)) {
+        if (ref.name !== oldName) continue;
+        edit.replace(
+          document.uri,
+          new vscode.Range(
+            new vscode.Position(lineIndex, ref.nameStart),
+            new vscode.Position(lineIndex, ref.nameStart + ref.name.length),
+          ),
+          newName,
+        );
+      }
+    }
+
+    return edit;
+  }
+}
+
+/**
  * ファイルリネーム時に include パスを更新する WorkspaceEdit を構築
  *
  * @param renames - リネーム対象ファイルのペア一覧
@@ -262,6 +373,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.languages.registerCompletionItemProvider(selector, new TtlCompletionProvider()),
     vscode.languages.registerHoverProvider(selector, new TtlHoverProvider()),
     vscode.languages.registerDefinitionProvider(selector, new TtlDefinitionProvider()),
+    vscode.languages.registerRenameProvider(selector, new TtlRenameProvider()),
     vscode.workspace.onWillRenameFiles(event => {
       event.waitUntil(buildIncludeRenameEdit(event.files));
     }),
