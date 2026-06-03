@@ -24,3 +24,13 @@ jobs:
 
       - name: Unit tests
         run: npm test
+
+      - name: Package debug VSIX
+        run: npx @vscode/vsce package --no-dependencies --pre-release --out ttl-language-debug.vsix
+
+      - name: Upload debug VSIX
+        uses: actions/upload-artifact@v4
+        with:
+          name: ttl-language-debug
+          path: ttl-language-debug.vsix
+          retention-days: 14
