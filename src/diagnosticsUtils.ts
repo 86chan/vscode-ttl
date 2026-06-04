@@ -69,6 +69,15 @@ const INVALID_OPERATOR_PATTERN =
 /** 行頭の代入文（var = ...、比較演算 == は除外） */
 const ASSIGNMENT_PATTERN = /^(\s*)([A-Za-z_]\w*)\s*=(?!=)/;
 
+/** if / elseif で始まる条件行（then で終わるブロック形式） */
+const IF_CONDITION_OPENER = /^\s*(?:if|elseif)\b/i;
+
+/** 条件行末尾の then */
+const TRAILING_THEN = /\bthen\s*$/i;
+
+/** while / until で始まり、行の残り全体が条件となる行 */
+const REST_CONDITION_OPENER = /^\s*(?:while|until)\b/i;
+
 /**
  * 文字列・コメントを同じ長さの空白に置き換えてコード部分のみを残す
  *
@@ -200,6 +209,72 @@ function findReservedAssignment(maskedLine: string, lineIndex: number): TtlDiagn
 }
 
 /**
+ * マスク済み1行から、条件式の範囲 [開始列, 終了列) を求める
+ *
+ * @remarks
+ * - if / elseif は then で終わるブロック形式のみ対象とし、if と then の間を条件とする
+ * - while / until は行の残り全体を条件とする
+ * - 単一行 if（then 以降に文がある形式）は代入の = と区別できないため対象外
+ *
+ * @param maskedLine - マスク済みの行テキスト
+ * @returns 条件式の範囲、または条件行でない場合は null
+ */
+function resolveConditionRange(
+  maskedLine: string,
+): { readonly start: number; readonly end: number } | null {
+  const ifMatch = IF_CONDITION_OPENER.exec(maskedLine);
+  if (ifMatch !== null) {
+    const thenMatch = TRAILING_THEN.exec(maskedLine);
+    if (thenMatch === null) return null;
+    return { start: ifMatch[0].length, end: thenMatch.index };
+  }
+
+  const restMatch = REST_CONDITION_OPENER.exec(maskedLine);
+  if (restMatch !== null) {
+    return { start: restMatch[0].length, end: maskedLine.length };
+  }
+
+  return null;
+}
+
+/**
+ * マスク済み1行の条件式から、比較に用いられた単独の = を検出
+ *
+ * @remarks
+ * 条件式中の = は比較演算であり、== / <= / >= / != / => の一部は除外する。
+ * 代入と紛らわしいため == の使用を推奨する。
+ *
+ * @param maskedLine - マスク済みの行テキスト
+ * @param lineIndex - 0始まりの行番号
+ * @returns 検出した診断の配列
+ */
+function findSingleEqualsComparison(maskedLine: string, lineIndex: number): TtlDiagnostic[] {
+  const range = resolveConditionRange(maskedLine);
+  if (range === null) return [];
+
+  const diagnostics: TtlDiagnostic[] = [];
+  for (let index = range.start; index < range.end; index++) {
+    if (maskedLine[index] !== '=') continue;
+    const previous = maskedLine[index - 1];
+    const next = maskedLine[index + 1];
+    // == / <= / >= / != / => の一部である = は比較記号として正しいので除外
+    if (next === '=' || next === '>') continue;
+    if (previous === '=' || previous === '<' || previous === '>' || previous === '!') continue;
+
+    diagnostics.push({
+      line: lineIndex,
+      startCharacter: index,
+      endCharacter: index + 1,
+      message: "比較には '==' の使用を推奨します（'=' は代入と紛らわしいため）",
+      severity: 'warning',
+      code: 'comparison-single-equals',
+    });
+  }
+
+  return diagnostics;
+}
+
+/**
  * TTL ソースコードを解析して診断一覧を生成
  *
  * @param text - 解析対象のソーステキスト
@@ -211,6 +286,7 @@ export function analyzeTtl(text: string): TtlDiagnostic[] {
 
   maskedLines.forEach((maskedLine, lineIndex) => {
     diagnostics.push(...findInvalidOperators(maskedLine, lineIndex));
+    diagnostics.push(...findSingleEqualsComparison(maskedLine, lineIndex));
     const reserved = findReservedAssignment(maskedLine, lineIndex);
     if (reserved !== null) diagnostics.push(reserved);
   });

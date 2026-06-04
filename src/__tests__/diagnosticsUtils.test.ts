@@ -119,13 +119,65 @@ describe('analyzeTtl - システム変数への代入', () => {
   });
 });
 
+describe('analyzeTtl - 比較演算子としての単独 =', () => {
+  it('if 条件内の単独 = を warning として検出し == を提案する', () => {
+    const diagnostics = analyzeTtl('if result = 0 then');
+    const diagnostic = diagnostics.find(d => d.code === 'comparison-single-equals');
+    expect(diagnostic).toBeDefined();
+    expect(diagnostic?.severity).toBe('warning');
+    expect(diagnostic?.message).toContain('==');
+    // = の1文字だけを指すこと
+    expect(diagnostic?.endCharacter).toBe(diagnostic!.startCharacter + 1);
+  });
+
+  it('elseif 条件内の単独 = を検出する', () => {
+    const diagnostics = analyzeTtl('elseif a = 2 then');
+    expect(diagnostics.some(d => d.code === 'comparison-single-equals')).toBe(true);
+  });
+
+  it('while 条件内の単独 = を検出する', () => {
+    const diagnostics = analyzeTtl('while result = 0');
+    expect(diagnostics.some(d => d.code === 'comparison-single-equals')).toBe(true);
+  });
+
+  it('== / <= / >= / <> / != は比較記号として正しく、検出しない', () => {
+    const text = [
+      'if a == 1 then',
+      'if b <= 2 then',
+      'if c >= 3 then',
+      'if d <> 4 then',
+      'while e != 5',
+    ].join('\n');
+    const diagnostics = analyzeTtl(text);
+    expect(diagnostics.filter(d => d.code === 'comparison-single-equals')).toHaveLength(0);
+  });
+
+  it('代入文（var = value）は比較として検出しない', () => {
+    const diagnostics = analyzeTtl('myvar = 1');
+    expect(diagnostics.filter(d => d.code === 'comparison-single-equals')).toHaveLength(0);
+  });
+
+  it('単一行 if（then で終わらない形式）は代入と区別できないため検出しない', () => {
+    const diagnostics = analyzeTtl("if a == 1 messagebox 'x' 'y'");
+    expect(diagnostics.filter(d => d.code === 'comparison-single-equals')).toHaveLength(0);
+  });
+
+  it('文字列内の = は検出しない', () => {
+    const diagnostics = analyzeTtl("if strmatch = 0 then ; cond");
+    // strmatch = 0 の = は検出されるが、コメントや文字列の = は対象外であることの確認
+    const inString = analyzeTtl("sendln 'a = b'");
+    expect(inString.filter(d => d.code === 'comparison-single-equals')).toHaveLength(0);
+    expect(diagnostics.some(d => d.code === 'comparison-single-equals')).toBe(true);
+  });
+});
+
 describe('analyzeTtl - 正常なスクリプト', () => {
   it('問題のないスクリプトでは診断を生成しない', () => {
     const text = [
       "connect 'host'",
       "wait '$'",
       'for i 1 10',
-      '  if result = 0 then',
+      '  if result == 0 then',
       '    break',
       '  endif',
       'next',
