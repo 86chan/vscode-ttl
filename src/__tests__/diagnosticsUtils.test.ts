@@ -171,6 +171,135 @@ describe('analyzeTtl - 比較演算子としての単独 =', () => {
   });
 });
 
+describe('analyzeTtl - ブロックの閉じ忘れ・不一致', () => {
+  it('endif の無い if ブロックを error として検出する', () => {
+    const text = ['if a == 1 then', "  sendln 'x'"].join('\n');
+    const diagnostic = analyzeTtl(text).find(d => d.code === 'unclosed-block');
+    expect(diagnostic).toBeDefined();
+    expect(diagnostic?.severity).toBe('error');
+    expect(diagnostic?.line).toBe(0);
+    expect(diagnostic?.message).toContain('endif');
+  });
+
+  it('next の無い for ブロックを検出する', () => {
+    const text = ['for i 1 10', '  mpause 1'].join('\n');
+    const diagnostic = analyzeTtl(text).find(d => d.code === 'unclosed-block');
+    expect(diagnostic).toBeDefined();
+    expect(diagnostic?.message).toContain('next');
+  });
+
+  it('endwhile の無い while ブロックを検出する', () => {
+    const diagnostic = analyzeTtl('while a == 0').find(d => d.code === 'unclosed-block');
+    expect(diagnostic).toBeDefined();
+    expect(diagnostic?.message).toContain('endwhile');
+  });
+
+  it('対応する開始の無い endif を error として検出する', () => {
+    const diagnostic = analyzeTtl('endif').find(d => d.code === 'unmatched-block-close');
+    expect(diagnostic).toBeDefined();
+    expect(diagnostic?.severity).toBe('error');
+  });
+
+  it('開始と一致しない終了キーワードを検出する', () => {
+    // while を next で閉じようとしている
+    const text = ['while a == 1', 'next'].join('\n');
+    const diagnostic = analyzeTtl(text).find(d => d.code === 'mismatched-block-close');
+    expect(diagnostic).toBeDefined();
+    expect(diagnostic?.severity).toBe('error');
+  });
+
+  it('単一行 if（then で終わらない）は endif を要求しない', () => {
+    const diagnostics = analyzeTtl("if a == 1 messagebox 'x' 'y'");
+    expect(diagnostics.filter(d => d.code === 'unclosed-block')).toHaveLength(0);
+  });
+
+  it('マクロ終了の end をブロック終了と誤認しない', () => {
+    const text = ['if a == 1 then', "  sendln 'x'", '  end', 'endif'].join('\n');
+    const diagnostics = analyzeTtl(text);
+    expect(diagnostics.filter(d => d.code.startsWith('unclosed') || d.code.startsWith('unmatched') || d.code.startsWith('mismatched'))).toHaveLength(0);
+  });
+
+  it('正しく入れ子・閉じられたブロックは検出しない', () => {
+    const text = [
+      'for i 1 10',
+      '  if a == 1 then',
+      "    sendln 'x'",
+      '  endif',
+      'next',
+    ].join('\n');
+    const diagnostics = analyzeTtl(text);
+    expect(diagnostics.filter(d =>
+      ['unclosed-block', 'unmatched-block-close', 'mismatched-block-close'].includes(d.code),
+    )).toHaveLength(0);
+  });
+
+  it('文字列・コメント内の endif はブロック終了と見なさない', () => {
+    const text = ['if a == 1 then', "  sendln 'endif'", '  ; endif', 'endif'].join('\n');
+    const diagnostics = analyzeTtl(text);
+    expect(diagnostics.filter(d =>
+      ['unclosed-block', 'unmatched-block-close', 'mismatched-block-close'].includes(d.code),
+    )).toHaveLength(0);
+  });
+});
+
+describe('analyzeTtl - 過剰なネスト', () => {
+  it('既定の上限（2段）を超えるネストを warning として検出する', () => {
+    const text = [
+      'for i 1 10',          // 1段
+      '  while a == 1',      // 2段
+      '    if b == 2 then',  // 3段（上限超過）
+      "      sendln 'x'",
+      '    endif',
+      '  endwhile',
+      'next',
+    ].join('\n');
+    const diagnostics = analyzeTtl(text);
+    const nesting = diagnostics.filter(d => d.code === 'excessive-nesting');
+    expect(nesting).toHaveLength(1);
+    expect(nesting[0].severity).toBe('warning');
+    // 3段目（if）の行を指すこと
+    expect(nesting[0].line).toBe(2);
+    expect(nesting[0].message).toContain('3 段');
+  });
+
+  it('上限内（2段）のネストは検出しない', () => {
+    const text = [
+      'for i 1 10',
+      '  if a == 1 then',
+      "    sendln 'x'",
+      '  endif',
+      'next',
+    ].join('\n');
+    expect(analyzeTtl(text).filter(d => d.code === 'excessive-nesting')).toHaveLength(0);
+  });
+
+  it('maxNestingDepth オプションで上限を変更できる', () => {
+    const text = [
+      'for i 1 10',
+      '  if a == 1 then',
+      "    sendln 'x'",
+      '  endif',
+      'next',
+    ].join('\n');
+    // 上限1段にすると2段目（if）が警告される
+    const diagnostics = analyzeTtl(text, { maxNestingDepth: 1 });
+    expect(diagnostics.filter(d => d.code === 'excessive-nesting')).toHaveLength(1);
+  });
+
+  it('maxNestingDepth が 0 の場合はネスト警告を無効化する', () => {
+    const text = [
+      'for i 1 10',
+      '  while a == 1',
+      '    if b == 2 then',
+      "      sendln 'x'",
+      '    endif',
+      '  endwhile',
+      'next',
+    ].join('\n');
+    expect(analyzeTtl(text, { maxNestingDepth: 0 }).filter(d => d.code === 'excessive-nesting')).toHaveLength(0);
+  });
+});
+
 describe('analyzeTtl - 正常なスクリプト', () => {
   it('問題のないスクリプトでは診断を生成しない', () => {
     const text = [

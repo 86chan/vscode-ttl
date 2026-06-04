@@ -9,7 +9,7 @@
 - **ホバードキュメント** — コマンド上にカーソルを置くと日本語または英語のリファレンスを表示
 - **定義ジャンプ** — `goto`/`call` のラベル参照から `:label` 定義行へジャンプ (F12)
 - **コード整形** — `if`/`for`/`while`/`do` などのブロック構造に応じて自動インデント (Shift+Alt+F)
-- **診断（エラー/警告）** — 無効な演算子（`&&`/`++`/`+=` など）やシステム変数（`result` など）への代入、条件式での単独 `=`（比較は `==` を推奨）を検出
+- **診断（エラー/警告）** — 無効な演算子（`&&`/`++`/`+=` など）、システム変数（`result` など）への代入、条件式での単独 `=`（比較は `==` を推奨）、ブロックの閉じ忘れ（`endif`/`next` など）、深すぎるネスト（既定 2 段）を検出
 
 ---
 
@@ -20,7 +20,7 @@
 - **Hover Documentation** — inline reference in Japanese or English
 - **Go to Definition** — jump from `goto`/`call` to `:label` definitions (F12)
 - **Code Formatting** — auto-indent based on block structures such as `if`/`for`/`while`/`do` (Shift+Alt+F)
-- **Diagnostics (Errors/Warnings)** — detects invalid operators (`&&`, `++`, `+=`, etc.), assignments to system variables (e.g. `result`), and a single `=` used for comparison (suggests `==`)
+- **Diagnostics (Errors/Warnings)** — detects invalid operators (`&&`, `++`, `+=`, etc.), assignments to system variables (e.g. `result`), a single `=` used for comparison (suggests `==`), unclosed blocks (missing `endif`/`next`, etc.), and excessive nesting (default depth 2, configurable via `ttl.maxNestingDepth`)
 
 ## 言語設定 / Language Setting
 
@@ -30,6 +30,14 @@ The extension auto-detects the VS Code UI language. Override in settings:
 
 ```json
 "ttl.language": "auto"  // "auto" | "ja" | "en"
+```
+
+ネスト警告の上限段数も設定できます（既定 2、0 で無効化）。
+
+The maximum nesting depth before a warning is also configurable (default 2, 0 disables it):
+
+```json
+"ttl.maxNestingDepth": 2
 ```
 
 ## 対応構文 / Supported Syntax
