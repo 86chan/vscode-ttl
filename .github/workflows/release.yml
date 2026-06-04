@@ -21,6 +21,11 @@ jobs:
 
       - run: npm ci --ignore-scripts
 
+      - name: Sync version to tag
+        env:
+          TAG: ${{ github.ref_name }}
+        run: npm version "${TAG#v}" --no-git-tag-version
+
       - name: Type check
         run: npx tsc --noEmit
 
