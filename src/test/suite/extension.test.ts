@@ -25,7 +25,7 @@ async function openFixture(): Promise<vscode.TextDocument> {
 }
 
 /**
- * 補完候補をドキュメント指定位置で取得
+ * 指定位置の補完候補を取得
  *
  * @param uri - 対象ドキュメントのURI
  * @param position - カーソル位置
@@ -45,7 +45,7 @@ async function getCompletions(
 }
 
 /**
- * ホバー情報をドキュメント指定位置で取得
+ * 指定位置のホバー情報を取得
  *
  * @param uri - 対象ドキュメントのURI
  * @param position - カーソル位置
@@ -64,7 +64,7 @@ async function getHovers(
 }
 
 /**
- * 定義位置をドキュメント指定位置で取得
+ * 指定位置の定義を取得
  *
  * @param uri - 対象ドキュメントのURI
  * @param position - カーソル位置
