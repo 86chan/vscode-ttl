@@ -9,8 +9,6 @@
 import { describe, it, expect } from 'vitest';
 import { extractLabelDefinition, extractLabelReferences } from '../labelUtils';
 
-// ── extractLabelDefinition ────────────────────────────────────────────────────
-
 describe('extractLabelDefinition', () => {
   it('行頭のラベル定義を検出する', () => {
     const result = extractLabelDefinition(':do_login');
@@ -50,8 +48,6 @@ describe('extractLabelDefinition', () => {
     expect(result?.name).toBe('dologin');
   });
 });
-
-// ── extractLabelReferences ────────────────────────────────────────────────────
 
 describe('extractLabelReferences', () => {
   it('goto 参照を検出する', () => {

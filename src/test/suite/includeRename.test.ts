@@ -19,8 +19,6 @@ const MAIN_TTL = path.join(FIXTURES_DIR, 'include_main.ttl');
 const HELPER_OLD = path.join(FIXTURES_DIR, 'include_helper.ttl');
 const HELPER_NEW = path.join(FIXTURES_DIR, 'include_helper_renamed.ttl');
 
-// ── include リネーム追従 ──────────────────────────────────────────────────────
-
 describe('include リネーム追従', () => {
   it('.ttl 以外のリネームは空の WorkspaceEdit を返す', async () => {
     // When: .txt ファイルをリネームする

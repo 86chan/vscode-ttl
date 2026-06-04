@@ -38,8 +38,6 @@ function findPosition(
 
 const provider = new TtlRenameProvider();
 
-// ── prepareRename ─────────────────────────────────────────────────────────────
-
 describe('TtlRenameProvider.prepareRename', () => {
   let document: vscode.TextDocument;
 
@@ -72,8 +70,6 @@ describe('TtlRenameProvider.prepareRename', () => {
     assert.strictEqual(range, undefined, 'sendln is not a label');
   });
 });
-
-// ── provideRenameEdits ────────────────────────────────────────────────────────
 
 describe('TtlRenameProvider.provideRenameEdits', () => {
   let document: vscode.TextDocument;
