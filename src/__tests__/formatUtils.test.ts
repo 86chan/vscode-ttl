@@ -127,4 +127,91 @@ describe('formatTtl', () => {
     const expected = ['do', '  recvln', 'loop'].join('\n');
     expect(formatTtl(input)).toBe(expected);
   });
+
+  it('コメント内の markdown テーブルを桁揃えする（全角文字対応）', () => {
+    const input = [
+      '; ===============================',
+      '; 関数名',
+      '; ',
+      '; - 必須変数',
+      '; | 変数名 | R/W | 概要 |',
+      '; | --- | --- | --- |',
+      '; | name | R | 名前 |',
+      '; | age | R | 年齢 |',
+      '; | since | W | 生まれ |',
+      '; ',
+      '; ===============================',
+    ].join('\n');
+    const expected = [
+      '; ===============================',
+      '; 関数名',
+      ';',
+      '; - 必須変数',
+      '; | 変数名 | R/W | 概要   |',
+      '; | ------ | --- | ------ |',
+      '; | name   | R   | 名前   |',
+      '; | age    | R   | 年齢   |',
+      '; | since  | W   | 生まれ |',
+      ';',
+      '; ===============================',
+    ].join('\n');
+    expect(formatTtl(input)).toBe(expected);
+  });
+
+  it('崩れたコメントテーブルの桁を揃え直す', () => {
+    const input = [
+      ';|a|bb|',
+      ';|---|---|',
+      ';|1|22|',
+    ].join('\n');
+    const expected = [
+      '; | a   | bb  |',
+      '; | --- | --- |',
+      '; | 1   | 22  |',
+    ].join('\n');
+    expect(formatTtl(input)).toBe(expected);
+  });
+
+  it('列揃え指定（:--- / ---: / :---:）を保持する', () => {
+    const input = [
+      '; | left | center | right |',
+      '; | :--- | :---: | ---: |',
+      '; | a | b | c |',
+    ].join('\n');
+    const expected = [
+      '; | left | center | right |',
+      '; | :--- | :----: | ----: |',
+      '; | a    |   b    |     c |',
+    ].join('\n');
+    expect(formatTtl(input)).toBe(expected);
+  });
+
+  it('区切り行のないテーブルもどきは変更しない', () => {
+    const input = ['; | a | b |', '; | c | d |'].join('\n');
+    expect(formatTtl(input)).toBe(input);
+  });
+
+  it('インデントされたブロック内のコメントテーブルも桁揃えする', () => {
+    const input = [
+      'for i 1 3',
+      '; | k | v |',
+      '; | --- | --- |',
+      '; | a | 1 |',
+      'next',
+    ].join('\n');
+    const expected = [
+      'for i 1 3',
+      '  ; | k   | v   |',
+      '  ; | --- | --- |',
+      '  ; | a   | 1   |',
+      'next',
+    ].join('\n');
+    expect(formatTtl(input)).toBe(expected);
+  });
+
+  it('コメントテーブルを含んでも CRLF を保持する', () => {
+    const input = ['; | a | b |', '; | --- | --- |', '; | 1 | 2 |'].join('\r\n');
+    const expected = ['; | a   | b   |', '; | --- | --- |', '; | 1   | 2   |'].join('\r\n');
+    expect(formatTtl(input)).toBe(expected);
+  });
 });
