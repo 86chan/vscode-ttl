@@ -5,6 +5,7 @@
 import * as nodePath from 'node:path';
 import * as vscode from 'vscode';
 import { collectDocumentWords, TTL_IDENTIFIER_PATTERN } from './completionUtils';
+import { type FormatOptions, formatTtl } from './formatUtils';
 import { extractLabelDefinition, extractLabelReferences } from './labelUtils';
 import {
   type TtlCommand,
@@ -394,6 +395,46 @@ export async function buildIncludeRenameEdit(
 }
 
 /**
+ * VS Code の整形オプションから TTL 整形用のインデント単位を導出
+ *
+ * @param options - エディタの整形オプション
+ * @returns TTL 整形オプション
+ */
+function toFormatOptions(options: vscode.FormattingOptions): FormatOptions {
+  const indentUnit = options.insertSpaces ? ' '.repeat(options.tabSize) : '\t';
+  return { indentUnit };
+}
+
+/**
+ * TTL ドキュメント整形プロバイダ
+ *
+ * @remarks ブロック構造のネストに応じてドキュメント全体を再インデントする
+ */
+class TtlFormattingProvider implements vscode.DocumentFormattingEditProvider {
+  /**
+   * ドキュメント全体の整形編集を提供
+   *
+   * @param document - 対象ドキュメント
+   * @param options - エディタの整形オプション
+   * @returns ドキュメント全体を整形後テキストに置き換える編集
+   */
+  provideDocumentFormattingEdits(
+    document: vscode.TextDocument,
+    options: vscode.FormattingOptions,
+  ): vscode.TextEdit[] {
+    const original = document.getText();
+    const formatted = formatTtl(original, toFormatOptions(options));
+    if (formatted === original) return [];
+
+    const fullRange = new vscode.Range(
+      document.positionAt(0),
+      document.positionAt(original.length),
+    );
+    return [vscode.TextEdit.replace(fullRange, formatted)];
+  }
+}
+
+/**
  * 拡張機能のアクティベーション
  *
  * @param context - 拡張機能コンテキスト
@@ -406,6 +447,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.languages.registerHoverProvider(selector, new TtlHoverProvider()),
     vscode.languages.registerDefinitionProvider(selector, new TtlDefinitionProvider()),
     vscode.languages.registerRenameProvider(selector, new TtlRenameProvider()),
+    vscode.languages.registerDocumentFormattingEditProvider(selector, new TtlFormattingProvider()),
     vscode.workspace.onWillRenameFiles(event => {
       event.waitUntil(buildIncludeRenameEdit(event.files));
     }),
