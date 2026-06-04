@@ -1,9 +1,9 @@
 /**
- * TTLデータ定義の静的整合性テスト
+ * TTL データ定義の静的整合性テスト
  *
  * @remarks
- * - `ttlData.ts` はVSCode APIに依存しないため、Vitestで直接テスト可能。
- * - コマンドの重複・説明欠落・マップ整合性・文法パターン適用範囲を検証する。
+ * - `ttlData.ts` は VS Code API に依存しないため、Vitest で直接テスト可能
+ * - コマンド重複、説明欠落、マップ整合性、文法パターンを検証
  */
 
 import { readFileSync } from 'node:fs';
@@ -16,9 +16,7 @@ import {
   TTL_SYSTEM_VARIABLES,
 } from '../ttlData';
 
-// ── ヘルパー ──────────────────────────────────────────────────────────────────
-
-/** TextMate文法ファイルを読み込んで返す */
+/** TextMate 文法ファイルを読み込む */
 function loadGrammar(): {
   repository: Record<string, { match: string; begin?: string }>;
 } {
@@ -33,8 +31,6 @@ function matchesAsWholeWord(pattern: string, word: string): boolean {
   const regex = new RegExp(cleanPattern, 'i');
   return regex.test(word);
 }
-
-// ── TTL_COMMANDS テスト ───────────────────────────────────────────────────────
 
 describe('TTL_COMMANDS', () => {
   it('コマンド名に重複がない', () => {
@@ -80,8 +76,6 @@ describe('TTL_COMMANDS', () => {
   });
 });
 
-// ── TTL_COMMANDS_MAP テスト ───────────────────────────────────────────────────
-
 describe('TTL_COMMANDS_MAP', () => {
   it('TTL_COMMANDS と同じ件数', () => {
     expect(TTL_COMMANDS_MAP.size).toBe(TTL_COMMANDS.length);
@@ -112,8 +106,6 @@ describe('TTL_COMMANDS_MAP', () => {
   });
 });
 
-// ── TTL_STRUCTURAL_KEYWORDS テスト ───────────────────────────────────────────
-
 describe('TTL_STRUCTURAL_KEYWORDS', () => {
   it('重複がない', () => {
     const duplicates = TTL_STRUCTURAL_KEYWORDS.filter(
@@ -134,8 +126,6 @@ describe('TTL_STRUCTURAL_KEYWORDS', () => {
     expect(upperCase).toEqual([]);
   });
 });
-
-// ── TTL_SYSTEM_VARIABLES テスト ──────────────────────────────────────────────
 
 describe('TTL_SYSTEM_VARIABLES', () => {
   it('重複がない', () => {
@@ -164,8 +154,6 @@ describe('TTL_SYSTEM_VARIABLES', () => {
     }
   });
 });
-
-// ── TextMate 文法テスト ───────────────────────────────────────────────────────
 
 describe('TextMate grammar', () => {
   const grammar = loadGrammar();
@@ -221,8 +209,6 @@ describe('TextMate grammar', () => {
     expect(stringRepo.end).toMatch(/'/);
   });
 });
-
-// ── セキュリティ検証 ──────────────────────────────────────────────────────────
 
 describe('セキュリティ', () => {
   it('extension.ts が isTrusted = true を設定していない', () => {
