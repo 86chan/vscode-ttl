@@ -5,6 +5,7 @@
 import * as nodePath from 'node:path';
 import * as vscode from 'vscode';
 import { collectDocumentWords, TTL_IDENTIFIER_PATTERN } from './completionUtils';
+import { analyzeTtl, type TtlDiagnostic } from './diagnosticsUtils';
 import { type FormatOptions, formatTtl } from './formatUtils';
 import { extractLabelDefinition, extractLabelReferences } from './labelUtils';
 import {
@@ -435,12 +436,60 @@ class TtlFormattingProvider implements vscode.DocumentFormattingEditProvider {
 }
 
 /**
+ * TTL 診断を VS Code の Diagnostic に変換
+ *
+ * @param diagnostic - 解析結果の診断
+ * @returns VS Code 診断オブジェクト
+ */
+function toVscodeDiagnostic(diagnostic: TtlDiagnostic): vscode.Diagnostic {
+  const range = new vscode.Range(
+    new vscode.Position(diagnostic.line, diagnostic.startCharacter),
+    new vscode.Position(diagnostic.line, diagnostic.endCharacter),
+  );
+  const severity = diagnostic.severity === 'error'
+    ? vscode.DiagnosticSeverity.Error
+    : vscode.DiagnosticSeverity.Warning;
+  const result = new vscode.Diagnostic(range, diagnostic.message, severity);
+  result.source = 'ttl';
+  result.code = diagnostic.code;
+  return result;
+}
+
+/**
+ * ドキュメントを解析し診断コレクションを更新
+ *
+ * @param document - 対象ドキュメント
+ * @param collection - 更新対象の診断コレクション
+ */
+function refreshDiagnostics(
+  document: vscode.TextDocument,
+  collection: vscode.DiagnosticCollection,
+): void {
+  if (document.languageId !== TTL_LANGUAGE_ID) return;
+  collection.set(document.uri, analyzeTtl(document.getText()).map(toVscodeDiagnostic));
+}
+
+/**
  * 拡張機能のアクティベーション
  *
  * @param context - 拡張機能コンテキスト
  */
 export function activate(context: vscode.ExtensionContext): void {
   const selector: vscode.DocumentSelector = { language: TTL_LANGUAGE_ID };
+
+  const diagnostics = vscode.languages.createDiagnosticCollection('ttl');
+  context.subscriptions.push(
+    diagnostics,
+    vscode.workspace.onDidOpenTextDocument(document => refreshDiagnostics(document, diagnostics)),
+    vscode.workspace.onDidChangeTextDocument(event =>
+      refreshDiagnostics(event.document, diagnostics),
+    ),
+    vscode.workspace.onDidCloseTextDocument(document => diagnostics.delete(document.uri)),
+  );
+  // 起動時に既に開かれているドキュメントを解析
+  for (const document of vscode.workspace.textDocuments) {
+    refreshDiagnostics(document, diagnostics);
+  }
 
   context.subscriptions.push(
     vscode.languages.registerCompletionItemProvider(selector, new TtlCompletionProvider()),

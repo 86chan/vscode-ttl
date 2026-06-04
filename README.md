@@ -9,6 +9,7 @@
 - **ホバードキュメント** — コマンド上にカーソルを置くと日本語または英語のリファレンスを表示
 - **定義ジャンプ** — `goto`/`call` のラベル参照から `:label` 定義行へジャンプ (F12)
 - **コード整形** — `if`/`for`/`while`/`do` などのブロック構造に応じて自動インデント (Shift+Alt+F)
+- **診断（エラー/警告）** — 無効な演算子（`&&`/`++`/`+=` など）やシステム変数（`result` など）への代入を検出
 
 ---
 
@@ -19,6 +20,7 @@
 - **Hover Documentation** — inline reference in Japanese or English
 - **Go to Definition** — jump from `goto`/`call` to `:label` definitions (F12)
 - **Code Formatting** — auto-indent based on block structures such as `if`/`for`/`while`/`do` (Shift+Alt+F)
+- **Diagnostics (Errors/Warnings)** — detects invalid operators (`&&`, `++`, `+=`, etc.) and assignments to system variables (e.g. `result`)
 
 ## 言語設定 / Language Setting
 
