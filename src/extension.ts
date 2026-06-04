@@ -5,7 +5,7 @@
 import * as nodePath from 'node:path';
 import * as vscode from 'vscode';
 import { collectDocumentWords, TTL_IDENTIFIER_PATTERN } from './completionUtils';
-import { analyzeTtl, type TtlDiagnostic } from './diagnosticsUtils';
+import { analyzeTtl, DEFAULT_MAX_NESTING_DEPTH, type TtlDiagnostic } from './diagnosticsUtils';
 import { type FormatOptions, formatTtl } from './formatUtils';
 import { extractLabelDefinition, extractLabelReferences } from './labelUtils';
 import {
@@ -466,7 +466,13 @@ function refreshDiagnostics(
   collection: vscode.DiagnosticCollection,
 ): void {
   if (document.languageId !== TTL_LANGUAGE_ID) return;
-  collection.set(document.uri, analyzeTtl(document.getText()).map(toVscodeDiagnostic));
+  const maxNestingDepth = vscode.workspace
+    .getConfiguration('ttl')
+    .get<number>('maxNestingDepth', DEFAULT_MAX_NESTING_DEPTH);
+  collection.set(
+    document.uri,
+    analyzeTtl(document.getText(), { maxNestingDepth }).map(toVscodeDiagnostic),
+  );
 }
 
 /**
@@ -485,6 +491,13 @@ export function activate(context: vscode.ExtensionContext): void {
       refreshDiagnostics(event.document, diagnostics),
     ),
     vscode.workspace.onDidCloseTextDocument(document => diagnostics.delete(document.uri)),
+    // 設定変更時は開いている全ドキュメントを再解析
+    vscode.workspace.onDidChangeConfiguration(event => {
+      if (!event.affectsConfiguration('ttl.maxNestingDepth')) return;
+      for (const document of vscode.workspace.textDocuments) {
+        refreshDiagnostics(document, diagnostics);
+      }
+    }),
   );
   // 起動時に既に開かれているドキュメントを解析
   for (const document of vscode.workspace.textDocuments) {

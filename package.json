@@ -60,6 +60,12 @@
           ],
           "default": "auto",
           "description": "Language for hover documentation. 'auto' uses the VS Code display language."
+        },
+        "ttl.maxNestingDepth": {
+          "type": "integer",
+          "default": 2,
+          "minimum": 0,
+          "description": "Maximum allowed block nesting depth before a warning is reported. Set to 0 to disable the check."
         }
       }
     }

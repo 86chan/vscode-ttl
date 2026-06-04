@@ -78,6 +78,31 @@ const TRAILING_THEN = /\bthen\s*$/i;
 /** while / until で始まり、行の残り全体が条件となる行 */
 const REST_CONDITION_OPENER = /^\s*(?:while|until)\b/i;
 
+/** 行頭の最初のキーワードトークン（ラベルや記号は対象外） */
+const FIRST_TOKEN_PATTERN = /^\s*([A-Za-z]\w*)/;
+
+/**
+ * ブロック開始キーワードと、対応する終了キーワード
+ *
+ * @remarks `end`（マクロ終了）はブロック閉じではないため対象外
+ */
+const BLOCK_OPENERS: ReadonlyMap<string, string> = new Map([
+  ['if', 'endif'],
+  ['for', 'next'],
+  ['while', 'endwhile'],
+  ['do', 'loop'],
+  ['until', 'enduntil'],
+]);
+
+/** ブロック終了キーワードと、対応する開始キーワード */
+const BLOCK_CLOSERS: ReadonlyMap<string, string> = new Map([
+  ['endif', 'if'],
+  ['next', 'for'],
+  ['endwhile', 'while'],
+  ['loop', 'do'],
+  ['enduntil', 'until'],
+]);
+
 /**
  * 文字列・コメントを同じ長さの空白に置き換えてコード部分のみを残す
  *
@@ -274,13 +299,128 @@ function findSingleEqualsComparison(maskedLine: string, lineIndex: number): TtlD
   return diagnostics;
 }
 
+/** 解析中に保持する未閉鎖のブロック情報 */
+interface OpenBlock {
+  /** 開始キーワード */
+  readonly keyword: string;
+  /** 対応する終了キーワード */
+  readonly expectedCloser: string;
+  /** 0始まりの行番号 */
+  readonly line: number;
+  /** キーワードの開始列 */
+  readonly startCharacter: number;
+  /** キーワードの終了列 */
+  readonly endCharacter: number;
+}
+
+/**
+ * ブロックのネスト構造を走査し、閉じ忘れ・不一致・過剰なネストを検出
+ *
+ * @remarks
+ * - 終了キーワードに対応する開始がない場合や、開始が閉じられないまま終端した場合をエラーとする
+ * - ネスト段数が上限を超えた開始ブロックを警告する（上限0以下で無効化）
+ *
+ * @param maskedLines - マスク済みの行テキスト配列
+ * @param maxNestingDepth - 許容するネスト段数の上限
+ * @returns 検出した診断の配列
+ */
+function findBlockStructureIssues(
+  maskedLines: readonly string[],
+  maxNestingDepth: number,
+): TtlDiagnostic[] {
+  const diagnostics: TtlDiagnostic[] = [];
+  const stack: OpenBlock[] = [];
+
+  maskedLines.forEach((maskedLine, lineIndex) => {
+    const tokenMatch = FIRST_TOKEN_PATTERN.exec(maskedLine);
+    if (tokenMatch === null) return;
+
+    const keyword = tokenMatch[1].toLowerCase();
+    const startCharacter = tokenMatch[0].length - tokenMatch[1].length;
+    const endCharacter = tokenMatch[0].length;
+
+    const expectedCloser = BLOCK_OPENERS.get(keyword);
+    if (expectedCloser !== undefined) {
+      // if は then で終わるブロック形式のみブロックを開く（単一行 if は除外）
+      if (keyword === 'if' && !TRAILING_THEN.test(maskedLine)) return;
+
+      stack.push({ keyword, expectedCloser, line: lineIndex, startCharacter, endCharacter });
+
+      if (maxNestingDepth > 0 && stack.length > maxNestingDepth) {
+        diagnostics.push({
+          line: lineIndex,
+          startCharacter,
+          endCharacter,
+          message: `ネストが深すぎます（${stack.length} 段、上限 ${maxNestingDepth} 段）`,
+          severity: 'warning',
+          code: 'excessive-nesting',
+        });
+      }
+      return;
+    }
+
+    const expectedOpener = BLOCK_CLOSERS.get(keyword);
+    if (expectedOpener === undefined) return;
+
+    const top = stack[stack.length - 1];
+    if (top === undefined) {
+      diagnostics.push({
+        line: lineIndex,
+        startCharacter,
+        endCharacter,
+        message: `'${keyword}' に対応する '${expectedOpener}' がありません`,
+        severity: 'error',
+        code: 'unmatched-block-close',
+      });
+      return;
+    }
+
+    stack.pop();
+    if (top.keyword !== expectedOpener) {
+      diagnostics.push({
+        line: lineIndex,
+        startCharacter,
+        endCharacter,
+        message: `'${keyword}' は ${top.line + 1} 行目の '${top.keyword}' に対応していません`,
+        severity: 'error',
+        code: 'mismatched-block-close',
+      });
+    }
+  });
+
+  // 終端まで閉じられなかった開始ブロック
+  for (const block of stack) {
+    diagnostics.push({
+      line: block.line,
+      startCharacter: block.startCharacter,
+      endCharacter: block.endCharacter,
+      message: `'${block.keyword}' ブロックが '${block.expectedCloser}' で閉じられていません`,
+      severity: 'error',
+      code: 'unclosed-block',
+    });
+  }
+
+  return diagnostics;
+}
+
+/** analyzeTtl の解析オプション */
+export interface AnalyzeOptions {
+  /** 許容するネスト段数の上限（既定 2、0以下で無効化） */
+  readonly maxNestingDepth?: number;
+}
+
+/** ネスト段数上限の既定値 */
+export const DEFAULT_MAX_NESTING_DEPTH = 2;
+
 /**
  * TTL ソースコードを解析して診断一覧を生成
  *
  * @param text - 解析対象のソーステキスト
+ * @param options - 解析オプション
  * @returns 検出した診断の配列
  */
-export function analyzeTtl(text: string): TtlDiagnostic[] {
+export function analyzeTtl(text: string, options: AnalyzeOptions = {}): TtlDiagnostic[] {
+  const maxNestingDepth = options.maxNestingDepth ?? DEFAULT_MAX_NESTING_DEPTH;
   const maskedLines = maskNonCode(text);
   const diagnostics: TtlDiagnostic[] = [];
 
@@ -290,6 +430,8 @@ export function analyzeTtl(text: string): TtlDiagnostic[] {
     const reserved = findReservedAssignment(maskedLine, lineIndex);
     if (reserved !== null) diagnostics.push(reserved);
   });
+
+  diagnostics.push(...findBlockStructureIssues(maskedLines, maxNestingDepth));
 
   return diagnostics;
 }
