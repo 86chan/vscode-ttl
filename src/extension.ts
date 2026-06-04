@@ -4,6 +4,7 @@
 
 import * as nodePath from 'node:path';
 import * as vscode from 'vscode';
+import { collectDocumentWords, TTL_IDENTIFIER_PATTERN } from './completionUtils';
 import { extractLabelDefinition, extractLabelReferences } from './labelUtils';
 import {
   type TtlCommand,
@@ -94,19 +95,20 @@ class TtlCompletionProvider implements vscode.CompletionItemProvider {
   /**
    * 補完候補一覧の提供
    *
-   * @param _document - 対象ドキュメント
-   * @param _position - カーソル位置
+   * @param document - 対象ドキュメント
+   * @param position - カーソル位置
    * @returns 補完候補の配列
    */
   provideCompletionItems(
-    _document: vscode.TextDocument,
-    _position: vscode.Position,
+    document: vscode.TextDocument,
+    position: vscode.Position,
   ): vscode.CompletionItem[] {
     const language = resolveDisplayLanguage();
     const commandItems = this.buildCommandItems(language);
     const keywordItems = this.buildKeywordItems();
     const variableItems = this.buildVariableItems();
-    return [...commandItems, ...keywordItems, ...variableItems];
+    const documentWordItems = this.buildDocumentWordItems(document, position);
+    return [...commandItems, ...keywordItems, ...variableItems, ...documentWordItems];
   }
 
   private buildCommandItems(language: 'ja' | 'en'): vscode.CompletionItem[] {
@@ -134,6 +136,36 @@ class TtlCompletionProvider implements vscode.CompletionItemProvider {
       item.detail = 'System variable';
       return item;
     });
+  }
+
+  /**
+   * ドキュメント内のユーザー定義識別子から補完候補を生成
+   *
+   * @remarks エディタ標準の単語ベース補完に依存せず、過去に入力した変数名・ラベル名を確実に候補化
+   * @param document - 対象ドキュメント
+   * @param position - カーソル位置
+   * @returns 入力中の語を除いた識別子の補完候補
+   */
+  private buildDocumentWordItems(
+    document: vscode.TextDocument,
+    position: vscode.Position,
+  ): vscode.CompletionItem[] {
+    const words = collectDocumentWords(document.getText());
+
+    // 入力中の語そのものを候補から除外する
+    const currentWordRange = document.getWordRangeAtPosition(position, TTL_IDENTIFIER_PATTERN);
+    const currentWord = currentWordRange !== undefined
+      ? document.getText(currentWordRange)
+      : undefined;
+
+    const items: vscode.CompletionItem[] = [];
+    for (const word of words) {
+      if (word === currentWord) continue;
+      const item = new vscode.CompletionItem(word, vscode.CompletionItemKind.Text);
+      item.detail = 'User-defined identifier';
+      items.push(item);
+    }
+    return items;
   }
 }
 
