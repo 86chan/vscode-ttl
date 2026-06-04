@@ -1,5 +1,5 @@
 /**
- * TTL (Tera Term Language) VSCode拡張機能エントリポイント
+ * TTL (Tera Term Language) VS Code 拡張機能のエントリポイント
  */
 
 import * as nodePath from 'node:path';
@@ -25,7 +25,7 @@ const LABEL_REFERENCE_PREFIX = /(?:goto|call)\s+$/i;
 const INCLUDE_PATTERN = /\binclude\s+'([^']+)'/gi;
 
 /**
- * 設定またはVSCode UIの言語から表示言語を解決
+ * 設定または VS Code UI 言語から表示言語を解決
  *
  * @returns 表示言語識別子
  */
@@ -87,7 +87,7 @@ function collectLabelDefinitions(
 }
 
 /**
- * TTL補完プロバイダ
+ * TTL 補完プロバイダ
  *
  * @remarks コマンド・キーワード・システム変数の補完候補を提供
  */
