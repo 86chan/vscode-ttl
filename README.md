@@ -8,7 +8,7 @@
 - **コード補完** — 201 個の組み込みコマンドをシグネチャ付きで補完
 - **ホバードキュメント** — コマンド上にカーソルを置くと日本語または英語のリファレンスを表示
 - **定義ジャンプ** — `goto`/`call` のラベル参照から `:label` 定義行へジャンプ (F12)
-- **コード整形** — `if`/`for`/`while`/`do` などのブロック構造に応じて自動インデント (Shift+Alt+F)
+- **コード整形** — `if`/`for`/`while`/`do` などのブロック構造に応じて自動インデント。コメント内に書かれた Markdown テーブルも全角文字を考慮して桁揃え (Shift+Alt+F)
 - **診断（エラー/警告）** — 無効な演算子（`&&`/`++`/`+=` など）、システム変数（`result` など）への代入、条件式での単独 `=`（比較は `==` を推奨）、ブロックの閉じ忘れ（`endif`/`next` など）、深すぎるネスト（既定 2 段）を検出
 
 ---
@@ -19,7 +19,7 @@
 - **Code Completion** — 201 built-in commands with signatures and documentation
 - **Hover Documentation** — inline reference in Japanese or English
 - **Go to Definition** — jump from `goto`/`call` to `:label` definitions (F12)
-- **Code Formatting** — auto-indent based on block structures such as `if`/`for`/`while`/`do` (Shift+Alt+F)
+- **Code Formatting** — auto-indent based on block structures such as `if`/`for`/`while`/`do`, plus alignment of Markdown tables written inside comments (full-width aware) (Shift+Alt+F)
 - **Diagnostics (Errors/Warnings)** — detects invalid operators (`&&`, `++`, `+=`, etc.), assignments to system variables (e.g. `result`), a single `=` used for comparison (suggests `==`), unclosed blocks (missing `endif`/`next`, etc.), and excessive nesting (default depth 2, configurable via `ttl.maxNestingDepth`)
 
 ## 言語設定 / Language Setting
