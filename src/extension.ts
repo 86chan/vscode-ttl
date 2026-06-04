@@ -5,6 +5,8 @@
 import * as nodePath from 'node:path';
 import * as vscode from 'vscode';
 import { collectDocumentWords, TTL_IDENTIFIER_PATTERN } from './completionUtils';
+import { analyzeTtl, DEFAULT_MAX_NESTING_DEPTH, type TtlDiagnostic } from './diagnosticsUtils';
+import { type FormatOptions, formatTtl } from './formatUtils';
 import { extractLabelDefinition, extractLabelReferences } from './labelUtils';
 import {
   type TtlCommand,
@@ -394,6 +396,86 @@ export async function buildIncludeRenameEdit(
 }
 
 /**
+ * VS Code の整形オプションから TTL 整形用のインデント単位を導出
+ *
+ * @param options - エディタの整形オプション
+ * @returns TTL 整形オプション
+ */
+function toFormatOptions(options: vscode.FormattingOptions): FormatOptions {
+  const indentUnit = options.insertSpaces ? ' '.repeat(options.tabSize) : '\t';
+  return { indentUnit };
+}
+
+/**
+ * TTL ドキュメント整形プロバイダ
+ *
+ * @remarks ブロック構造のネストに応じてドキュメント全体を再インデントする
+ */
+class TtlFormattingProvider implements vscode.DocumentFormattingEditProvider {
+  /**
+   * ドキュメント全体の整形編集を提供
+   *
+   * @param document - 対象ドキュメント
+   * @param options - エディタの整形オプション
+   * @returns ドキュメント全体を整形後テキストに置き換える編集
+   */
+  provideDocumentFormattingEdits(
+    document: vscode.TextDocument,
+    options: vscode.FormattingOptions,
+  ): vscode.TextEdit[] {
+    const original = document.getText();
+    const formatted = formatTtl(original, toFormatOptions(options));
+    if (formatted === original) return [];
+
+    const fullRange = new vscode.Range(
+      document.positionAt(0),
+      document.positionAt(original.length),
+    );
+    return [vscode.TextEdit.replace(fullRange, formatted)];
+  }
+}
+
+/**
+ * TTL 診断を VS Code の Diagnostic に変換
+ *
+ * @param diagnostic - 解析結果の診断
+ * @returns VS Code 診断オブジェクト
+ */
+function toVscodeDiagnostic(diagnostic: TtlDiagnostic): vscode.Diagnostic {
+  const range = new vscode.Range(
+    new vscode.Position(diagnostic.line, diagnostic.startCharacter),
+    new vscode.Position(diagnostic.line, diagnostic.endCharacter),
+  );
+  const severity = diagnostic.severity === 'error'
+    ? vscode.DiagnosticSeverity.Error
+    : vscode.DiagnosticSeverity.Warning;
+  const result = new vscode.Diagnostic(range, diagnostic.message, severity);
+  result.source = 'ttl';
+  result.code = diagnostic.code;
+  return result;
+}
+
+/**
+ * ドキュメントを解析し診断コレクションを更新
+ *
+ * @param document - 対象ドキュメント
+ * @param collection - 更新対象の診断コレクション
+ */
+function refreshDiagnostics(
+  document: vscode.TextDocument,
+  collection: vscode.DiagnosticCollection,
+): void {
+  if (document.languageId !== TTL_LANGUAGE_ID) return;
+  const maxNestingDepth = vscode.workspace
+    .getConfiguration('ttl')
+    .get<number>('maxNestingDepth', DEFAULT_MAX_NESTING_DEPTH);
+  collection.set(
+    document.uri,
+    analyzeTtl(document.getText(), { maxNestingDepth }).map(toVscodeDiagnostic),
+  );
+}
+
+/**
  * 拡張機能のアクティベーション
  *
  * @param context - 拡張機能コンテキスト
@@ -401,11 +483,33 @@ export async function buildIncludeRenameEdit(
 export function activate(context: vscode.ExtensionContext): void {
   const selector: vscode.DocumentSelector = { language: TTL_LANGUAGE_ID };
 
+  const diagnostics = vscode.languages.createDiagnosticCollection('ttl');
+  context.subscriptions.push(
+    diagnostics,
+    vscode.workspace.onDidOpenTextDocument(document => refreshDiagnostics(document, diagnostics)),
+    vscode.workspace.onDidChangeTextDocument(event =>
+      refreshDiagnostics(event.document, diagnostics),
+    ),
+    vscode.workspace.onDidCloseTextDocument(document => diagnostics.delete(document.uri)),
+    // 設定変更時は開いている全ドキュメントを再解析
+    vscode.workspace.onDidChangeConfiguration(event => {
+      if (!event.affectsConfiguration('ttl.maxNestingDepth')) return;
+      for (const document of vscode.workspace.textDocuments) {
+        refreshDiagnostics(document, diagnostics);
+      }
+    }),
+  );
+  // 起動時に既に開かれているドキュメントを解析
+  for (const document of vscode.workspace.textDocuments) {
+    refreshDiagnostics(document, diagnostics);
+  }
+
   context.subscriptions.push(
     vscode.languages.registerCompletionItemProvider(selector, new TtlCompletionProvider()),
     vscode.languages.registerHoverProvider(selector, new TtlHoverProvider()),
     vscode.languages.registerDefinitionProvider(selector, new TtlDefinitionProvider()),
     vscode.languages.registerRenameProvider(selector, new TtlRenameProvider()),
+    vscode.languages.registerDocumentFormattingEditProvider(selector, new TtlFormattingProvider()),
     vscode.workspace.onWillRenameFiles(event => {
       event.waitUntil(buildIncludeRenameEdit(event.files));
     }),
