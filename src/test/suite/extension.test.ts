@@ -1,22 +1,22 @@
 /**
- * TTL拡張機能 Integration テスト
+ * TTL 拡張機能の統合テスト
  *
  * @remarks
- * VS Code プロセス内で実行されるため、vscode API を直接呼び出せる。
+ * VS Code プロセス内で実行されるため、VS Code API を直接呼び出せる。
  *
- * Given-When-Then 形式で記述し、各テストは独立して実行可能にする。
+ * Given-When-Then 形式で各テストを記述し、独立実行を保証する。
  */
 
 import * as assert from 'node:assert';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 
-// fixtures は src/test/fixtures/ に存在する（tsc のコンパイル対象外）
-// __dirname は out/test/suite/ になるため、3段上がってプロジェクトルートへ
+// Fixture: src/test/fixtures/ に配置（tscのコンパイル対象外）
+// __dirname は out/test/suite/ のため、プロジェクトルートへは3段上
 const FIXTURE_PATH = path.resolve(__dirname, '../../../src/test/fixtures/sample.ttl');
 const LANGUAGE_ID = 'ttl';
 
-/** .ttl ファイルを開いてエディタを返す */
+/** Fixture の .ttl ファイルを開く */
 async function openFixture(): Promise<vscode.TextDocument> {
   const uri = vscode.Uri.file(FIXTURE_PATH);
   const document = await vscode.workspace.openTextDocument(uri);
@@ -25,7 +25,7 @@ async function openFixture(): Promise<vscode.TextDocument> {
 }
 
 /**
- * 補完候補を取得するヘルパー
+ * 補完候補をドキュメント指定位置で取得
  *
  * @param uri - 対象ドキュメントのURI
  * @param position - カーソル位置
@@ -45,7 +45,7 @@ async function getCompletions(
 }
 
 /**
- * ホバー情報を取得するヘルパー
+ * ホバー情報をドキュメント指定位置で取得
  *
  * @param uri - 対象ドキュメントのURI
  * @param position - カーソル位置
@@ -64,7 +64,7 @@ async function getHovers(
 }
 
 /**
- * 定義位置を取得するヘルパー
+ * 定義位置をドキュメント指定位置で取得
  *
  * @param uri - 対象ドキュメントのURI
  * @param position - カーソル位置
@@ -81,8 +81,6 @@ async function getDefinitions(
   );
   return result ?? [];
 }
-
-// ── 拡張機能のアクティベーション ─────────────────────────────────────────────
 
 describe('拡張機能のアクティベーション', () => {
   it('拡張機能が登録されている', () => {
@@ -103,14 +101,12 @@ describe('拡張機能のアクティベーション', () => {
   });
 });
 
-// ── 補完プロバイダ ────────────────────────────────────────────────────────────
-
 describe('補完プロバイダ', () => {
   let document: vscode.TextDocument;
 
   before(async () => {
     document = await openFixture();
-    // 拡張機能がアクティベートされるまで少し待つ
+    // 拡張機能のアクティベーション待機
     await new Promise(resolve => setTimeout(resolve, 1000));
   });
 
@@ -181,8 +177,6 @@ describe('補完プロバイダ', () => {
   });
 });
 
-// ── ホバープロバイダ ──────────────────────────────────────────────────────────
-
 describe('ホバープロバイダ', () => {
   let document: vscode.TextDocument;
 
@@ -192,8 +186,8 @@ describe('ホバープロバイダ', () => {
   });
 
   it('connect コマンド上でホバー情報が返る', async () => {
-    // Arrange: fixture の2行目（0-origin: 1）は "connect 'myserver /ssh /user=admin'"
-    // When: connect の文字上（列 2）でホバーを要求する
+    // Arrange: Fixture の2行目（0-origin: 1）は "connect 'myserver /ssh /user=admin'"
+    // When: connect の文字位置（列 2）でホバーを実行
     const hovers = await getHovers(document.uri, new vscode.Position(1, 2));
 
     // Then: ホバー情報が返ること
@@ -234,8 +228,6 @@ describe('ホバープロバイダ', () => {
   });
 });
 
-// ── 定義ジャンプ（Go to Definition）────────────────────────────────────────────
-
 describe('Go to Definition（ラベルジャンプ）', () => {
   let document: vscode.TextDocument;
 
@@ -245,8 +237,7 @@ describe('Go to Definition（ラベルジャンプ）', () => {
   });
 
   it('call do_login のラベル名にジャンプできる', async () => {
-    // Arrange: fixture の "call do_login" 行を特定する
-    // "call do_login" は fixture 内の行
+    // Arrange: Fixture 内から "call do_login" 行を検索
     let callLine = -1;
     for (let i = 0; i < document.lineCount; i++) {
       if (/^\s*call\s+do_login/i.test(document.lineAt(i).text)) {
@@ -256,12 +247,12 @@ describe('Go to Definition（ラベルジャンプ）', () => {
     }
     assert.ok(callLine >= 0, '"call do_login" line must exist in fixture');
 
-    // "do_login" の最初の文字の列を特定
+    // do_login のカーソル位置を特定
     const lineText = document.lineAt(callLine).text;
     const labelStart = lineText.toLowerCase().indexOf('do_login');
     assert.ok(labelStart >= 0, '"do_login" must be found in the call line');
 
-    // When: do_login の文字上で定義ジャンプを要求する
+    // When: do_login の位置でジャンプを実行
     const definitions = await getDefinitions(
       document.uri,
       new vscode.Position(callLine, labelStart + 2),
@@ -277,7 +268,7 @@ describe('Go to Definition（ラベルジャンプ）', () => {
   });
 
   it('ジャンプ先が :do_login ラベル行', async () => {
-    // Arrange: ":do_login" ラベルの行番号を特定する
+    // Arrange: ":do_login" ラベルの行番号を検索
     let labelLine = -1;
     for (let i = 0; i < document.lineCount; i++) {
       if (/^\s*:do_login\b/i.test(document.lineAt(i).text)) {
@@ -287,7 +278,7 @@ describe('Go to Definition（ラベルジャンプ）', () => {
     }
     assert.ok(labelLine >= 0, '":do_login" label line must exist in fixture');
 
-    // call 行を探す
+    // call 行を検索
     let callLine = -1;
     for (let i = 0; i < document.lineCount; i++) {
       if (/^\s*call\s+do_login/i.test(document.lineAt(i).text)) {
@@ -299,13 +290,13 @@ describe('Go to Definition（ラベルジャンプ）', () => {
     const lineText = document.lineAt(callLine).text;
     const labelStart = lineText.toLowerCase().indexOf('do_login');
 
-    // When: 定義ジャンプを要求する
+    // When: ジャンプを実行
     const definitions = await getDefinitions(
       document.uri,
       new vscode.Position(callLine, labelStart + 2),
     );
 
-    // Then: ジャンプ先がラベル定義行
+    // Then: ジャンプ先がラベル定義行であること
     if (definitions.length > 0) {
       assert.strictEqual(
         definitions[0].range.start.line,
@@ -316,15 +307,15 @@ describe('Go to Definition（ラベルジャンプ）', () => {
   });
 
   it('通常の単語では定義ジャンプが返らない', async () => {
-    // Arrange: コメント行のランダムな単語
-    // When: コメント内の単語（"Integration"）で定義ジャンプを要求する
+    // Arrange: コメント行内の単語位置
+    // When: コメント内の単語（"Integration"）でジャンプを実行
     const definitions = await getDefinitions(
       document.uri,
-      new vscode.Position(0, 6), // "; Integration test fixture" の "I" あたり
+      new vscode.Position(0, 6), // "; Integration test fixture" の "I" 位置
     );
 
-    // Then: TTLラベルとして定義が返らないこと
-    // （他のプロバイダが定義を返す場合があるが、同一ファイルのラベルは返らない）
+    // Then: TTLラベル定義が返らないこと
+    // （他のプロバイダが定義を返す場合があるが、同一ファイルのラベルは返さない）
     const sameFileDefinitions = definitions.filter(
       d => d.uri.fsPath === document.uri.fsPath,
     );
