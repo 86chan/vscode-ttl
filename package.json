@@ -2,7 +2,7 @@
   "name": "ttl-language",
   "displayName": "TTL - Tera Term Language",
   "description": "TTL (Tera Term Language) language support: syntax highlighting, completions, hover docs, and label navigation.",
-  "version": "0.1.0",
+  "version": "0.0.3",
   "publisher": "ttl-lsp",
   "engines": {
     "vscode": "^1.120.0"
