@@ -1,5 +1,5 @@
 /**
- * TTL (Tera Term Language) VSCode拡張機能エントリポイント
+ * TTL (Tera Term Language) VS Code 拡張機能のエントリポイント
  */
 
 import * as nodePath from 'node:path';
@@ -18,14 +18,14 @@ const TTL_LANGUAGE_ID = 'ttl' as const;
 /** ラベル定義行のパターン（行頭コロン） */
 const LABEL_DEFINITION_PATTERN = /^\s*:(\w+)/;
 
-/** ラベル参照行のパターン（goto/callの引数） */
+/** ラベル参照行のパターン（goto/call の引数） */
 const LABEL_REFERENCE_PREFIX = /(?:goto|call)\s+$/i;
 
 /** include文のパターン（シングルクォート内のパス） */
 const INCLUDE_PATTERN = /\binclude\s+'([^']+)'/gi;
 
 /**
- * 設定またはVSCode UIの言語から表示言語を解決
+ * 設定または VS Code UI 言語から表示言語を解決
  *
  * @returns 表示言語識別子
  */
@@ -55,7 +55,7 @@ function selectDescription(command: TtlCommand, language: 'ja' | 'en'): string {
  *
  * @param command - TTLコマンド定義
  * @param language - 表示言語
- * @returns MarkdownStringホバーコンテンツ
+ * @returns Markdown 形式のホバーコンテンツ
  */
 function buildHoverMarkdown(command: TtlCommand, language: 'ja' | 'en'): vscode.MarkdownString {
   const markdown = new vscode.MarkdownString();
@@ -87,7 +87,7 @@ function collectLabelDefinitions(
 }
 
 /**
- * TTL補完プロバイダ
+ * TTL 補完プロバイダ
  *
  * @remarks コマンド・キーワード・システム変数の補完候補を提供
  */
@@ -170,9 +170,9 @@ class TtlCompletionProvider implements vscode.CompletionItemProvider {
 }
 
 /**
- * TTLホバープロバイダ
+ * TTL ホバープロバイダ
  *
- * @remarks コマンド上にカーソルを置いたときのドキュメントを提供
+ * @remarks コマンド上でカーソルを置いたときのドキュメントを提供
  */
 class TtlHoverProvider implements vscode.HoverProvider {
   /**
@@ -198,9 +198,9 @@ class TtlHoverProvider implements vscode.HoverProvider {
 }
 
 /**
- * TTL定義ジャンププロバイダ
+ * TTL 定義ジャンププロバイダ
  *
- * @remarks goto/call コマンドのラベル参照から定義位置へのジャンプを提供
+ * @remarks goto/call コマンドのラベル参照から定義へジャンプできるようにする
  */
 class TtlDefinitionProvider implements vscode.DefinitionProvider {
   /**
@@ -270,9 +270,9 @@ export function resolveLabelNameRange(
 }
 
 /**
- * TTLラベルリネームプロバイダ
+ * TTL ラベルリネームプロバイダ
  *
- * @remarks F2 でラベル名を変更すると定義（:label）と参照（goto/call）を一括置換
+ * @remarks F2 キーでラベル名を変更すると、定義（:label）と参照（goto/call）を一括置換
  */
 export class TtlRenameProvider implements vscode.RenameProvider {
   /**
