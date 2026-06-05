@@ -7,9 +7,13 @@
 - **シンタックスハイライト** — キーワード・コマンド・文字列・コメント・ラベル・演算子・システム変数
 - **コード補完** — 201 個の組み込みコマンドをシグネチャ付きで補完
 - **ホバードキュメント** — コマンド上にカーソルを置くと日本語または英語のリファレンスを表示
-- **定義ジャンプ** — `goto`/`call` のラベル参照から `:label` 定義行へジャンプ (F12)
+- **定義ジャンプ** — `goto`/`call` のラベル参照から `:label` 定義行へジャンプ。同一ファイルに無ければ `include` 先（再帰的に）も探索 (F12)
+- **参照検索** — ラベルの定義・参照（`goto`/`call`）の一覧を表示 (Shift+F12)
+- **アウトライン / シンボル** — ラベル定義と `include` をパンくず・アウトライン・シンボル検索（Ctrl+Shift+O）に表示
+- **include リンク** — `include 'path'` のパスを Ctrl+クリックで開く
+- **マクロ実行** — 現在の `.ttl` を `ttpmacro.exe` で実行（エディタ右上の ▶ ボタン、またはコマンド「Run TTL Macro」）。実行ファイルのパスは `ttl.macroExecutablePath` で指定（空なら一般的なインストール先を自動探索）
 - **コード整形** — `if`/`for`/`while`/`do` などのブロック構造に応じて自動インデント。コメント内に書かれた Markdown テーブルも全角文字を考慮して桁揃え (Shift+Alt+F)
-- **診断（エラー/警告）** — 無効な演算子（`&&`/`++`/`+=` など）、システム変数（`result` など）への代入、条件式での単独 `=`（比較は `==` を推奨）、ブロックの閉じ忘れ（`endif`/`next` など）、深すぎるネスト（既定 2 段）を検出
+- **診断（エラー/警告）** — 無効な演算子（`&&`/`++`/`+=` など）、システム変数（`result` など）への代入、条件式での単独 `=`（比較は `==` を推奨）、ブロックの閉じ忘れ（`endif`/`next` など）、深すぎるネスト（既定 2 段）、未知のコマンド（近いコマンドを提案）、未定義ラベルへの `goto`/`call`（include 先も解決）、重複したラベル定義を検出
 
 ---
 
@@ -18,9 +22,13 @@
 - **Syntax Highlighting** — keywords, commands, strings, comments, labels, operators, system variables
 - **Code Completion** — 201 built-in commands with signatures and documentation
 - **Hover Documentation** — inline reference in Japanese or English
-- **Go to Definition** — jump from `goto`/`call` to `:label` definitions (F12)
+- **Go to Definition** — jump from `goto`/`call` to `:label` definitions; falls back to (recursively) searching `include`d files (F12)
+- **Find All References** — list a label's definition and references (`goto`/`call`) (Shift+F12)
+- **Outline / Symbols** — labels and `include`s shown in breadcrumbs, outline, and symbol search (Ctrl+Shift+O)
+- **Include Links** — Ctrl+click the path in `include 'path'` to open the file
+- **Run Macro** — run the current `.ttl` with `ttpmacro.exe` (▶ button in the editor title, or the "Run TTL Macro" command). Set the executable via `ttl.macroExecutablePath` (auto-detects common install locations when empty)
 - **Code Formatting** — auto-indent based on block structures such as `if`/`for`/`while`/`do`, plus alignment of Markdown tables written inside comments (full-width aware) (Shift+Alt+F)
-- **Diagnostics (Errors/Warnings)** — detects invalid operators (`&&`, `++`, `+=`, etc.), assignments to system variables (e.g. `result`), a single `=` used for comparison (suggests `==`), unclosed blocks (missing `endif`/`next`, etc.), and excessive nesting (default depth 2, configurable via `ttl.maxNestingDepth`)
+- **Diagnostics (Errors/Warnings)** — detects invalid operators (`&&`, `++`, `+=`, etc.), assignments to system variables (e.g. `result`), a single `=` used for comparison (suggests `==`), unclosed blocks (missing `endif`/`next`, etc.), excessive nesting (default depth 2, configurable via `ttl.maxNestingDepth`), unknown commands (suggests the closest command), `goto`/`call` to undefined labels (includes resolved), and duplicate label definitions
 
 ## 言語設定 / Language Setting
 
@@ -38,6 +46,24 @@ The maximum nesting depth before a warning is also configurable (default 2, 0 di
 
 ```json
 "ttl.maxNestingDepth": 2
+```
+
+個別の診断は設定で無効化できます（いずれも既定 true）。
+
+Individual diagnostics can be toggled (all default `true`):
+
+```json
+"ttl.diagnostics.undefinedLabel": true,
+"ttl.diagnostics.unknownCommand": true,
+"ttl.diagnostics.duplicateLabel": true
+```
+
+マクロ実行に使う `ttpmacro.exe` のパス（空なら自動探索）。
+
+Path to `ttpmacro.exe` used to run macros (auto-detected when empty):
+
+```json
+"ttl.macroExecutablePath": "C:\\Program Files\\teraterm5\\ttpmacro.exe"
 ```
 
 ## 対応構文 / Supported Syntax

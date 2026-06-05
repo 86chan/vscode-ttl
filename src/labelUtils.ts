@@ -29,7 +29,7 @@ export function extractLabelDefinition(
  * @param lineText - 対象行のテキスト
  * @returns コメント除去後のテキスト
  */
-function stripLineComment(lineText: string): string {
+export function stripLineComment(lineText: string): string {
   let inString = false;
   for (let i = 0; i < lineText.length; i++) {
     if (lineText[i] === "'") inString = !inString;
