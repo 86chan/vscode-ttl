@@ -1,0 +1,60 @@
+name: Release Tag
+
+on:
+  workflow_dispatch:
+    inputs:
+      major:
+        description: 'Major version (x) — blank to keep current'
+        required: false
+        type: string
+      minor:
+        description: 'Minor version (y) — blank to keep current'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          ref: main
+          fetch-tags: true
+
+      - name: Compute next tag
+        id: next
+        env:
+          INPUT_MAJOR: ${{ inputs.major }}
+          INPUT_MINOR: ${{ inputs.minor }}
+        run: |
+          latest=$(git tag --list 'v*' --sort=-v:refname | head -1)
+          if [[ -z "$latest" ]]; then
+            cur_major=0; cur_minor=0; cur_patch=0
+          else
+            cur_major=$(echo "$latest" | sed 's/^v//' | cut -d. -f1)
+            cur_minor=$(echo "$latest" | sed 's/^v//' | cut -d. -f2)
+            cur_patch=$(echo "$latest" | sed 's/^v//' | cut -d. -f3)
+          fi
+
+          new_major=${INPUT_MAJOR:-$cur_major}
+          new_minor=${INPUT_MINOR:-$cur_minor}
+
+          if [[ "$new_major" != "$cur_major" || "$new_minor" != "$cur_minor" ]]; then
+            new_patch=0
+          else
+            new_patch=$((cur_patch + 1))
+          fi
+
+          new_tag="v${new_major}.${new_minor}.${new_patch}"
+          echo "tag=$new_tag" >> "$GITHUB_OUTPUT"
+          echo "Previous: ${latest:-none}  →  Next: $new_tag"
+
+      - name: Create and push tag
+        env:
+          TAG: ${{ steps.next.outputs.tag }}
+        run: |
+          git tag "$TAG"
+          git push origin "$TAG"
