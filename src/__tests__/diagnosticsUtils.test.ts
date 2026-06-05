@@ -300,6 +300,118 @@ describe('analyzeTtl - 過剰なネスト', () => {
   });
 });
 
+describe('analyzeTtl - 未知のコマンド', () => {
+  it('タイプミスを warning として検出し近いコマンドを提案する', () => {
+    const diagnostics = analyzeTtl("sendlm 'hello'");
+    const diagnostic = diagnostics.find(d => d.code === 'unknown-command');
+    expect(diagnostic).toBeDefined();
+    expect(diagnostic?.severity).toBe('warning');
+    expect(diagnostic?.message).toContain("'sendln'");
+    // トークン部分だけを指すこと
+    expect("sendlm 'hello'".slice(diagnostic!.startCharacter, diagnostic!.endCharacter)).toBe('sendlm');
+  });
+
+  it('既知のコマンド・キーワードは検出しない', () => {
+    const text = [
+      "connect 'host'",
+      "wait '$'",
+      'flushrecv',
+      'for i 1 10',
+      'next',
+      'break',
+      'return',
+    ].join('\n');
+    expect(analyzeTtl(text).filter(d => d.code === 'unknown-command')).toHaveLength(0);
+  });
+
+  it('代入文・比較・配列アクセスは未知コマンドとして検出しない', () => {
+    const text = [
+      'myvar = 1',
+      'result == 0',
+      'fib[i] = fib[i - 1]',
+      'count += 1',
+      'i++',
+    ].join('\n');
+    expect(analyzeTtl(text).filter(d => d.code === 'unknown-command')).toHaveLength(0);
+  });
+
+  it('ラベル定義・コメントは未知コマンドとして検出しない', () => {
+    const text = [':do_login', '; just a comment', "  /* block */ wait '$'"].join('\n');
+    expect(analyzeTtl(text).filter(d => d.code === 'unknown-command')).toHaveLength(0);
+  });
+
+  it('近いコマンドが無ければ提案なしで検出する', () => {
+    const diagnostic = analyzeTtl('zxqwvy 1 2 3').find(d => d.code === 'unknown-command');
+    expect(diagnostic).toBeDefined();
+    expect(diagnostic?.message).not.toContain('ことですか');
+  });
+
+  it('checkUnknownCommand=false で無効化できる', () => {
+    const diagnostics = analyzeTtl("sendl 'x'", { checkUnknownCommand: false });
+    expect(diagnostics.filter(d => d.code === 'unknown-command')).toHaveLength(0);
+  });
+});
+
+describe('analyzeTtl - 重複ラベル定義', () => {
+  it('同名ラベルの2回目の定義を warning として検出する', () => {
+    const text = [':loop', "  sendln 'a'", ':loop', "  sendln 'b'"].join('\n');
+    const diagnostics = analyzeTtl(text).filter(d => d.code === 'duplicate-label');
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0].severity).toBe('warning');
+    expect(diagnostics[0].line).toBe(2);
+    expect(diagnostics[0].message).toContain('1 行目');
+  });
+
+  it('一意なラベルは検出しない', () => {
+    const text = [':start', ':middle', ':end_proc'].join('\n');
+    expect(analyzeTtl(text).filter(d => d.code === 'duplicate-label')).toHaveLength(0);
+  });
+
+  it('大文字小文字を区別せず重複と見なす', () => {
+    const text = [':Loop', ':loop'].join('\n');
+    expect(analyzeTtl(text).filter(d => d.code === 'duplicate-label')).toHaveLength(1);
+  });
+
+  it('checkDuplicateLabel=false で無効化できる', () => {
+    const text = [':loop', ':loop'].join('\n');
+    expect(
+      analyzeTtl(text, { checkDuplicateLabel: false }).filter(d => d.code === 'duplicate-label'),
+    ).toHaveLength(0);
+  });
+});
+
+describe('analyzeTtl - 未定義ラベル参照', () => {
+  it('定義の無い goto を warning として検出する', () => {
+    const diagnostics = analyzeTtl('goto missing').filter(d => d.code === 'undefined-label');
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0].severity).toBe('warning');
+    expect('goto missing'.slice(diagnostics[0].startCharacter, diagnostics[0].endCharacter)).toBe(
+      'missing',
+    );
+  });
+
+  it('同一ファイル内に定義があれば検出しない', () => {
+    const text = ['call do_login', ':do_login', 'return'].join('\n');
+    expect(analyzeTtl(text).filter(d => d.code === 'undefined-label')).toHaveLength(0);
+  });
+
+  it('externalLabels に含まれるラベルは検出しない', () => {
+    const diagnostics = analyzeTtl('call remote_proc', {
+      externalLabels: new Set(['remote_proc']),
+    });
+    expect(diagnostics.filter(d => d.code === 'undefined-label')).toHaveLength(0);
+  });
+
+  it('コメント内の goto は検出しない', () => {
+    expect(analyzeTtl('; goto missing').filter(d => d.code === 'undefined-label')).toHaveLength(0);
+  });
+
+  it('checkUndefinedLabels=false で無効化できる', () => {
+    const diagnostics = analyzeTtl('goto missing', { checkUndefinedLabels: false });
+    expect(diagnostics.filter(d => d.code === 'undefined-label')).toHaveLength(0);
+  });
+});
+
 describe('analyzeTtl - 正常なスクリプト', () => {
   it('問題のないスクリプトでは診断を生成しない', () => {
     const text = [
@@ -311,6 +423,19 @@ describe('analyzeTtl - 正常なスクリプト', () => {
       '  endif',
       'next',
       'myvar = i + 1',
+    ].join('\n');
+    expect(analyzeTtl(text)).toHaveLength(0);
+  });
+
+  it('ラベルを使う正常なスクリプトでは診断を生成しない', () => {
+    const text = [
+      'call do_login',
+      'goto finish',
+      ':do_login',
+      "  sendln 'login'",
+      '  return',
+      ':finish',
+      '  end',
     ].join('\n');
     expect(analyzeTtl(text)).toHaveLength(0);
   });
