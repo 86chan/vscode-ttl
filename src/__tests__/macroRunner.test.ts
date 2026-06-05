@@ -7,7 +7,11 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { DEFAULT_TTPMACRO_PATHS, resolveMacroExecutable } from '../macroRunner';
+import {
+  buildMacroLaunch,
+  DEFAULT_TTPMACRO_PATHS,
+  resolveMacroExecutable,
+} from '../macroRunner';
 
 const NEVER_EXISTS = (): boolean => false;
 const ALWAYS_EXISTS = (): boolean => true;
@@ -43,5 +47,27 @@ describe('resolveMacroExecutable', () => {
   it('既定候補は teraterm5 / teraterm を順に探索する', () => {
     expect(DEFAULT_TTPMACRO_PATHS[0]).toContain('teraterm5');
     expect(DEFAULT_TTPMACRO_PATHS.every(p => p.endsWith('ttpmacro.exe'))).toBe(true);
+  });
+});
+
+describe('buildMacroLaunch', () => {
+  const TTPMACRO = 'C:\\Program Files\\teraterm5\\ttpmacro.exe';
+  const MACRO = 'C:\\Users\\me\\scripts\\login.ttl';
+
+  it('teraterm 方式は同フォルダの ttermpro.exe を /M= で起動する', () => {
+    const launch = buildMacroLaunch(TTPMACRO, MACRO, 'teraterm');
+    expect(launch.executable).toBe('C:\\Program Files\\teraterm5\\ttermpro.exe');
+    expect(launch.args).toEqual([`/M=${MACRO}`]);
+  });
+
+  it('ttpmacro 方式は ttpmacro.exe にファイルパスを渡す', () => {
+    const launch = buildMacroLaunch(TTPMACRO, MACRO, 'ttpmacro');
+    expect(launch.executable).toBe(TTPMACRO);
+    expect(launch.args).toEqual([MACRO]);
+  });
+
+  it('teraterm 方式は Windows パス規則で ttermpro.exe を導出する（実行ホスト非依存）', () => {
+    const launch = buildMacroLaunch('D:\\tt\\ttpmacro.exe', MACRO, 'teraterm');
+    expect(launch.executable).toBe('D:\\tt\\ttermpro.exe');
   });
 });

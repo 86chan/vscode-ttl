@@ -6,6 +6,8 @@
  * テスト容易性を確保する。実際のプロセス起動は VS Code 層（extension.ts）で行う。
  */
 
+import * as nodePath from 'node:path';
+
 /**
  * `ttpmacro.exe` の一般的なインストール先候補
  *
@@ -44,4 +46,48 @@ export function resolveMacroExecutable(
     if (exists(candidate)) return candidate;
   }
   return null;
+}
+
+/**
+ * マクロの起動方式
+ *
+ * @remarks
+ * - `teraterm`: `ttermpro.exe /M=<file>` で起動。先に Tera Term（端末）を立ち上げてマクロを連携させるため、
+ *   `connect` 前でも `clearscreen` 等の端末コマンドが使える。
+ * - `ttpmacro`: `ttpmacro.exe <file>` でマクロエンジンのみ起動。端末はマクロ内の `connect` で初めて連携する。
+ */
+export type RunMacroMode = 'teraterm' | 'ttpmacro';
+
+/** 起動する実行ファイルと引数 */
+export interface MacroLaunch {
+  /** 実行ファイルの絶対パス */
+  readonly executable: string;
+  /** コマンドライン引数 */
+  readonly args: readonly string[];
+}
+
+/**
+ * 起動方式に応じて実行ファイルと引数を組み立てる
+ *
+ * @remarks
+ * `teraterm` 方式では、`ttpmacro.exe` と同じフォルダにある `ttermpro.exe` を Windows パス規則で導出する。
+ *
+ * @param ttpmacroPath - 解決済みの `ttpmacro.exe` パス
+ * @param macroFilePath - 実行するマクロファイルの絶対パス
+ * @param mode - 起動方式
+ * @returns 実行ファイルと引数
+ */
+export function buildMacroLaunch(
+  ttpmacroPath: string,
+  macroFilePath: string,
+  mode: RunMacroMode,
+): MacroLaunch {
+  if (mode === 'teraterm') {
+    const teraTermPath = nodePath.win32.join(
+      nodePath.win32.dirname(ttpmacroPath),
+      'ttermpro.exe',
+    );
+    return { executable: teraTermPath, args: [`/M=${macroFilePath}`] };
+  }
+  return { executable: ttpmacroPath, args: [macroFilePath] };
 }
