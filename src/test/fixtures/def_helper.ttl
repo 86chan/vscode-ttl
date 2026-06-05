@@ -1,0 +1,4 @@
+; クロスファイル定義ジャンプテスト用ヘルパー
+:remote_proc
+messagebox 'remote' 'Info'
+return

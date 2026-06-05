@@ -6,6 +6,9 @@
  * 代入を検出する。位置情報を保つため、対象外領域は同じ長さの空白でマスクする。
  */
 
+import { extractLabelDefinition, extractLabelReferences } from './labelUtils';
+import { TTL_COMMANDS_MAP, TTL_STRUCTURAL_KEYWORDS, TTL_SYSTEM_VARIABLES } from './ttlData';
+
 /** 診断の重大度 */
 export type TtlDiagnosticSeverity = 'error' | 'warning';
 
@@ -102,6 +105,37 @@ const BLOCK_CLOSERS: ReadonlyMap<string, string> = new Map([
   ['loop', 'do'],
   ['enduntil', 'until'],
 ]);
+
+/**
+ * 行頭トークンとして正当なコマンド・キーワード（小文字）
+ *
+ * @remarks これらに一致しない行頭トークンは未知コマンドの候補とする
+ */
+const KNOWN_COMMAND_TOKENS: ReadonlySet<string> = new Set<string>([
+  ...TTL_COMMANDS_MAP.keys(),
+  ...TTL_STRUCTURAL_KEYWORDS,
+]);
+
+/** 未知コマンド判定で除外するシステム変数（小文字） */
+const SYSTEM_VARIABLE_TOKENS: ReadonlySet<string> = new Set<string>(TTL_SYSTEM_VARIABLES);
+
+/** 未知コマンド候補のサジェスト対象（コマンド名・キーワードのみ） */
+const SUGGESTION_CANDIDATES: readonly string[] = [...KNOWN_COMMAND_TOKENS];
+
+/**
+ * 行頭トークンの直後が代入・比較・配列アクセスを表す場合の先頭文字集合
+ *
+ * @remarks `var = ...` / `var == ...` / `a[i] = ...` / `i++` など、コマンド呼び出しでない行を除外する
+ */
+const NON_COMMAND_FOLLOWERS: ReadonlySet<string> = new Set<string>([
+  '=', '<', '>', '!', '+', '-', '*', '/', '%', '[',
+]);
+
+/** サジェストを行う最小トークン長（短い語の偶然一致を避ける） */
+const MIN_SUGGESTION_LENGTH = 3;
+
+/** サジェストとして採用する最大編集距離 */
+const MAX_SUGGESTION_DISTANCE = 2;
 
 /**
  * 文字列・コメントを同じ長さの空白に置き換えてコード部分のみを残す
@@ -299,6 +333,168 @@ function findSingleEqualsComparison(maskedLine: string, lineIndex: number): TtlD
   return diagnostics;
 }
 
+/**
+ * 2語間のレーベンシュタイン距離を計算
+ *
+ * @param a - 比較元の文字列
+ * @param b - 比較先の文字列
+ * @returns 編集距離
+ */
+function levenshtein(a: string, b: string): number {
+  const rows = a.length + 1;
+  const cols = b.length + 1;
+  let previous = Array.from({ length: cols }, (_, index) => index);
+  let current = new Array<number>(cols).fill(0);
+
+  for (let i = 1; i < rows; i++) {
+    current[0] = i;
+    for (let j = 1; j < cols; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      current[j] = Math.min(
+        previous[j] + 1, // 削除
+        current[j - 1] + 1, // 挿入
+        previous[j - 1] + cost, // 置換
+      );
+    }
+    [previous, current] = [current, previous];
+  }
+
+  return previous[cols - 1];
+}
+
+/**
+ * 未知トークンに最も近い既知コマンド名を提案
+ *
+ * @param token - 未知の行頭トークン（小文字）
+ * @returns 編集距離が閾値以内で最も近いコマンド名、または該当なしの場合は undefined
+ */
+function suggestCommand(token: string): string | undefined {
+  if (token.length < MIN_SUGGESTION_LENGTH) return undefined;
+
+  let best: string | undefined;
+  let bestDistance = MAX_SUGGESTION_DISTANCE + 1;
+  for (const candidate of SUGGESTION_CANDIDATES) {
+    // 長さ差が閾値を超える候補は計算を省略
+    if (Math.abs(candidate.length - token.length) > MAX_SUGGESTION_DISTANCE) continue;
+    const distance = levenshtein(token, candidate);
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      best = candidate;
+    }
+  }
+
+  return bestDistance <= MAX_SUGGESTION_DISTANCE ? best : undefined;
+}
+
+/**
+ * マスク済み1行から未知のコマンド（行頭トークン）を検出
+ *
+ * @remarks
+ * - ラベル定義・空行・記号始まりの行は対象外（行頭トークンが取れない）
+ * - 既知のコマンド・キーワード・システム変数は対象外
+ * - 代入・比較・配列アクセス（`var = ` / `var == ` / `a[i] = ` / `i++` 等）は対象外
+ *
+ * @param maskedLine - マスク済みの行テキスト
+ * @param lineIndex - 0始まりの行番号
+ * @returns 検出した診断、または該当なしの場合は null
+ */
+function findUnknownCommand(maskedLine: string, lineIndex: number): TtlDiagnostic | null {
+  const tokenMatch = FIRST_TOKEN_PATTERN.exec(maskedLine);
+  if (tokenMatch === null) return null;
+
+  const rawToken = tokenMatch[1];
+  const token = rawToken.toLowerCase();
+  if (KNOWN_COMMAND_TOKENS.has(token) || SYSTEM_VARIABLE_TOKENS.has(token)) return null;
+
+  // 行頭トークン直後が演算子・代入・配列アクセスならコマンド呼び出しではない
+  const afterToken = maskedLine.slice(tokenMatch[0].length).trimStart();
+  const follower = afterToken[0];
+  if (follower !== undefined && NON_COMMAND_FOLLOWERS.has(follower)) return null;
+
+  const startCharacter = tokenMatch[0].length - rawToken.length;
+  const suggestion = suggestCommand(token);
+  const message = suggestion !== undefined
+    ? `未知のコマンド '${rawToken}' — '${suggestion}' のことですか？`
+    : `未知のコマンド '${rawToken}'`;
+
+  return {
+    line: lineIndex,
+    startCharacter,
+    endCharacter: startCharacter + rawToken.length,
+    message,
+    severity: 'warning',
+    code: 'unknown-command',
+  };
+}
+
+/**
+ * マスク済み行配列から重複したラベル定義を検出
+ *
+ * @param maskedLines - マスク済みの行テキスト配列
+ * @returns 2回目以降の定義に対する診断の配列
+ */
+function findDuplicateLabels(maskedLines: readonly string[]): TtlDiagnostic[] {
+  const diagnostics: TtlDiagnostic[] = [];
+  const firstSeenLine = new Map<string, number>();
+
+  maskedLines.forEach((maskedLine, lineIndex) => {
+    const def = extractLabelDefinition(maskedLine);
+    if (def === null) return;
+
+    const previousLine = firstSeenLine.get(def.name);
+    if (previousLine === undefined) {
+      firstSeenLine.set(def.name, lineIndex);
+      return;
+    }
+
+    diagnostics.push({
+      line: lineIndex,
+      startCharacter: def.nameStart,
+      endCharacter: def.nameStart + def.name.length,
+      message: `ラベル ':${def.name}' は ${previousLine + 1} 行目で既に定義されています`,
+      severity: 'warning',
+      code: 'duplicate-label',
+    });
+  });
+
+  return diagnostics;
+}
+
+/**
+ * マスク済み行配列から、定義の無いラベル参照（goto/call）を検出
+ *
+ * @param maskedLines - マスク済みの行テキスト配列
+ * @param externalLabels - include 先など外部で定義済みのラベル名（小文字）
+ * @returns 検出した診断の配列
+ */
+function findUndefinedLabels(
+  maskedLines: readonly string[],
+  externalLabels: ReadonlySet<string>,
+): TtlDiagnostic[] {
+  const localLabels = new Set<string>();
+  for (const maskedLine of maskedLines) {
+    const def = extractLabelDefinition(maskedLine);
+    if (def !== null) localLabels.add(def.name);
+  }
+
+  const diagnostics: TtlDiagnostic[] = [];
+  maskedLines.forEach((maskedLine, lineIndex) => {
+    for (const ref of extractLabelReferences(maskedLine)) {
+      if (localLabels.has(ref.name) || externalLabels.has(ref.name)) continue;
+      diagnostics.push({
+        line: lineIndex,
+        startCharacter: ref.nameStart,
+        endCharacter: ref.nameStart + ref.name.length,
+        message: `ラベル ':${ref.name}' の定義が見つかりません`,
+        severity: 'warning',
+        code: 'undefined-label',
+      });
+    }
+  });
+
+  return diagnostics;
+}
+
 /** 解析中に保持する未閉鎖のブロック情報 */
 interface OpenBlock {
   /** 開始キーワード */
@@ -407,10 +603,21 @@ function findBlockStructureIssues(
 export interface AnalyzeOptions {
   /** 許容するネスト段数の上限（既定 2、0以下で無効化） */
   readonly maxNestingDepth?: number;
+  /** include 先など外部で定義済みのラベル名（小文字）。undefined-label の誤検知抑制に使用 */
+  readonly externalLabels?: ReadonlySet<string>;
+  /** 定義の無いラベル参照を検査するか（既定 true、include 解決が不完全な場合は false 推奨） */
+  readonly checkUndefinedLabels?: boolean;
+  /** 未知のコマンドを検査するか（既定 true） */
+  readonly checkUnknownCommand?: boolean;
+  /** 重複したラベル定義を検査するか（既定 true） */
+  readonly checkDuplicateLabel?: boolean;
 }
 
 /** ネスト段数上限の既定値 */
 export const DEFAULT_MAX_NESTING_DEPTH = 2;
+
+/** 外部ラベル未指定時に使う空集合 */
+const EMPTY_LABEL_SET: ReadonlySet<string> = new Set<string>();
 
 /**
  * TTL ソースコードを解析して診断一覧を生成
@@ -421,6 +628,10 @@ export const DEFAULT_MAX_NESTING_DEPTH = 2;
  */
 export function analyzeTtl(text: string, options: AnalyzeOptions = {}): TtlDiagnostic[] {
   const maxNestingDepth = options.maxNestingDepth ?? DEFAULT_MAX_NESTING_DEPTH;
+  const checkUndefinedLabels = options.checkUndefinedLabels ?? true;
+  const checkUnknownCommand = options.checkUnknownCommand ?? true;
+  const checkDuplicateLabel = options.checkDuplicateLabel ?? true;
+  const externalLabels = options.externalLabels ?? EMPTY_LABEL_SET;
   const maskedLines = maskNonCode(text);
   const diagnostics: TtlDiagnostic[] = [];
 
@@ -429,8 +640,14 @@ export function analyzeTtl(text: string, options: AnalyzeOptions = {}): TtlDiagn
     diagnostics.push(...findSingleEqualsComparison(maskedLine, lineIndex));
     const reserved = findReservedAssignment(maskedLine, lineIndex);
     if (reserved !== null) diagnostics.push(reserved);
+    if (checkUnknownCommand) {
+      const unknown = findUnknownCommand(maskedLine, lineIndex);
+      if (unknown !== null) diagnostics.push(unknown);
+    }
   });
 
+  if (checkDuplicateLabel) diagnostics.push(...findDuplicateLabels(maskedLines));
+  if (checkUndefinedLabels) diagnostics.push(...findUndefinedLabels(maskedLines, externalLabels));
   diagnostics.push(...findBlockStructureIssues(maskedLines, maxNestingDepth));
 
   return diagnostics;
