@@ -1,0 +1,9 @@
+; クロスファイル定義ジャンプテスト用メイン
+include 'def_helper.ttl'
+call local_proc
+call remote_proc
+end
+
+:local_proc
+sendln 'local'
+return
