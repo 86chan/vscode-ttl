@@ -2,12 +2,21 @@
  * TTL (Tera Term Language) VS Code 拡張機能のエントリポイント
  */
 
+import * as childProcess from 'node:child_process';
+import * as nodeFs from 'node:fs';
 import * as nodePath from 'node:path';
 import * as vscode from 'vscode';
 import { collectDocumentWords, TTL_IDENTIFIER_PATTERN } from './completionUtils';
+import { DEFAULT_TTPMACRO_PATHS, resolveMacroExecutable } from './macroRunner';
 import { analyzeTtl, DEFAULT_MAX_NESTING_DEPTH, type TtlDiagnostic } from './diagnosticsUtils';
 import { type FormatOptions, formatTtl } from './formatUtils';
 import { extractLabelDefinition, extractLabelReferences } from './labelUtils';
+import {
+  collectLabelOccurrences,
+  extractDocumentSymbols,
+  extractIncludeDirectives,
+  type TtlSymbol,
+} from './navigationUtils';
 import {
   type TtlCommand,
   TTL_COMMANDS_MAP,
@@ -17,14 +26,8 @@ import {
 
 const TTL_LANGUAGE_ID = 'ttl' as const;
 
-/** ラベル定義行のパターン（行頭コロン） */
-const LABEL_DEFINITION_PATTERN = /^\s*:(\w+)/;
-
 /** ラベル参照行のパターン（goto/call の引数） */
 const LABEL_REFERENCE_PREFIX = /(?:goto|call)\s+$/i;
-
-/** include文のパターン（シングルクォート内のパス） */
-const INCLUDE_PATTERN = /\binclude\s+'([^']+)'/gi;
 
 /**
  * 設定または VS Code UI 言語から表示言語を解決
@@ -68,24 +71,58 @@ function buildHoverMarkdown(command: TtlCommand, language: 'ja' | 'en'): vscode.
 }
 
 /**
- * ドキュメント内の全ラベル定義を収集
+ * 起点ドキュメントから include を辿り、ラベル定義を最初に見つけた位置を返す
  *
- * @param document - 対象ドキュメント
- * @returns ラベル名（小文字）から定義位置へのマップ
+ * @remarks
+ * 起点ドキュメント自身を先頭に幅優先探索する。これにより同一ファイル内の定義が
+ * 優先され、見つからない場合のみ include 先（再帰的に）を探索する。
+ *
+ * @param startUri - 探索の起点となるドキュメントの URI
+ * @param startText - 起点ドキュメントの全文
+ * @param labelName - 探索するラベル名（小文字）
+ * @returns ラベル定義の位置、または見つからない場合は undefined
  */
-function collectLabelDefinitions(
-  document: vscode.TextDocument
-): ReadonlyMap<string, vscode.Position> {
-  const labels = new Map<string, vscode.Position>();
-  for (let lineIndex = 0; lineIndex < document.lineCount; lineIndex++) {
-    const line = document.lineAt(lineIndex);
-    const match = LABEL_DEFINITION_PATTERN.exec(line.text);
-    if (match !== null) {
-      const colonIndex = line.text.indexOf(':' + match[1]);
-      labels.set(match[1].toLowerCase(), new vscode.Position(lineIndex, colonIndex));
+async function findLabelDefinitionAcrossFiles(
+  startUri: vscode.Uri,
+  startText: string,
+  labelName: string,
+): Promise<vscode.Location | undefined> {
+  const visited = new Set<string>();
+  const queue: Array<{ readonly uri: vscode.Uri; readonly text: string }> = [
+    { uri: startUri, text: startText },
+  ];
+
+  while (queue.length > 0) {
+    const current = queue.shift();
+    if (current === undefined) break;
+    if (visited.has(current.uri.fsPath)) continue;
+    visited.add(current.uri.fsPath);
+
+    const definition = collectLabelOccurrences(current.text, labelName).find(
+      occurrence => occurrence.isDefinition,
+    );
+    if (definition !== undefined) {
+      return new vscode.Location(
+        current.uri,
+        new vscode.Position(definition.line, definition.startCharacter),
+      );
+    }
+
+    const fileDir = nodePath.dirname(current.uri.fsPath);
+    for (const include of extractIncludeDirectives(current.text)) {
+      const includedAbsolute = nodePath.resolve(fileDir, include.path);
+      if (visited.has(includedAbsolute)) continue;
+      try {
+        const includedUri = vscode.Uri.file(includedAbsolute);
+        const includedDocument = await vscode.workspace.openTextDocument(includedUri);
+        queue.push({ uri: includedUri, text: includedDocument.getText() });
+      } catch {
+        // include 先を開けない場合（存在しない等）は無視して探索を続ける
+      }
     }
   }
-  return labels;
+
+  return undefined;
 }
 
 /**
@@ -202,7 +239,9 @@ class TtlHoverProvider implements vscode.HoverProvider {
 /**
  * TTL 定義ジャンププロバイダ
  *
- * @remarks goto/call コマンドのラベル参照から定義へジャンプできるようにする
+ * @remarks
+ * goto/call コマンドのラベル参照から定義へジャンプできるようにする。
+ * 同一ファイル内に定義がない場合は include 先（再帰的に）も探索する。
  */
 class TtlDefinitionProvider implements vscode.DefinitionProvider {
   /**
@@ -215,7 +254,7 @@ class TtlDefinitionProvider implements vscode.DefinitionProvider {
   provideDefinition(
     document: vscode.TextDocument,
     position: vscode.Position,
-  ): vscode.Location | undefined {
+  ): Promise<vscode.Location | undefined> | undefined {
     const range = document.getWordRangeAtPosition(position, /\w+/);
     if (range === undefined) return undefined;
 
@@ -225,11 +264,107 @@ class TtlDefinitionProvider implements vscode.DefinitionProvider {
     if (!LABEL_REFERENCE_PREFIX.test(textBeforeWord)) return undefined;
 
     const labelName = document.getText(range).toLowerCase();
-    const labels = collectLabelDefinitions(document);
-    const labelPosition = labels.get(labelName);
+    return findLabelDefinitionAcrossFiles(document.uri, document.getText(), labelName);
+  }
+}
 
-    if (labelPosition === undefined) return undefined;
-    return new vscode.Location(document.uri, labelPosition);
+/**
+ * TTL 参照検索プロバイダ
+ *
+ * @remarks ラベル定義・参照のいずれかにカーソルを置くと、定義（:label）と
+ * 全ての参照（goto/call）の一覧を提供する（Shift+F12）
+ */
+class TtlReferenceProvider implements vscode.ReferenceProvider {
+  /**
+   * 参照一覧の提供
+   *
+   * @param document - 対象ドキュメント
+   * @param position - カーソル位置
+   * @param context - 定義自身を含めるかどうかの情報
+   * @returns ラベルの出現箇所の Location 配列、またはラベル位置でない場合は undefined
+   */
+  provideReferences(
+    document: vscode.TextDocument,
+    position: vscode.Position,
+    context: vscode.ReferenceContext,
+  ): vscode.Location[] | undefined {
+    const range = resolveLabelNameRange(document, position);
+    if (range === undefined) return undefined;
+
+    const labelName = document.getText(range).toLowerCase();
+    return collectLabelOccurrences(document.getText(), labelName)
+      .filter(occurrence => context.includeDeclaration || !occurrence.isDefinition)
+      .map(
+        occurrence =>
+          new vscode.Location(
+            document.uri,
+            new vscode.Range(
+              new vscode.Position(occurrence.line, occurrence.startCharacter),
+              new vscode.Position(occurrence.line, occurrence.endCharacter),
+            ),
+          ),
+      );
+  }
+}
+
+/**
+ * TTL ドキュメントシンボルプロバイダ
+ *
+ * @remarks ラベル定義と include をアウトライン・パンくず・シンボル検索に提供する
+ */
+class TtlDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
+  /**
+   * ドキュメントシンボル一覧の提供
+   *
+   * @param document - 対象ドキュメント
+   * @returns ラベル・include のシンボル配列
+   */
+  provideDocumentSymbols(document: vscode.TextDocument): vscode.DocumentSymbol[] {
+    return extractDocumentSymbols(document.getText()).map(symbol =>
+      this.toDocumentSymbol(symbol),
+    );
+  }
+
+  private toDocumentSymbol(symbol: TtlSymbol): vscode.DocumentSymbol {
+    const range = new vscode.Range(
+      new vscode.Position(symbol.line, symbol.startCharacter),
+      new vscode.Position(symbol.line, symbol.endCharacter),
+    );
+    const isLabel = symbol.kind === 'label';
+    return new vscode.DocumentSymbol(
+      isLabel ? `:${symbol.name}` : symbol.name,
+      isLabel ? '' : 'include',
+      isLabel ? vscode.SymbolKind.Function : vscode.SymbolKind.File,
+      range,
+      range,
+    );
+  }
+}
+
+/**
+ * TTL ドキュメントリンクプロバイダ
+ *
+ * @remarks include 'path' のパス部分を Ctrl+クリックで開けるリンクにする
+ */
+class TtlDocumentLinkProvider implements vscode.DocumentLinkProvider {
+  /**
+   * ドキュメントリンク一覧の提供
+   *
+   * @param document - 対象ドキュメント
+   * @returns include パスへのリンク配列
+   */
+  provideDocumentLinks(document: vscode.TextDocument): vscode.DocumentLink[] {
+    const fileDir = nodePath.dirname(document.uri.fsPath);
+    return extractIncludeDirectives(document.getText()).map(include => {
+      const range = new vscode.Range(
+        new vscode.Position(include.line, include.startCharacter),
+        new vscode.Position(include.line, include.endCharacter),
+      );
+      const target = vscode.Uri.file(nodePath.resolve(fileDir, include.path));
+      const link = new vscode.DocumentLink(range, target);
+      link.tooltip = 'include 先を開く';
+      return link;
+    });
   }
 }
 
@@ -362,32 +497,24 @@ export async function buildIncludeRenameEdit(
     const document = await vscode.workspace.openTextDocument(fileUri);
     const fileDir = nodePath.dirname(fileUri.fsPath);
 
-    for (let lineIndex = 0; lineIndex < document.lineCount; lineIndex++) {
-      const lineText = document.lineAt(lineIndex).text;
-      INCLUDE_PATTERN.lastIndex = 0;
-      let match: RegExpExecArray | null;
+    for (const include of extractIncludeDirectives(document.getText())) {
+      const includedAbsolute = nodePath.resolve(fileDir, include.path);
 
-      while ((match = INCLUDE_PATTERN.exec(lineText)) !== null) {
-        const includedRelative = match[1];
-        const includedAbsolute = nodePath.resolve(fileDir, includedRelative);
+      for (const rename of ttlRenames) {
+        if (includedAbsolute !== rename.oldUri.fsPath) continue;
 
-        for (const rename of ttlRenames) {
-          if (includedAbsolute !== rename.oldUri.fsPath) continue;
+        const newRelative = nodePath
+          .relative(fileDir, rename.newUri.fsPath)
+          .replace(/\\/g, '/');
 
-          const newRelative = nodePath
-            .relative(fileDir, rename.newUri.fsPath)
-            .replace(/\\/g, '/');
-
-          const pathStart = match.index + match[0].indexOf(match[1]);
-          edit.replace(
-            fileUri,
-            new vscode.Range(
-              new vscode.Position(lineIndex, pathStart),
-              new vscode.Position(lineIndex, pathStart + match[1].length),
-            ),
-            newRelative,
-          );
-        }
+        edit.replace(
+          fileUri,
+          new vscode.Range(
+            new vscode.Position(include.line, include.startCharacter),
+            new vscode.Position(include.line, include.endCharacter),
+          ),
+          newRelative,
+        );
       }
     }
   }
@@ -456,23 +583,162 @@ function toVscodeDiagnostic(diagnostic: TtlDiagnostic): vscode.Diagnostic {
 }
 
 /**
+ * ドキュメントの include 文を解決した URI 一覧を返す
+ *
+ * @param baseUri - include 文を含むドキュメントの URI
+ * @param text - ドキュメントの全文
+ * @returns include 先の絶対パス URI 配列
+ */
+function resolveIncludeUris(baseUri: vscode.Uri, text: string): vscode.Uri[] {
+  const baseDir = nodePath.dirname(baseUri.fsPath);
+  return extractIncludeDirectives(text).map(include =>
+    vscode.Uri.file(nodePath.resolve(baseDir, include.path)),
+  );
+}
+
+/**
+ * include を再帰的に辿り、定義済みラベル名を収集
+ *
+ * @remarks
+ * undefined-label 診断の誤検知を防ぐため、include 先で定義されたラベルを集める。
+ * 1つでも include 先を開けなかった場合は `complete` を false とし、
+ * 呼び出し側で undefined-label 検査を抑制できるようにする。
+ *
+ * @param startUri - 起点ドキュメントの URI
+ * @param startText - 起点ドキュメントの全文
+ * @returns 収集したラベル名（小文字）と、全 include を解決できたかのフラグ
+ */
+async function collectIncludedLabels(
+  startUri: vscode.Uri,
+  startText: string,
+): Promise<{ readonly labels: ReadonlySet<string>; readonly complete: boolean }> {
+  const labels = new Set<string>();
+  const visited = new Set<string>([startUri.fsPath]);
+  const queue = resolveIncludeUris(startUri, startText);
+  let complete = true;
+
+  while (queue.length > 0) {
+    const uri = queue.shift();
+    if (uri === undefined) break;
+    if (visited.has(uri.fsPath)) continue;
+    visited.add(uri.fsPath);
+
+    let document: vscode.TextDocument;
+    try {
+      document = await vscode.workspace.openTextDocument(uri);
+    } catch {
+      // include 先を開けない場合は解決不完全として記録
+      complete = false;
+      continue;
+    }
+
+    const text = document.getText();
+    for (const symbol of extractDocumentSymbols(text)) {
+      if (symbol.kind === 'label') labels.add(symbol.name.toLowerCase());
+    }
+    for (const childUri of resolveIncludeUris(uri, text)) queue.push(childUri);
+  }
+
+  return { labels, complete };
+}
+
+/**
  * ドキュメントを解析し診断コレクションを更新
  *
  * @param document - 対象ドキュメント
  * @param collection - 更新対象の診断コレクション
  */
-function refreshDiagnostics(
+async function refreshDiagnostics(
   document: vscode.TextDocument,
   collection: vscode.DiagnosticCollection,
-): void {
+): Promise<void> {
   if (document.languageId !== TTL_LANGUAGE_ID) return;
-  const maxNestingDepth = vscode.workspace
-    .getConfiguration('ttl')
-    .get<number>('maxNestingDepth', DEFAULT_MAX_NESTING_DEPTH);
+
+  const config = vscode.workspace.getConfiguration('ttl');
+  const maxNestingDepth = config.get<number>('maxNestingDepth', DEFAULT_MAX_NESTING_DEPTH);
+  const checkUnknownCommand = config.get<boolean>('diagnostics.unknownCommand', true);
+  const checkDuplicateLabel = config.get<boolean>('diagnostics.duplicateLabel', true);
+  const undefinedLabelEnabled = config.get<boolean>('diagnostics.undefinedLabel', true);
+
+  const text = document.getText();
+  const version = document.version;
+
+  const { labels: externalLabels, complete } = undefinedLabelEnabled
+    ? await collectIncludedLabels(document.uri, text)
+    : { labels: new Set<string>(), complete: true };
+
+  // 非同期処理中にドキュメントが変更された場合は破棄（後続のイベントで再解析される）
+  if (document.version !== version) return;
+
   collection.set(
     document.uri,
-    analyzeTtl(document.getText(), { maxNestingDepth }).map(toVscodeDiagnostic),
+    analyzeTtl(text, {
+      maxNestingDepth,
+      externalLabels,
+      // include 解決が不完全なときは誤検知を避けるため undefined-label を抑制
+      checkUndefinedLabels: undefinedLabelEnabled && complete,
+      checkUnknownCommand,
+      checkDuplicateLabel,
+    }).map(toVscodeDiagnostic),
   );
+}
+
+/**
+ * 現在の TTL マクロを ttpmacro.exe で実行
+ *
+ * @remarks
+ * 実行前にファイルを保存し、設定または既定候補から ttpmacro.exe を解決して起動する。
+ * ttpmacro.exe は独立した GUI プロセスとして切り離して起動する（VS Code 終了に影響されない）。
+ *
+ * @param resource - エディタタイトルから渡される対象ファイルの URI（省略時はアクティブエディタ）
+ */
+async function runMacro(resource?: vscode.Uri): Promise<void> {
+  const document = resource !== undefined
+    ? await vscode.workspace.openTextDocument(resource)
+    : vscode.window.activeTextEditor?.document;
+
+  if (document === undefined || document.languageId !== TTL_LANGUAGE_ID) {
+    void vscode.window.showErrorMessage('実行する .ttl ファイルをアクティブにしてください。');
+    return;
+  }
+
+  if (document.isDirty) await document.save();
+
+  const configuredPath = vscode.workspace
+    .getConfiguration('ttl')
+    .get<string>('macroExecutablePath', '');
+  const executablePath = resolveMacroExecutable(
+    configuredPath,
+    DEFAULT_TTPMACRO_PATHS,
+    path => nodeFs.existsSync(path),
+  );
+
+  if (executablePath === null) {
+    const choice = await vscode.window.showErrorMessage(
+      'ttpmacro.exe が見つかりません。設定 "ttl.macroExecutablePath" にフルパスを指定してください。',
+      '設定を開く',
+    );
+    if (choice === '設定を開く') {
+      void vscode.commands.executeCommand('workbench.action.openSettings', 'ttl.macroExecutablePath');
+    }
+    return;
+  }
+
+  const filePath = document.uri.fsPath;
+  try {
+    const child = childProcess.spawn(executablePath, [filePath], {
+      detached: true,
+      stdio: 'ignore',
+    });
+    child.once('error', error => {
+      void vscode.window.showErrorMessage(`マクロの起動に失敗しました: ${error.message}`);
+    });
+    child.unref();
+    void vscode.window.showInformationMessage(`マクロを実行: ${nodePath.basename(filePath)}`);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    void vscode.window.showErrorMessage(`マクロの起動に失敗しました: ${message}`);
+  }
 }
 
 /**
@@ -486,30 +752,43 @@ export function activate(context: vscode.ExtensionContext): void {
   const diagnostics = vscode.languages.createDiagnosticCollection('ttl');
   context.subscriptions.push(
     diagnostics,
-    vscode.workspace.onDidOpenTextDocument(document => refreshDiagnostics(document, diagnostics)),
-    vscode.workspace.onDidChangeTextDocument(event =>
-      refreshDiagnostics(event.document, diagnostics),
-    ),
+    vscode.workspace.onDidOpenTextDocument(document => {
+      void refreshDiagnostics(document, diagnostics);
+    }),
+    vscode.workspace.onDidChangeTextDocument(event => {
+      void refreshDiagnostics(event.document, diagnostics);
+    }),
     vscode.workspace.onDidCloseTextDocument(document => diagnostics.delete(document.uri)),
-    // 設定変更時は開いている全ドキュメントを再解析
+    // 設定変更時は開いている全ドキュメントを再解析（ttl.* のいずれかが変わったら反映）
     vscode.workspace.onDidChangeConfiguration(event => {
-      if (!event.affectsConfiguration('ttl.maxNestingDepth')) return;
+      if (!event.affectsConfiguration('ttl')) return;
       for (const document of vscode.workspace.textDocuments) {
-        refreshDiagnostics(document, diagnostics);
+        void refreshDiagnostics(document, diagnostics);
+      }
+    }),
+    // include 先の編集が親ファイルの診断（undefined-label）に影響するため、保存時に全 .ttl を再解析
+    vscode.workspace.onDidSaveTextDocument(saved => {
+      if (saved.languageId !== TTL_LANGUAGE_ID) return;
+      for (const document of vscode.workspace.textDocuments) {
+        void refreshDiagnostics(document, diagnostics);
       }
     }),
   );
   // 起動時に既に開かれているドキュメントを解析
   for (const document of vscode.workspace.textDocuments) {
-    refreshDiagnostics(document, diagnostics);
+    void refreshDiagnostics(document, diagnostics);
   }
 
   context.subscriptions.push(
     vscode.languages.registerCompletionItemProvider(selector, new TtlCompletionProvider()),
     vscode.languages.registerHoverProvider(selector, new TtlHoverProvider()),
     vscode.languages.registerDefinitionProvider(selector, new TtlDefinitionProvider()),
+    vscode.languages.registerReferenceProvider(selector, new TtlReferenceProvider()),
+    vscode.languages.registerDocumentSymbolProvider(selector, new TtlDocumentSymbolProvider()),
+    vscode.languages.registerDocumentLinkProvider(selector, new TtlDocumentLinkProvider()),
     vscode.languages.registerRenameProvider(selector, new TtlRenameProvider()),
     vscode.languages.registerDocumentFormattingEditProvider(selector, new TtlFormattingProvider()),
+    vscode.commands.registerCommand('ttl.runMacro', (resource?: vscode.Uri) => runMacro(resource)),
     vscode.workspace.onWillRenameFiles(event => {
       event.waitUntil(buildIncludeRenameEdit(event.files));
     }),
