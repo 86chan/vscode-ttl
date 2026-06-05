@@ -11,7 +11,7 @@
 - **参照検索** — ラベルの定義・参照（`goto`/`call`）の一覧を表示 (Shift+F12)
 - **アウトライン / シンボル** — ラベル定義と `include` をパンくず・アウトライン・シンボル検索（Ctrl+Shift+O）に表示
 - **include リンク** — `include 'path'` のパスを Ctrl+クリックで開く
-- **マクロ実行** — 現在の `.ttl` を `ttpmacro.exe` で実行（エディタ右上の ▶ ボタン、またはコマンド「Run TTL Macro」）。実行ファイルのパスは `ttl.macroExecutablePath` で指定（空なら一般的なインストール先を自動探索）
+- **マクロ実行** — 現在の `.ttl` を実行（エディタ右上の ▶ ボタン、またはコマンド「Run TTL Macro」）。既定は `ttermpro.exe /M=` で起動するため、`connect` 前でも `clearscreen` などの端末コマンドが使える。`ttl.runMacroVia` で `ttpmacro.exe` 直接起動にも切替可。実行ファイルのパスは `ttl.macroExecutablePath` で指定（空なら一般的なインストール先を自動探索）
 - **コード整形** — `if`/`for`/`while`/`do` などのブロック構造に応じて自動インデント。コメント内に書かれた Markdown テーブルも全角文字を考慮して桁揃え (Shift+Alt+F)
 - **診断（エラー/警告）** — 無効な演算子（`&&`/`++`/`+=` など）、システム変数（`result` など）への代入、条件式での単独 `=`（比較は `==` を推奨）、ブロックの閉じ忘れ（`endif`/`next` など）、深すぎるネスト（既定 2 段）、未知のコマンド（近いコマンドを提案）、未定義ラベルへの `goto`/`call`（include 先も解決）、重複したラベル定義を検出
 
@@ -26,7 +26,7 @@
 - **Find All References** — list a label's definition and references (`goto`/`call`) (Shift+F12)
 - **Outline / Symbols** — labels and `include`s shown in breadcrumbs, outline, and symbol search (Ctrl+Shift+O)
 - **Include Links** — Ctrl+click the path in `include 'path'` to open the file
-- **Run Macro** — run the current `.ttl` with `ttpmacro.exe` (▶ button in the editor title, or the "Run TTL Macro" command). Set the executable via `ttl.macroExecutablePath` (auto-detects common install locations when empty)
+- **Run Macro** — run the current `.ttl` (▶ button in the editor title, or the "Run TTL Macro" command). By default it launches via `ttermpro.exe /M=`, so terminal commands like `clearscreen` work even before the macro calls `connect`; switch to launching `ttpmacro.exe` directly with `ttl.runMacroVia`. Set the executable via `ttl.macroExecutablePath` (auto-detects common install locations when empty)
 - **Code Formatting** — auto-indent based on block structures such as `if`/`for`/`while`/`do`, plus alignment of Markdown tables written inside comments (full-width aware) (Shift+Alt+F)
 - **Diagnostics (Errors/Warnings)** — detects invalid operators (`&&`, `++`, `+=`, etc.), assignments to system variables (e.g. `result`), a single `=` used for comparison (suggests `==`), unclosed blocks (missing `endif`/`next`, etc.), excessive nesting (default depth 2, configurable via `ttl.maxNestingDepth`), unknown commands (suggests the closest command), `goto`/`call` to undefined labels (includes resolved), and duplicate label definitions
 
@@ -64,6 +64,14 @@ Path to `ttpmacro.exe` used to run macros (auto-detected when empty):
 
 ```json
 "ttl.macroExecutablePath": "C:\\Program Files\\teraterm5\\ttpmacro.exe"
+```
+
+起動方式（既定 `teraterm` = `ttermpro.exe /M=`）。
+
+Launch mode (default `teraterm` = `ttermpro.exe /M=`):
+
+```json
+"ttl.runMacroVia": "teraterm"  // "teraterm" | "ttpmacro"
 ```
 
 ## 対応構文 / Supported Syntax

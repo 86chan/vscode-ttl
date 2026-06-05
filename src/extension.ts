@@ -7,7 +7,12 @@ import * as nodeFs from 'node:fs';
 import * as nodePath from 'node:path';
 import * as vscode from 'vscode';
 import { collectDocumentWords, TTL_IDENTIFIER_PATTERN } from './completionUtils';
-import { DEFAULT_TTPMACRO_PATHS, resolveMacroExecutable } from './macroRunner';
+import {
+  buildMacroLaunch,
+  DEFAULT_TTPMACRO_PATHS,
+  type RunMacroMode,
+  resolveMacroExecutable,
+} from './macroRunner';
 import { analyzeTtl, DEFAULT_MAX_NESTING_DEPTH, type TtlDiagnostic } from './diagnosticsUtils';
 import { type FormatOptions, formatTtl } from './formatUtils';
 import { extractLabelDefinition, extractLabelReferences } from './labelUtils';
@@ -704,16 +709,16 @@ async function runMacro(resource?: vscode.Uri): Promise<void> {
 
   if (document.isDirty) await document.save();
 
-  const configuredPath = vscode.workspace
-    .getConfiguration('ttl')
-    .get<string>('macroExecutablePath', '');
-  const executablePath = resolveMacroExecutable(
+  const config = vscode.workspace.getConfiguration('ttl');
+  const configuredPath = config.get<string>('macroExecutablePath', '');
+  const mode = config.get<RunMacroMode>('runMacroVia', 'teraterm');
+  const ttpmacroPath = resolveMacroExecutable(
     configuredPath,
     DEFAULT_TTPMACRO_PATHS,
     path => nodeFs.existsSync(path),
   );
 
-  if (executablePath === null) {
+  if (ttpmacroPath === null) {
     const choice = await vscode.window.showErrorMessage(
       'ttpmacro.exe が見つかりません。設定 "ttl.macroExecutablePath" にフルパスを指定してください。',
       '設定を開く',
@@ -725,8 +730,9 @@ async function runMacro(resource?: vscode.Uri): Promise<void> {
   }
 
   const filePath = document.uri.fsPath;
+  const { executable, args } = buildMacroLaunch(ttpmacroPath, filePath, mode);
   try {
-    const child = childProcess.spawn(executablePath, [filePath], {
+    const child = childProcess.spawn(executable, args, {
       detached: true,
       stdio: 'ignore',
     });
