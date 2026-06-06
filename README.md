@@ -1,5 +1,7 @@
 # TTL - Tera Term Language Support for VS Code
 
+*[English](README.en.md) | 日本語*
+
 [Tera Term](https://teratermproject.github.io/) のマクロ言語 TTL (Tera Term Language) に対応した VS Code 拡張機能です。
 
 > Tera Term は [TeraTerm Project](https://github.com/TeraTermProject/teraterm) の著作物です。本拡張は非公式であり、TeraTerm Project とは関係ありません。
@@ -13,32 +15,13 @@
 - **参照検索** — ラベルの定義・参照（`goto`/`call`）の一覧を表示 (Shift+F12)
 - **アウトライン / シンボル** — ラベル定義と `include` をパンくず・アウトライン・シンボル検索（Ctrl+Shift+O）に表示
 - **include リンク** — `include 'path'` のパスを Ctrl+クリックで開く
-- **マクロ実行（デバッグ構成）** — `launch.json` の「構成の追加」に **TTL Macro (Tera Term)** が並び、F5 / ▶ で現在のマクロを Tera Term で実行。接続（SSH/Telnet/シリアル）を構造化した `connect` で指定（[使い方](#マクロ実行--running-macros)）
+- **マクロ実行（デバッグ構成）** — `launch.json` の「構成の追加」に **TTL Macro (Tera Term)** が並び、F5 / ▶ で現在のマクロを Tera Term で実行。接続（SSH/Telnet/シリアル）を構造化した `connect` で指定（[使い方](#マクロ実行)）
 - **コード整形** — `if`/`for`/`while`/`do` などのブロック構造に応じて自動インデント。コメント内に書かれた Markdown テーブルも全角文字を考慮して桁揃え (Shift+Alt+F)
 - **診断（エラー/警告）** — 無効な演算子（`&&`/`++`/`+=` など）、システム変数（`result` など）への代入、条件式での単独 `=`（比較は `==` を推奨）、ブロックの閉じ忘れ（`endif`/`next` など）、深すぎるネスト（既定 2 段）、未知のコマンド（近いコマンドを提案）、未定義ラベルへの `goto`/`call`（include 先も解決）、重複したラベル定義を検出
 
----
-
-[Tera Term](https://teratermproject.github.io/) macro language (TTL) support extension for Visual Studio Code.
-
-> Tera Term is a work of the [TeraTerm Project](https://github.com/TeraTermProject/teraterm). This is an unofficial extension and is not affiliated with the TeraTerm Project.
-
-- **Syntax Highlighting** — keywords, commands, strings, comments, labels, operators, system variables
-- **Code Completion** — 201 built-in commands with signatures and documentation
-- **Hover Documentation** — inline reference in Japanese or English
-- **Go to Definition** — jump from `goto`/`call` to `:label` definitions; falls back to (recursively) searching `include`d files (F12)
-- **Find All References** — list a label's definition and references (`goto`/`call`) (Shift+F12)
-- **Outline / Symbols** — labels and `include`s shown in breadcrumbs, outline, and symbol search (Ctrl+Shift+O)
-- **Include Links** — Ctrl+click the path in `include 'path'` to open the file
-- **Run Macro (debug config)** — **TTL Macro (Tera Term)** appears in launch.json's "Add Configuration", and F5 / ▶ runs the current macro with Tera Term. Describe the connection (SSH / Telnet / serial) with a structured `connect` object ([usage](#マクロ実行--running-macros))
-- **Code Formatting** — auto-indent based on block structures such as `if`/`for`/`while`/`do`, plus alignment of Markdown tables written inside comments (full-width aware) (Shift+Alt+F)
-- **Diagnostics (Errors/Warnings)** — detects invalid operators (`&&`, `++`, `+=`, etc.), assignments to system variables (e.g. `result`), a single `=` used for comparison (suggests `==`), unclosed blocks (missing `endif`/`next`, etc.), excessive nesting (default depth 2, configurable via `ttl.maxNestingDepth`), unknown commands (suggests the closest command), `goto`/`call` to undefined labels (includes resolved), and duplicate label definitions
-
-## 言語設定 / Language Setting
+## 言語設定
 
 VS Code の UI 言語を自動検出して日本語・英語を切り替えます。設定で固定することも可能です。
-
-The extension auto-detects the VS Code UI language. Override in settings:
 
 ```json
 "ttl.language": "auto"  // "auto" | "ja" | "en"
@@ -46,15 +29,11 @@ The extension auto-detects the VS Code UI language. Override in settings:
 
 ネスト警告の上限段数も設定できます（既定 2、0 で無効化）。
 
-The maximum nesting depth before a warning is also configurable (default 2, 0 disables it):
-
 ```json
 "ttl.maxNestingDepth": 2
 ```
 
 個別の診断は設定で無効化できます（いずれも既定 true）。
-
-Individual diagnostics can be toggled (all default `true`):
 
 ```json
 "ttl.diagnostics.undefinedLabel": true,
@@ -62,41 +41,37 @@ Individual diagnostics can be toggled (all default `true`):
 "ttl.diagnostics.duplicateLabel": true
 ```
 
-## マクロ実行 / Running Macros
+## マクロ実行
 
 `launch.json` のデバッグ構成として実行します。**実行とデバッグ** パネルで「launch.json ファイルを作成」→ **TTL Macro (Tera Term)** を選ぶか、`launch.json` の「構成の追加」から追加します。F5 または ▶ で起動します（Windows + Tera Term が必要）。
 
-Run macros as a debug configuration. In the **Run and Debug** view, "create a launch.json file" → pick **TTL Macro (Tera Term)**, or use "Add Configuration" in `launch.json`. Launch with F5 or ▶ (requires Windows + Tera Term).
-
 接続は構造化した `connect` オブジェクトで記述し、拡張が Tera Term の CLI オプションに変換します。`connect` を省略すると接続せずに起動し、接続はマクロ内の `connect` に委ねます。
-
-Describe the connection with a structured `connect` object; the extension translates it to Tera Term CLI options. Omit `connect` to launch without connecting (the macro's own `connect` handles it).
 
 ```jsonc
 // SSH
 {
   "type": "ttl", "request": "launch", "name": "Run TTL Macro (SSH)",
-  "program": "${file}",            // 実行するマクロ / macro to run
+  "program": "${file}",            // 実行するマクロ
   "connect": {
     "proto": "ssh",                // "ssh" | "telnet" | "console"(=serial)
     "host": "192.168.0.100",
     "port": 22,
-    "options": ["/auth=password", "/user=admin"]  // 追加の生オプション / extra raw options
+    "options": ["/auth=password", "/user=admin"]  // 追加の生オプション
   },
-  "teraTermDir": ""                 // 空なら自動探索 / auto-detected when empty
+  "teraTermDir": ""                 // 空なら自動探索
 }
 // → ttermpro.exe 192.168.0.100:22 /ssh /auth=password /user=admin /M=<file>
 ```
 
 ```jsonc
-// シリアル / Serial (console)
+// シリアル (console)
 {
   "type": "ttl", "request": "launch", "name": "Run TTL Macro (Serial)",
   "program": "${file}",
   "connect": {
     "proto": "console",
-    "comport": 3,        // COM ポート番号 / COM port (1–256)
-    "speed": 115200,     // ボーレート / baud
+    "comport": 3,        // COM ポート番号 (1–256)
+    "speed": 115200,     // ボーレート
     "cdatabit": 8,       // 7 | 8
     "cparity": "none",   // none | odd | even | mark | space
     "cstopbit": 1,       // 1 | 1.5 | 2
@@ -108,8 +83,6 @@ Describe the connection with a structured `connect` object; the extension transl
 
 `connect.host` に `${input:ttlHost}` を指定し、`launch.json` に `inputs` を足せば、実行時に接続先を入力できます。
 
-Use `${input:ttlHost}` for `connect.host` (with an `inputs` entry) to prompt for the host on each run:
-
 ```jsonc
 {
   "configurations": [
@@ -117,34 +90,32 @@ Use `${input:ttlHost}` for `connect.host` (with an `inputs` entry) to prompt for
       "program": "${file}", "connect": { "proto": "ssh", "host": "${input:ttlHost}", "port": 22 } }
   ],
   "inputs": [
-    { "id": "ttlHost", "type": "promptString", "description": "接続先 / Host (e.g. 192.168.0.100)" }
+    { "id": "ttlHost", "type": "promptString", "description": "接続先 (例: 192.168.0.100)" }
   ]
 }
 ```
 
-### その他のオプション / Other options
+### その他のオプション
 
 接続以外の Tera Term 起動オプションも構成のトップレベルに指定できます（説明は VS Code の表示言語で日本語/英語に切り替わります）。
 
-Non-connection Tera Term options can be set at the top level of the configuration (descriptions are shown in Japanese or English depending on the VS Code display language).
-
-| 構成キー / key | Tera Term | 説明 / description |
+| 構成キー | Tera Term | 説明 |
 |---|---|---|
-| `windowTitle` | `/W=` | ウィンドウタイトル / Window title |
-| `setupFile` | `/F=` | 設定ファイル / Setup file |
-| `keyboardFile` | `/K=` | キーボード設定 / Keyboard setup file |
+| `windowTitle` | `/W=` | ウィンドウタイトル |
+| `setupFile` | `/F=` | 設定ファイル |
+| `keyboardFile` | `/K=` | キーボード設定 |
 | `logFile` / `noLog` | `/L=` / `/NOLOG` | ログ開始 / 開始しない |
-| `replayFile` | `/R=` | 再生ファイル / Replay file |
-| `fileTransferDir` | `/FD=` | 転送ディレクトリ / File transfer dir |
-| `theme` | `/THEME=` | テーマ / Theme file |
-| `vtIcon` / `tekIcon` | `/VTICON=` / `/TEKICON=` | ウィンドウアイコン / Window icons |
+| `replayFile` | `/R=` | 再生ファイル |
+| `fileTransferDir` | `/FD=` | 転送ディレクトリ |
+| `theme` | `/THEME=` | テーマ |
+| `vtIcon` / `tekIcon` | `/VTICON=` / `/TEKICON=` | ウィンドウアイコン |
 | `hideTitleBar` / `iconify` / `hidden` | `/H` / `/I` / `/V` | タイトルバー非表示 / アイコン化 / 非表示起動 |
-| `windowX` / `windowY` | `/X=` / `/Y=` | ウィンドウ位置 / Window position |
+| `windowX` / `windowY` | `/X=` / `/Y=` | ウィンドウ位置 |
 | `kanjiReceive` / `kanjiTransmit` | `/KR=` / `/KT=` | 漢字コード 受信/送信 |
-| `multicastName` | `/MN=` | マルチキャスト名 / Multicast name |
-| `osc52` | `/OSC52=` | クリップボード許可操作 / Clipboard access |
-| `autoWinClose` | `/AUTOWINCLOSE=` | 切断時に自動で閉じる / Auto close |
-| `disableLocalEcho` | `/E` | ローカルエコー無効 / Disable local echo |
+| `multicastName` | `/MN=` | マルチキャスト名 |
+| `osc52` | `/OSC52=` | クリップボード許可操作 |
+| `autoWinClose` | `/AUTOWINCLOSE=` | 切断時に自動で閉じる |
+| `disableLocalEcho` | `/E` | ローカルエコー無効 |
 | `newConnectionDialog` | `/ES` `/DS` | 新しい接続ダイアログ 表示/非表示 |
 
 接続側 (`connect`) は `binary`(`/B`)・`waitcom`(`/WAITCOM`)・`timeout`(`/TIMEOUT=`)・`proto: "namedpipe"`(`/PIPE`) にも対応します。スキーマ未対応のオプションは `connect.options` に生で書けます。
@@ -158,21 +129,21 @@ Non-connection Tera Term options can be set at the top level of the configuratio
 }
 ```
 
-## 対応構文 / Supported Syntax
+## 対応構文
 
 | 構文 | 例 |
 |------|----|
-| 行コメント / Line comment | `; コメント` |
-| ブロックコメント / Block comment | `/* ... */` |
-| 文字列 / String | `'hello'` |
-| ラベル定義 / Label definition | `:loop_start` |
-| 制御フロー / Control flow | `if`, `for`, `while`, `do`, `goto`, `call`, `return` |
-| システム変数 / System variables | `result`, `inputstr`, `matchstr`, `param1`–`param9` |
+| 行コメント | `; コメント` |
+| ブロックコメント | `/* ... */` |
+| 文字列 | `'hello'` |
+| ラベル定義 | `:loop_start` |
+| 制御フロー | `if`, `for`, `while`, `do`, `goto`, `call`, `return` |
+| システム変数 | `result`, `inputstr`, `matchstr`, `param1`–`param9` |
 
-## 動作要件 / Requirements
+## 動作要件
 
-VS Code 1.85.0 以降 / VS Code 1.85.0 or later.
+VS Code 1.85.0 以降。
 
-## ライセンス / License
+## ライセンス
 
 MIT
