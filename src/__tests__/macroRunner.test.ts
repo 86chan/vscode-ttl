@@ -66,18 +66,4 @@ describe('buildMacroLaunch', () => {
     expect(buildMacroLaunch('D:\\tt', MACRO, 'teraterm').executable).toBe('D:\\tt\\ttermpro.exe');
     expect(buildMacroLaunch('D:\\tt', MACRO, 'ttpmacro').executable).toBe('D:\\tt\\ttpmacro.exe');
   });
-
-  it('teraterm 方式で showNewConnectionDialog を指定すると /ES を /M= の前に付与する', () => {
-    const launch = buildMacroLaunch(DIR, MACRO, 'teraterm', { showNewConnectionDialog: true });
-    expect(launch.args).toEqual(['/ES', `/M=${MACRO}`]);
-  });
-
-  it('showNewConnectionDialog 未指定なら /ES を付けない', () => {
-    expect(buildMacroLaunch(DIR, MACRO, 'teraterm').args).toEqual([`/M=${MACRO}`]);
-  });
-
-  it('ttpmacro 方式では showNewConnectionDialog を無視する', () => {
-    const launch = buildMacroLaunch(DIR, MACRO, 'ttpmacro', { showNewConnectionDialog: true });
-    expect(launch.args).toEqual([MACRO]);
-  });
 });

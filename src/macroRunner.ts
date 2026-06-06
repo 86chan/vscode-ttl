@@ -72,42 +72,26 @@ export interface MacroLaunch {
   readonly args: readonly string[];
 }
 
-/** マクロ起動の追加オプション */
-export interface MacroLaunchOptions {
-  /**
-   * 起動時に「新しい接続」ダイアログを表示するか（`teraterm` 方式のみ）
-   *
-   * @remarks `ttermpro.exe /ES` に対応。`HostDialogOnStartup` が無効でも強制表示する。
-   */
-  readonly showNewConnectionDialog?: boolean;
-}
-
 /**
  * 起動方式に応じて実行ファイルと引数を組み立てる
  *
  * @remarks
  * 実行ファイルは Tera Term ディレクトリから Windows パス規則で導出する。
- * `showNewConnectionDialog` は `teraterm` 方式でのみ有効（`ttpmacro` 方式は端末を直接起動しないため無視）。
  *
  * @param teraTermDir - 解決済みの Tera Term インストールディレクトリ
  * @param macroFilePath - 実行するマクロファイルの絶対パス
  * @param mode - 起動方式
- * @param options - 追加オプション
  * @returns 実行ファイルと引数
  */
 export function buildMacroLaunch(
   teraTermDir: string,
   macroFilePath: string,
   mode: RunMacroMode,
-  options: MacroLaunchOptions = {},
 ): MacroLaunch {
   if (mode === 'teraterm') {
-    const args: string[] = [];
-    if (options.showNewConnectionDialog === true) args.push('/ES');
-    args.push(`/M=${macroFilePath}`);
     return {
       executable: nodePath.win32.join(teraTermDir, TERATERM_EXE),
-      args,
+      args: [`/M=${macroFilePath}`],
     };
   }
   return {
