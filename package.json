@@ -105,10 +105,10 @@
           "default": true,
           "description": "Warn when the same label is defined more than once."
         },
-        "ttl.macroExecutablePath": {
+        "ttl.teraTermDir": {
           "type": "string",
           "default": "",
-          "markdownDescription": "Full path to Tera Term's macro interpreter `ttpmacro.exe`, used to run the current `.ttl` file. When empty, common install locations such as `C:\\Program Files\\teraterm5\\ttpmacro.exe` are tried automatically. Example: `C:\\Program Files\\teraterm5\\ttpmacro.exe`."
+          "markdownDescription": "Directory that contains Tera Term's executables (`ttpmacro.exe` and `ttermpro.exe`), used to run the current `.ttl` file. When empty, common install locations such as `C:\\Program Files\\teraterm5` are tried automatically. Example: `C:\\Program Files\\teraterm5`."
         },
         "ttl.runMacroVia": {
           "type": "string",
@@ -121,7 +121,7 @@
             "Launch ttpmacro.exe directly — macro engine only; the terminal is linked when the macro calls connect."
           ],
           "default": "teraterm",
-          "markdownDescription": "How to run a macro. `teraterm` uses `ttermpro.exe /M=<file>` (ttermpro.exe is taken from the same folder as `ttpmacro.exe`) so terminal commands like `clearscreen` work without first calling `connect`. `ttpmacro` runs `ttpmacro.exe <file>` directly."
+          "markdownDescription": "How to run a macro. `teraterm` uses `ttermpro.exe /M=<file>` so terminal commands like `clearscreen` work without first calling `connect`. `ttpmacro` runs `ttpmacro.exe <file>` directly. Both executables are taken from `#ttl.teraTermDir#`."
         }
       }
     }
