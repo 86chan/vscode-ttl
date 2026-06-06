@@ -712,7 +712,6 @@ async function runMacro(resource?: vscode.Uri): Promise<void> {
   const config = vscode.workspace.getConfiguration('ttl');
   const configuredDir = config.get<string>('teraTermDir', '');
   const mode = config.get<RunMacroMode>('runMacroVia', 'teraterm');
-  const showNewConnectionDialog = config.get<boolean>('showNewConnectionDialog', false);
   const teraTermDir = resolveTeraTermDir(
     configuredDir,
     DEFAULT_TERATERM_DIRS,
@@ -731,9 +730,7 @@ async function runMacro(resource?: vscode.Uri): Promise<void> {
   }
 
   const filePath = document.uri.fsPath;
-  const { executable, args } = buildMacroLaunch(teraTermDir, filePath, mode, {
-    showNewConnectionDialog,
-  });
+  const { executable, args } = buildMacroLaunch(teraTermDir, filePath, mode);
   try {
     const child = childProcess.spawn(executable, args, {
       detached: true,
