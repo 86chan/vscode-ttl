@@ -43,29 +43,6 @@
         "path": "./syntaxes/ttl.tmLanguage.json"
       }
     ],
-    "commands": [
-      {
-        "command": "ttl.runMacro",
-        "title": "Run TTL Macro",
-        "category": "TTL",
-        "icon": "$(play)"
-      }
-    ],
-    "menus": {
-      "commandPalette": [
-        {
-          "command": "ttl.runMacro",
-          "when": "resourceLangId == ttl"
-        }
-      ],
-      "editor/title/run": [
-        {
-          "command": "ttl.runMacro",
-          "when": "resourceLangId == ttl",
-          "group": "navigation"
-        }
-      ]
-    },
     "configuration": {
       "title": "TTL Language",
       "properties": {
@@ -104,24 +81,6 @@
           "type": "boolean",
           "default": true,
           "description": "Warn when the same label is defined more than once."
-        },
-        "ttl.teraTermDir": {
-          "type": "string",
-          "default": "",
-          "markdownDescription": "Directory that contains Tera Term's executables (`ttpmacro.exe` and `ttermpro.exe`), used to run the current `.ttl` file. When empty, common install locations such as `C:\\Program Files\\teraterm5` are tried automatically. Example: `C:\\Program Files\\teraterm5`."
-        },
-        "ttl.runMacroVia": {
-          "type": "string",
-          "enum": [
-            "teraterm",
-            "ttpmacro"
-          ],
-          "enumDescriptions": [
-            "Launch via ttermpro.exe /M= — starts Tera Term first, so terminal commands like clearscreen work before the macro calls connect.",
-            "Launch ttpmacro.exe directly — macro engine only; the terminal is linked when the macro calls connect."
-          ],
-          "default": "teraterm",
-          "markdownDescription": "How to run a macro. `teraterm` uses `ttermpro.exe /M=<file>` so terminal commands like `clearscreen` work without first calling `connect`. `ttpmacro` runs `ttpmacro.exe <file>` directly. Both executables are taken from `#ttl.teraTermDir#`."
         }
       }
     }
