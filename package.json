@@ -61,20 +61,97 @@
                 "description": "Macro (.ttl) file to run.",
                 "default": "${file}"
               },
-              "host": {
-                "type": "string",
-                "description": "Connection target, e.g. 192.168.1.10:22. Leave empty to let the macro connect itself.",
-                "default": ""
-              },
-              "connectOptions": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                },
-                "description": "Extra Tera Term connection options, e.g. [\"/ssh\", \"/auth=password\", \"/user=admin\"]. Used only when host is set.",
-                "default": [
-                  "/ssh"
-                ]
+              "connect": {
+                "type": "object",
+                "description": "Connection settings, translated to Tera Term command-line options. Omit to let the macro connect itself.",
+                "properties": {
+                  "proto": {
+                    "type": "string",
+                    "enum": [
+                      "ssh",
+                      "telnet",
+                      "console"
+                    ],
+                    "enumDescriptions": [
+                      "SSH (TCP/IP)",
+                      "Telnet (TCP/IP)",
+                      "Serial / COM port"
+                    ],
+                    "description": "Connection protocol (console = serial)."
+                  },
+                  "host": {
+                    "type": "string",
+                    "description": "Host name or address (ssh / telnet)."
+                  },
+                  "port": {
+                    "type": "number",
+                    "description": "TCP port (ssh / telnet)."
+                  },
+                  "comport": {
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 256,
+                    "description": "Serial COM port number (console)."
+                  },
+                  "speed": {
+                    "type": "number",
+                    "description": "Serial baud rate (console)."
+                  },
+                  "cdatabit": {
+                    "type": "number",
+                    "enum": [
+                      7,
+                      8
+                    ],
+                    "description": "Serial data bits (console)."
+                  },
+                  "cparity": {
+                    "type": "string",
+                    "enum": [
+                      "none",
+                      "odd",
+                      "even",
+                      "mark",
+                      "space"
+                    ],
+                    "description": "Serial parity (console)."
+                  },
+                  "cstopbit": {
+                    "type": "number",
+                    "enum": [
+                      1,
+                      1.5,
+                      2
+                    ],
+                    "description": "Serial stop bits (console)."
+                  },
+                  "cflowctrl": {
+                    "type": "string",
+                    "enum": [
+                      "x",
+                      "hard",
+                      "none",
+                      "rtscts",
+                      "dsrdtr"
+                    ],
+                    "description": "Serial flow control (console)."
+                  },
+                  "cdelayperchar": {
+                    "type": "number",
+                    "description": "Per-character delay in ms (console)."
+                  },
+                  "cdelayperline": {
+                    "type": "number",
+                    "description": "Per-line delay in ms (console)."
+                  },
+                  "options": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Extra raw Tera Term options appended as-is, e.g. [\"/auth=password\", \"/user=admin\"]."
+                  }
+                }
               },
               "teraTermDir": {
                 "type": "string",
@@ -90,25 +167,42 @@
             "request": "launch",
             "name": "Run TTL Macro",
             "program": "${file}",
-            "host": "",
-            "connectOptions": [
-              "/ssh"
-            ]
+            "connect": {
+              "proto": "ssh",
+              "host": "192.168.0.100",
+              "port": 22
+            }
           }
         ],
         "configurationSnippets": [
           {
-            "label": "TTL: Run Macro (Tera Term)",
-            "description": "Run the current TTL macro with Tera Term",
+            "label": "TTL: Run Macro (SSH)",
+            "description": "Run the current TTL macro over SSH",
             "body": {
               "type": "ttl",
               "request": "launch",
-              "name": "Run TTL Macro",
+              "name": "Run TTL Macro (SSH)",
               "program": "^\"\\${file}\"",
-              "host": "",
-              "connectOptions": [
-                "/ssh"
-              ]
+              "connect": {
+                "proto": "ssh",
+                "host": "192.168.0.100",
+                "port": 22
+              }
+            }
+          },
+          {
+            "label": "TTL: Run Macro (Serial)",
+            "description": "Run the current TTL macro over a serial / COM port",
+            "body": {
+              "type": "ttl",
+              "request": "launch",
+              "name": "Run TTL Macro (Serial)",
+              "program": "^\"\\${file}\"",
+              "connect": {
+                "proto": "console",
+                "comport": 1,
+                "speed": 115200
+              }
             }
           }
         ]
