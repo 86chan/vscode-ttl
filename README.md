@@ -74,6 +74,14 @@ Launch mode (default `teraterm` = `ttermpro.exe /M=`):
 "ttl.runMacroVia": "teraterm"  // "teraterm" | "ttpmacro"
 ```
 
+実行時に「新しい接続」ダイアログを表示（`teraterm` 方式で `ttermpro.exe /ES` を付与）。
+
+Show the "New connection" dialog when running (adds `/ES`, `teraterm` mode only):
+
+```json
+"ttl.showNewConnectionDialog": true
+```
+
 ## 対応構文 / Supported Syntax
 
 | 構文 | 例 |
