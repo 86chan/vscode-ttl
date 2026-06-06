@@ -59,13 +59,17 @@ describe('buildTeraTermLaunch', () => {
     expect(launch.args).toEqual(['192.168.1.10:22', '/ssh', '/user=admin', `/M=${MACRO}`]);
   });
 
-  it('host 未指定なら /M= のみ', () => {
+  it('host・connectOptions ともに無ければ /M= のみ', () => {
     expect(buildTeraTermLaunch(DIR, MACRO).args).toEqual([`/M=${MACRO}`]);
   });
 
-  it('host が空文字・空白のみなら接続引数を付けない', () => {
-    expect(buildTeraTermLaunch(DIR, MACRO, '', ['/ssh']).args).toEqual([`/M=${MACRO}`]);
-    expect(buildTeraTermLaunch(DIR, MACRO, '   ', ['/ssh']).args).toEqual([`/M=${MACRO}`]);
+  it('シリアル接続: host 無しでも connectOptions（/C= /BAUD=）を付与する', () => {
+    const launch = buildTeraTermLaunch(DIR, MACRO, '', ['/C=1', '/BAUD=115200']);
+    expect(launch.args).toEqual(['/C=1', '/BAUD=115200', `/M=${MACRO}`]);
+  });
+
+  it('host が空白のみでも connectOptions は付与する', () => {
+    expect(buildTeraTermLaunch(DIR, MACRO, '   ', ['/C=3']).args).toEqual(['/C=3', `/M=${MACRO}`]);
   });
 
   it('host の前後空白はトリムする', () => {

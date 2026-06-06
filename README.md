@@ -79,6 +79,24 @@ Run macros as a debug configuration. In the **Run and Debug** view, "create a la
 - `host` を空にすると `ttermpro.exe /M=<file>` のみで起動し、接続はマクロ内の `connect` に任せます。
 - `host` に `${input:ttlHost}` を指定し、`launch.json` に `inputs` を足せば、実行時に接続先を入力できます。
 
+### シリアル接続 / Serial connection
+
+シリアルは `host` を空にして、`connectOptions` に `/C=<ポート番号>`（COM ポート）などを指定します。`host` が無くても `connectOptions` は付与されます。
+
+For serial, leave `host` empty and put `/C=<port>` (COM port) etc. in `connectOptions` (options are passed even without a host):
+
+```jsonc
+{
+  "type": "ttl",
+  "request": "launch",
+  "name": "Run TTL Macro (Serial COM3)",
+  "program": "${file}",
+  "host": "",
+  "connectOptions": ["/C=3", "/BAUD=115200"]
+  // → ttermpro.exe /C=3 /BAUD=115200 /M=<file>
+}
+```
+
 ```jsonc
 // 接続先を都度入力する例 / prompt for the host on each run
 {
