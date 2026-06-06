@@ -81,83 +81,6 @@
                     ],
                     "description": "%ttl.dbg.connect.proto%"
                   },
-                  "host": {
-                    "type": "string",
-                    "description": "%ttl.dbg.connect.host%"
-                  },
-                  "port": {
-                    "type": "number",
-                    "description": "%ttl.dbg.connect.port%"
-                  },
-                  "comport": {
-                    "type": "number",
-                    "minimum": 1,
-                    "maximum": 256,
-                    "description": "%ttl.dbg.connect.comport%"
-                  },
-                  "speed": {
-                    "type": "number",
-                    "description": "%ttl.dbg.connect.speed%"
-                  },
-                  "cdatabit": {
-                    "type": "number",
-                    "enum": [
-                      7,
-                      8
-                    ],
-                    "description": "%ttl.dbg.connect.cdatabit%"
-                  },
-                  "cparity": {
-                    "type": "string",
-                    "enum": [
-                      "none",
-                      "odd",
-                      "even",
-                      "mark",
-                      "space"
-                    ],
-                    "description": "%ttl.dbg.connect.cparity%"
-                  },
-                  "cstopbit": {
-                    "type": "number",
-                    "enum": [
-                      1,
-                      1.5,
-                      2
-                    ],
-                    "description": "%ttl.dbg.connect.cstopbit%"
-                  },
-                  "cflowctrl": {
-                    "type": "string",
-                    "enum": [
-                      "x",
-                      "hard",
-                      "none",
-                      "rtscts",
-                      "dsrdtr"
-                    ],
-                    "description": "%ttl.dbg.connect.cflowctrl%"
-                  },
-                  "cdelayperchar": {
-                    "type": "number",
-                    "description": "%ttl.dbg.connect.cdelayperchar%"
-                  },
-                  "cdelayperline": {
-                    "type": "number",
-                    "description": "%ttl.dbg.connect.cdelayperline%"
-                  },
-                  "binary": {
-                    "type": "boolean",
-                    "description": "%ttl.dbg.connect.binary%"
-                  },
-                  "waitcom": {
-                    "type": "boolean",
-                    "description": "%ttl.dbg.connect.waitcom%"
-                  },
-                  "timeout": {
-                    "type": "number",
-                    "description": "%ttl.dbg.connect.timeout%"
-                  },
                   "options": {
                     "type": "array",
                     "items": {
@@ -165,7 +88,157 @@
                     },
                     "description": "%ttl.dbg.connect.options%"
                   }
-                }
+                },
+                "allOf": [
+                  {
+                    "if": {
+                      "required": [
+                        "proto"
+                      ],
+                      "properties": {
+                        "proto": {
+                          "enum": [
+                            "ssh",
+                            "telnet"
+                          ]
+                        }
+                      }
+                    },
+                    "then": {
+                      "properties": {
+                        "host": {
+                          "type": "string",
+                          "description": "%ttl.dbg.connect.host%"
+                        },
+                        "port": {
+                          "type": "number",
+                          "description": "%ttl.dbg.connect.port%"
+                        },
+                        "timeout": {
+                          "type": "number",
+                          "description": "%ttl.dbg.connect.timeout%"
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "if": {
+                      "required": [
+                        "proto"
+                      ],
+                      "properties": {
+                        "proto": {
+                          "const": "telnet"
+                        }
+                      }
+                    },
+                    "then": {
+                      "properties": {
+                        "binary": {
+                          "type": "boolean",
+                          "description": "%ttl.dbg.connect.binary%"
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "if": {
+                      "required": [
+                        "proto"
+                      ],
+                      "properties": {
+                        "proto": {
+                          "const": "console"
+                        }
+                      }
+                    },
+                    "then": {
+                      "properties": {
+                        "comport": {
+                          "type": "number",
+                          "minimum": 1,
+                          "maximum": 256,
+                          "description": "%ttl.dbg.connect.comport%"
+                        },
+                        "speed": {
+                          "type": "number",
+                          "description": "%ttl.dbg.connect.speed%"
+                        },
+                        "cdatabit": {
+                          "type": "number",
+                          "enum": [
+                            7,
+                            8
+                          ],
+                          "description": "%ttl.dbg.connect.cdatabit%"
+                        },
+                        "cparity": {
+                          "type": "string",
+                          "enum": [
+                            "none",
+                            "odd",
+                            "even",
+                            "mark",
+                            "space"
+                          ],
+                          "description": "%ttl.dbg.connect.cparity%"
+                        },
+                        "cstopbit": {
+                          "type": "number",
+                          "enum": [
+                            1,
+                            1.5,
+                            2
+                          ],
+                          "description": "%ttl.dbg.connect.cstopbit%"
+                        },
+                        "cflowctrl": {
+                          "type": "string",
+                          "enum": [
+                            "x",
+                            "hard",
+                            "none",
+                            "rtscts",
+                            "dsrdtr"
+                          ],
+                          "description": "%ttl.dbg.connect.cflowctrl%"
+                        },
+                        "cdelayperchar": {
+                          "type": "number",
+                          "description": "%ttl.dbg.connect.cdelayperchar%"
+                        },
+                        "cdelayperline": {
+                          "type": "number",
+                          "description": "%ttl.dbg.connect.cdelayperline%"
+                        },
+                        "waitcom": {
+                          "type": "boolean",
+                          "description": "%ttl.dbg.connect.waitcom%"
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "if": {
+                      "required": [
+                        "proto"
+                      ],
+                      "properties": {
+                        "proto": {
+                          "const": "namedpipe"
+                        }
+                      }
+                    },
+                    "then": {
+                      "properties": {
+                        "host": {
+                          "type": "string",
+                          "description": "%ttl.dbg.connect.host%"
+                        }
+                      }
+                    }
+                  }
+                ]
               },
               "windowTitle": {
                 "type": "string",
