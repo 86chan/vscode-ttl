@@ -122,6 +122,11 @@
           ],
           "default": "teraterm",
           "markdownDescription": "How to run a macro. `teraterm` uses `ttermpro.exe /M=<file>` so terminal commands like `clearscreen` work without first calling `connect`. `ttpmacro` runs `ttpmacro.exe <file>` directly. Both executables are taken from `#ttl.teraTermDir#`."
+        },
+        "ttl.showNewConnectionDialog": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Show Tera Term's \"New connection\" dialog on startup when running a macro (adds `/ES` to `ttermpro.exe`). Only applies to the `teraterm` launch mode (`#ttl.runMacroVia#`)."
         }
       }
     }
