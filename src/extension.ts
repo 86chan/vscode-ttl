@@ -2,17 +2,9 @@
  * TTL (Tera Term Language) VS Code 拡張機能のエントリポイント
  */
 
-import * as childProcess from 'node:child_process';
-import * as nodeFs from 'node:fs';
 import * as nodePath from 'node:path';
 import * as vscode from 'vscode';
 import { collectDocumentWords, TTL_IDENTIFIER_PATTERN } from './completionUtils';
-import {
-  buildMacroLaunch,
-  DEFAULT_TERATERM_DIRS,
-  type RunMacroMode,
-  resolveTeraTermDir,
-} from './macroRunner';
 import { analyzeTtl, DEFAULT_MAX_NESTING_DEPTH, type TtlDiagnostic } from './diagnosticsUtils';
 import { type FormatOptions, formatTtl } from './formatUtils';
 import { extractLabelDefinition, extractLabelReferences } from './labelUtils';
@@ -689,65 +681,6 @@ async function refreshDiagnostics(
 }
 
 /**
- * 現在の TTL マクロを ttpmacro.exe で実行
- *
- * @remarks
- * 実行前にファイルを保存し、設定または既定候補から ttpmacro.exe を解決して起動する。
- * ttpmacro.exe は独立した GUI プロセスとして切り離して起動する（VS Code 終了に影響されない）。
- *
- * @param resource - エディタタイトルから渡される対象ファイルの URI（省略時はアクティブエディタ）
- */
-async function runMacro(resource?: vscode.Uri): Promise<void> {
-  const document = resource !== undefined
-    ? await vscode.workspace.openTextDocument(resource)
-    : vscode.window.activeTextEditor?.document;
-
-  if (document === undefined || document.languageId !== TTL_LANGUAGE_ID) {
-    void vscode.window.showErrorMessage('実行する .ttl ファイルをアクティブにしてください。');
-    return;
-  }
-
-  if (document.isDirty) await document.save();
-
-  const config = vscode.workspace.getConfiguration('ttl');
-  const configuredDir = config.get<string>('teraTermDir', '');
-  const mode = config.get<RunMacroMode>('runMacroVia', 'teraterm');
-  const teraTermDir = resolveTeraTermDir(
-    configuredDir,
-    DEFAULT_TERATERM_DIRS,
-    path => nodeFs.existsSync(path),
-  );
-
-  if (teraTermDir === null) {
-    const choice = await vscode.window.showErrorMessage(
-      'Tera Term が見つかりません。設定 "ttl.teraTermDir" に ttpmacro.exe / ttermpro.exe があるディレクトリを指定してください。',
-      '設定を開く',
-    );
-    if (choice === '設定を開く') {
-      void vscode.commands.executeCommand('workbench.action.openSettings', 'ttl.teraTermDir');
-    }
-    return;
-  }
-
-  const filePath = document.uri.fsPath;
-  const { executable, args } = buildMacroLaunch(teraTermDir, filePath, mode);
-  try {
-    const child = childProcess.spawn(executable, args, {
-      detached: true,
-      stdio: 'ignore',
-    });
-    child.once('error', error => {
-      void vscode.window.showErrorMessage(`マクロの起動に失敗しました: ${error.message}`);
-    });
-    child.unref();
-    void vscode.window.showInformationMessage(`マクロを実行: ${nodePath.basename(filePath)}`);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    void vscode.window.showErrorMessage(`マクロの起動に失敗しました: ${message}`);
-  }
-}
-
-/**
  * 拡張機能のアクティベーション
  *
  * @param context - 拡張機能コンテキスト
@@ -794,7 +727,6 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.languages.registerDocumentLinkProvider(selector, new TtlDocumentLinkProvider()),
     vscode.languages.registerRenameProvider(selector, new TtlRenameProvider()),
     vscode.languages.registerDocumentFormattingEditProvider(selector, new TtlFormattingProvider()),
-    vscode.commands.registerCommand('ttl.runMacro', (resource?: vscode.Uri) => runMacro(resource)),
     vscode.workspace.onWillRenameFiles(event => {
       event.waitUntil(buildIncludeRenameEdit(event.files));
     }),
