@@ -2,10 +2,17 @@
  * TTL (Tera Term Language) VS Code 拡張機能のエントリポイント
  */
 
+import * as childProcess from 'node:child_process';
+import * as nodeFs from 'node:fs';
 import * as nodePath from 'node:path';
 import * as vscode from 'vscode';
 import { collectDocumentWords, TTL_IDENTIFIER_PATTERN } from './completionUtils';
 import { analyzeTtl, DEFAULT_MAX_NESTING_DEPTH, type TtlDiagnostic } from './diagnosticsUtils';
+import {
+  buildTeraTermLaunch,
+  DEFAULT_TERATERM_DIRS,
+  resolveTeraTermDir,
+} from './macroRunner';
 import { type FormatOptions, formatTtl } from './formatUtils';
 import { extractLabelDefinition, extractLabelReferences } from './labelUtils';
 import {
@@ -680,6 +687,80 @@ async function refreshDiagnostics(
   );
 }
 
+/** TTL デバッグ構成の type 識別子 */
+const TTL_DEBUG_TYPE = 'ttl' as const;
+
+/**
+ * TTL マクロ実行用のデバッグ構成プロバイダ
+ *
+ * @remarks
+ * 実際のデバッグは行わず、launch.json の構成（program / host / connectOptions / teraTermDir）から
+ * `ttermpro.exe` を起動して即座に構成解決を中断（undefined を返す）する「ランチャ型」プロバイダ。
+ * これにより「構成の追加」メニューに TTL が並び、F5 / ▶ でマクロを実行できる。
+ */
+class TtlDebugConfigurationProvider implements vscode.DebugConfigurationProvider {
+  /**
+   * 変数置換後のデバッグ構成を解決し、Tera Term を起動する
+   *
+   * @remarks
+   * `${file}` や `${input:...}` が解決された後に呼ばれるため、ここで起動引数を確定できる。
+   * 起動後は undefined を返してデバッグセッションを開始しない（デバッグアダプタ不要）。
+   *
+   * @param _folder - ワークスペースフォルダ（未使用）
+   * @param config - 変数置換済みのデバッグ構成
+   * @returns 常に undefined（セッションは開始しない）
+   */
+  resolveDebugConfigurationWithSubstitutedVariables(
+    _folder: vscode.WorkspaceFolder | undefined,
+    config: vscode.DebugConfiguration,
+  ): vscode.ProviderResult<vscode.DebugConfiguration> {
+    const program = typeof config.program === 'string' ? config.program.trim() : '';
+    if (program === '') {
+      void vscode.window.showErrorMessage(
+        '実行するマクロ (program) が指定されていません。launch.json の "program" を確認してください。',
+      );
+      return undefined;
+    }
+
+    const configuredDir = typeof config.teraTermDir === 'string' ? config.teraTermDir : '';
+    const teraTermDir = resolveTeraTermDir(
+      configuredDir,
+      DEFAULT_TERATERM_DIRS,
+      path => nodeFs.existsSync(path),
+    );
+    if (teraTermDir === null) {
+      void vscode.window.showErrorMessage(
+        'Tera Term (ttermpro.exe) が見つかりません。launch.json の "teraTermDir" に Tera Term のフォルダを指定してください。',
+      );
+      return undefined;
+    }
+
+    const host = typeof config.host === 'string' ? config.host : undefined;
+    const connectOptions = Array.isArray(config.connectOptions)
+      ? config.connectOptions.filter((option): option is string => typeof option === 'string')
+      : [];
+
+    const { executable, args } = buildTeraTermLaunch(teraTermDir, program, host, connectOptions);
+    try {
+      const child = childProcess.spawn(executable, args, {
+        detached: true,
+        stdio: 'ignore',
+      });
+      child.once('error', error => {
+        void vscode.window.showErrorMessage(`マクロの起動に失敗しました: ${error.message}`);
+      });
+      child.unref();
+      void vscode.window.showInformationMessage(`マクロを実行: ${nodePath.basename(program)}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      void vscode.window.showErrorMessage(`マクロの起動に失敗しました: ${message}`);
+    }
+
+    // デバッグセッションは開始しない（起動のみ）
+    return undefined;
+  }
+}
+
 /**
  * 拡張機能のアクティベーション
  *
@@ -727,6 +808,10 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.languages.registerDocumentLinkProvider(selector, new TtlDocumentLinkProvider()),
     vscode.languages.registerRenameProvider(selector, new TtlRenameProvider()),
     vscode.languages.registerDocumentFormattingEditProvider(selector, new TtlFormattingProvider()),
+    vscode.debug.registerDebugConfigurationProvider(
+      TTL_DEBUG_TYPE,
+      new TtlDebugConfigurationProvider(),
+    ),
     vscode.workspace.onWillRenameFiles(event => {
       event.waitUntil(buildIncludeRenameEdit(event.files));
     }),

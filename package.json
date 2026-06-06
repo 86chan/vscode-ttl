@@ -43,6 +43,77 @@
         "path": "./syntaxes/ttl.tmLanguage.json"
       }
     ],
+    "debuggers": [
+      {
+        "type": "ttl",
+        "label": "TTL Macro (Tera Term)",
+        "languages": [
+          "ttl"
+        ],
+        "configurationAttributes": {
+          "launch": {
+            "required": [
+              "program"
+            ],
+            "properties": {
+              "program": {
+                "type": "string",
+                "description": "Macro (.ttl) file to run.",
+                "default": "${file}"
+              },
+              "host": {
+                "type": "string",
+                "description": "Connection target, e.g. 192.168.1.10:22. Leave empty to let the macro connect itself.",
+                "default": ""
+              },
+              "connectOptions": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Extra Tera Term connection options, e.g. [\"/ssh\", \"/auth=password\", \"/user=admin\"]. Used only when host is set.",
+                "default": [
+                  "/ssh"
+                ]
+              },
+              "teraTermDir": {
+                "type": "string",
+                "description": "Directory containing ttermpro.exe. Auto-detected (e.g. C:\\Program Files\\teraterm5) when empty.",
+                "default": ""
+              }
+            }
+          }
+        },
+        "initialConfigurations": [
+          {
+            "type": "ttl",
+            "request": "launch",
+            "name": "Run TTL Macro",
+            "program": "${file}",
+            "host": "",
+            "connectOptions": [
+              "/ssh"
+            ]
+          }
+        ],
+        "configurationSnippets": [
+          {
+            "label": "TTL: Run Macro (Tera Term)",
+            "description": "Run the current TTL macro with Tera Term",
+            "body": {
+              "type": "ttl",
+              "request": "launch",
+              "name": "Run TTL Macro",
+              "program": "^\"\\${file}\"",
+              "host": "",
+              "connectOptions": [
+                "/ssh"
+              ]
+            }
+          }
+        ]
+      }
+    ],
     "configuration": {
       "title": "TTL Language",
       "properties": {
