@@ -9,9 +9,9 @@ import * as vscode from 'vscode';
 import { collectDocumentWords, TTL_IDENTIFIER_PATTERN } from './completionUtils';
 import {
   buildMacroLaunch,
-  DEFAULT_TTPMACRO_PATHS,
+  DEFAULT_TERATERM_DIRS,
   type RunMacroMode,
-  resolveMacroExecutable,
+  resolveTeraTermDir,
 } from './macroRunner';
 import { analyzeTtl, DEFAULT_MAX_NESTING_DEPTH, type TtlDiagnostic } from './diagnosticsUtils';
 import { type FormatOptions, formatTtl } from './formatUtils';
@@ -710,27 +710,27 @@ async function runMacro(resource?: vscode.Uri): Promise<void> {
   if (document.isDirty) await document.save();
 
   const config = vscode.workspace.getConfiguration('ttl');
-  const configuredPath = config.get<string>('macroExecutablePath', '');
+  const configuredDir = config.get<string>('teraTermDir', '');
   const mode = config.get<RunMacroMode>('runMacroVia', 'teraterm');
-  const ttpmacroPath = resolveMacroExecutable(
-    configuredPath,
-    DEFAULT_TTPMACRO_PATHS,
+  const teraTermDir = resolveTeraTermDir(
+    configuredDir,
+    DEFAULT_TERATERM_DIRS,
     path => nodeFs.existsSync(path),
   );
 
-  if (ttpmacroPath === null) {
+  if (teraTermDir === null) {
     const choice = await vscode.window.showErrorMessage(
-      'ttpmacro.exe が見つかりません。設定 "ttl.macroExecutablePath" にフルパスを指定してください。',
+      'Tera Term が見つかりません。設定 "ttl.teraTermDir" に ttpmacro.exe / ttermpro.exe があるディレクトリを指定してください。',
       '設定を開く',
     );
     if (choice === '設定を開く') {
-      void vscode.commands.executeCommand('workbench.action.openSettings', 'ttl.macroExecutablePath');
+      void vscode.commands.executeCommand('workbench.action.openSettings', 'ttl.teraTermDir');
     }
     return;
   }
 
   const filePath = document.uri.fsPath;
-  const { executable, args } = buildMacroLaunch(ttpmacroPath, filePath, mode);
+  const { executable, args } = buildMacroLaunch(teraTermDir, filePath, mode);
   try {
     const child = childProcess.spawn(executable, args, {
       detached: true,
