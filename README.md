@@ -2,6 +2,8 @@
 
 [Tera Term](https://teratermproject.github.io/) のマクロ言語 TTL (Tera Term Language) に対応した VS Code 拡張機能です。
 
+> Tera Term は [TeraTerm Project](https://github.com/TeraTermProject/teraterm) の著作物です。本拡張は非公式であり、TeraTerm Project とは関係ありません。
+
 ## 機能
 
 - **シンタックスハイライト** — キーワード・コマンド・文字列・コメント・ラベル・演算子・システム変数
@@ -18,6 +20,8 @@
 ---
 
 [Tera Term](https://teratermproject.github.io/) macro language (TTL) support extension for Visual Studio Code.
+
+> Tera Term is a work of the [TeraTerm Project](https://github.com/TeraTermProject/teraterm). This is an unofficial extension and is not affiliated with the TeraTerm Project.
 
 - **Syntax Highlighting** — keywords, commands, strings, comments, labels, operators, system variables
 - **Code Completion** — 201 built-in commands with signatures and documentation
@@ -168,19 +172,6 @@ Non-connection Tera Term options can be set at the top level of the configuratio
 ## 動作要件 / Requirements
 
 VS Code 1.85.0 以降 / VS Code 1.85.0 or later.
-
-## 開発 / Development
-
-```sh
-npm install
-npm run compile
-
-# ユニットテスト (VS Code 不要) / Unit tests (no VS Code required)
-npm test
-
-# 統合テスト (GUI / CI with xvfb が必要) / Integration tests (requires GUI or xvfb)
-npm run test:integration
-```
 
 ## ライセンス / License
 
