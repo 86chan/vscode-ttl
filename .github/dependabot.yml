@@ -1,0 +1,28 @@
+# To get started with Dependabot version updates, you'll need to specify which
+# package ecosystems to update and where the package manifests are located.
+# Please see the documentation for all configuration options:
+# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+# Dependabotのバージョン更新設定ファイル
+version: 2
+updates:
+  # Node.js (npm) のパッケージを対象に設定
+  - package-ecosystem: "npm"
+    
+    # package.json がプロジェクトのルートディレクトリにあることを指定
+    directory: "/"
+    
+    schedule:
+      # レビュー疲れ（PRの乱発）を防ぐため、チェック頻度を「毎月」に制限
+      interval: "monthly"
+      # レビューしやすいように、毎月第1月曜日の日本時間AM 9:00（UTC AM 0:00）に実行
+      day: "monday"
+      time: "00:00"
+      timezone: "Asia/Tokyo"
+
+    # 【重要】バラバラに届くアプデPRを1つにまとめるグルーピング設定
+    groups:
+      # すべての通常アップデートを1つのPRに集約する
+      all-dependencies:
+        patterns:
+          - "*"
