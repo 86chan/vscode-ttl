@@ -43,29 +43,347 @@
         "path": "./syntaxes/ttl.tmLanguage.json"
       }
     ],
-    "commands": [
+    "debuggers": [
       {
-        "command": "ttl.runMacro",
-        "title": "Run TTL Macro",
-        "category": "TTL",
-        "icon": "$(play)"
+        "type": "ttl",
+        "label": "TTL Macro (Tera Term)",
+        "languages": [
+          "ttl"
+        ],
+        "configurationAttributes": {
+          "launch": {
+            "required": [
+              "program"
+            ],
+            "properties": {
+              "program": {
+                "type": "string",
+                "description": "%ttl.dbg.program%",
+                "default": "${file}"
+              },
+              "connect": {
+                "type": "object",
+                "description": "%ttl.dbg.connect%",
+                "properties": {
+                  "proto": {
+                    "type": "string",
+                    "enum": [
+                      "ssh",
+                      "telnet",
+                      "console",
+                      "namedpipe"
+                    ],
+                    "enumDescriptions": [
+                      "%ttl.dbg.connect.proto.ssh%",
+                      "%ttl.dbg.connect.proto.telnet%",
+                      "%ttl.dbg.connect.proto.console%",
+                      "%ttl.dbg.connect.proto.namedpipe%"
+                    ],
+                    "description": "%ttl.dbg.connect.proto%"
+                  },
+                  "options": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "%ttl.dbg.connect.options%"
+                  }
+                },
+                "allOf": [
+                  {
+                    "if": {
+                      "required": [
+                        "proto"
+                      ],
+                      "properties": {
+                        "proto": {
+                          "enum": [
+                            "ssh",
+                            "telnet"
+                          ]
+                        }
+                      }
+                    },
+                    "then": {
+                      "properties": {
+                        "host": {
+                          "type": "string",
+                          "description": "%ttl.dbg.connect.host%"
+                        },
+                        "port": {
+                          "type": "number",
+                          "description": "%ttl.dbg.connect.port%"
+                        },
+                        "timeout": {
+                          "type": "number",
+                          "description": "%ttl.dbg.connect.timeout%"
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "if": {
+                      "required": [
+                        "proto"
+                      ],
+                      "properties": {
+                        "proto": {
+                          "const": "telnet"
+                        }
+                      }
+                    },
+                    "then": {
+                      "properties": {
+                        "binary": {
+                          "type": "boolean",
+                          "description": "%ttl.dbg.connect.binary%"
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "if": {
+                      "required": [
+                        "proto"
+                      ],
+                      "properties": {
+                        "proto": {
+                          "const": "console"
+                        }
+                      }
+                    },
+                    "then": {
+                      "properties": {
+                        "comport": {
+                          "type": "number",
+                          "minimum": 1,
+                          "maximum": 256,
+                          "description": "%ttl.dbg.connect.comport%"
+                        },
+                        "speed": {
+                          "type": "number",
+                          "description": "%ttl.dbg.connect.speed%"
+                        },
+                        "cdatabit": {
+                          "type": "number",
+                          "enum": [
+                            7,
+                            8
+                          ],
+                          "description": "%ttl.dbg.connect.cdatabit%"
+                        },
+                        "cparity": {
+                          "type": "string",
+                          "enum": [
+                            "none",
+                            "odd",
+                            "even",
+                            "mark",
+                            "space"
+                          ],
+                          "description": "%ttl.dbg.connect.cparity%"
+                        },
+                        "cstopbit": {
+                          "type": "number",
+                          "enum": [
+                            1,
+                            1.5,
+                            2
+                          ],
+                          "description": "%ttl.dbg.connect.cstopbit%"
+                        },
+                        "cflowctrl": {
+                          "type": "string",
+                          "enum": [
+                            "x",
+                            "hard",
+                            "none",
+                            "rtscts",
+                            "dsrdtr"
+                          ],
+                          "description": "%ttl.dbg.connect.cflowctrl%"
+                        },
+                        "cdelayperchar": {
+                          "type": "number",
+                          "description": "%ttl.dbg.connect.cdelayperchar%"
+                        },
+                        "cdelayperline": {
+                          "type": "number",
+                          "description": "%ttl.dbg.connect.cdelayperline%"
+                        },
+                        "waitcom": {
+                          "type": "boolean",
+                          "description": "%ttl.dbg.connect.waitcom%"
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "if": {
+                      "required": [
+                        "proto"
+                      ],
+                      "properties": {
+                        "proto": {
+                          "const": "namedpipe"
+                        }
+                      }
+                    },
+                    "then": {
+                      "properties": {
+                        "host": {
+                          "type": "string",
+                          "description": "%ttl.dbg.connect.host%"
+                        }
+                      }
+                    }
+                  }
+                ],
+                "unevaluatedProperties": false
+              },
+              "windowTitle": {
+                "type": "string",
+                "description": "%ttl.dbg.windowTitle%"
+              },
+              "setupFile": {
+                "type": "string",
+                "description": "%ttl.dbg.setupFile%"
+              },
+              "keyboardFile": {
+                "type": "string",
+                "description": "%ttl.dbg.keyboardFile%"
+              },
+              "logFile": {
+                "type": "string",
+                "description": "%ttl.dbg.logFile%"
+              },
+              "noLog": {
+                "type": "boolean",
+                "description": "%ttl.dbg.noLog%"
+              },
+              "replayFile": {
+                "type": "string",
+                "description": "%ttl.dbg.replayFile%"
+              },
+              "fileTransferDir": {
+                "type": "string",
+                "description": "%ttl.dbg.fileTransferDir%"
+              },
+              "theme": {
+                "type": "string",
+                "description": "%ttl.dbg.theme%"
+              },
+              "vtIcon": {
+                "type": "string",
+                "description": "%ttl.dbg.vtIcon%"
+              },
+              "tekIcon": {
+                "type": "string",
+                "description": "%ttl.dbg.tekIcon%"
+              },
+              "hideTitleBar": {
+                "type": "boolean",
+                "description": "%ttl.dbg.hideTitleBar%"
+              },
+              "iconify": {
+                "type": "boolean",
+                "description": "%ttl.dbg.iconify%"
+              },
+              "hidden": {
+                "type": "boolean",
+                "description": "%ttl.dbg.hidden%"
+              },
+              "windowX": {
+                "type": "number",
+                "description": "%ttl.dbg.windowX%"
+              },
+              "windowY": {
+                "type": "number",
+                "description": "%ttl.dbg.windowY%"
+              },
+              "kanjiReceive": {
+                "type": "string",
+                "description": "%ttl.dbg.kanjiReceive%"
+              },
+              "kanjiTransmit": {
+                "type": "string",
+                "description": "%ttl.dbg.kanjiTransmit%"
+              },
+              "multicastName": {
+                "type": "string",
+                "description": "%ttl.dbg.multicastName%"
+              },
+              "osc52": {
+                "type": "string",
+                "description": "%ttl.dbg.osc52%"
+              },
+              "autoWinClose": {
+                "type": "boolean",
+                "description": "%ttl.dbg.autoWinClose%"
+              },
+              "disableLocalEcho": {
+                "type": "boolean",
+                "description": "%ttl.dbg.disableLocalEcho%"
+              },
+              "newConnectionDialog": {
+                "type": "boolean",
+                "description": "%ttl.dbg.newConnectionDialog%"
+              },
+              "teraTermDir": {
+                "type": "string",
+                "description": "%ttl.dbg.teraTermDir%",
+                "default": ""
+              }
+            }
+          }
+        },
+        "initialConfigurations": [
+          {
+            "type": "ttl",
+            "request": "launch",
+            "name": "Run TTL Macro",
+            "program": "${file}",
+            "connect": {
+              "proto": "ssh",
+              "host": "192.168.0.100",
+              "port": 22
+            }
+          }
+        ],
+        "configurationSnippets": [
+          {
+            "label": "TTL: Run Macro (SSH)",
+            "description": "Run the current TTL macro over SSH",
+            "body": {
+              "type": "ttl",
+              "request": "launch",
+              "name": "Run TTL Macro (SSH)",
+              "program": "^\"\\${file}\"",
+              "connect": {
+                "proto": "ssh",
+                "host": "192.168.0.100",
+                "port": 22
+              }
+            }
+          },
+          {
+            "label": "TTL: Run Macro (Serial)",
+            "description": "Run the current TTL macro over a serial / COM port",
+            "body": {
+              "type": "ttl",
+              "request": "launch",
+              "name": "Run TTL Macro (Serial)",
+              "program": "^\"\\${file}\"",
+              "connect": {
+                "proto": "console",
+                "comport": 1,
+                "speed": 115200
+              }
+            }
+          }
+        ]
       }
     ],
-    "menus": {
-      "commandPalette": [
-        {
-          "command": "ttl.runMacro",
-          "when": "resourceLangId == ttl"
-        }
-      ],
-      "editor/title/run": [
-        {
-          "command": "ttl.runMacro",
-          "when": "resourceLangId == ttl",
-          "group": "navigation"
-        }
-      ]
-    },
     "configuration": {
       "title": "TTL Language",
       "properties": {
@@ -104,11 +422,6 @@
           "type": "boolean",
           "default": true,
           "description": "Warn when the same label is defined more than once."
-        },
-        "ttl.macroExecutablePath": {
-          "type": "string",
-          "default": "",
-          "markdownDescription": "Full path to Tera Term's macro interpreter `ttpmacro.exe`, used to run the current `.ttl` file. When empty, common install locations such as `C:\\Program Files\\teraterm5\\ttpmacro.exe` are tried automatically. Example: `C:\\Program Files\\teraterm5\\ttpmacro.exe`."
         }
       }
     }
