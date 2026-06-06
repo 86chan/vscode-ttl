@@ -11,8 +11,10 @@ import { analyzeTtl, DEFAULT_MAX_NESTING_DEPTH, type TtlDiagnostic } from './dia
 import {
   buildConnectArgs,
   buildTeraTermLaunch,
+  buildTeraTermOptions,
   DEFAULT_TERATERM_DIRS,
   resolveTeraTermDir,
+  type TeraTermOptions,
   type TtlConnect,
 } from './macroRunner';
 import { type FormatOptions, formatTtl } from './formatUtils';
@@ -741,9 +743,13 @@ class TtlDebugConfigurationProvider implements vscode.DebugConfigurationProvider
       typeof config.connect === 'object' && config.connect !== null
         ? (config.connect as TtlConnect)
         : {};
-    const connectArgs = buildConnectArgs(connect);
+    // 一般オプションは構成のトップレベルから読む（program/connect/teraTermDir 以外）
+    const optionArgs = [
+      ...buildConnectArgs(connect),
+      ...buildTeraTermOptions(config as unknown as TeraTermOptions),
+    ];
 
-    const { executable, args } = buildTeraTermLaunch(teraTermDir, program, connectArgs);
+    const { executable, args } = buildTeraTermLaunch(teraTermDir, program, optionArgs);
     try {
       const child = childProcess.spawn(executable, args, {
         detached: true,

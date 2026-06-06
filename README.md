@@ -118,6 +118,42 @@ Use `${input:ttlHost}` for `connect.host` (with an `inputs` entry) to prompt for
 }
 ```
 
+### その他のオプション / Other options
+
+接続以外の Tera Term 起動オプションも構成のトップレベルに指定できます（説明は VS Code の表示言語で日本語/英語に切り替わります）。
+
+Non-connection Tera Term options can be set at the top level of the configuration (descriptions are shown in Japanese or English depending on the VS Code display language).
+
+| 構成キー / key | Tera Term | 説明 / description |
+|---|---|---|
+| `windowTitle` | `/W=` | ウィンドウタイトル / Window title |
+| `setupFile` | `/F=` | 設定ファイル / Setup file |
+| `keyboardFile` | `/K=` | キーボード設定 / Keyboard setup file |
+| `logFile` / `noLog` | `/L=` / `/NOLOG` | ログ開始 / 開始しない |
+| `replayFile` | `/R=` | 再生ファイル / Replay file |
+| `fileTransferDir` | `/FD=` | 転送ディレクトリ / File transfer dir |
+| `theme` | `/THEME=` | テーマ / Theme file |
+| `vtIcon` / `tekIcon` | `/VTICON=` / `/TEKICON=` | ウィンドウアイコン / Window icons |
+| `hideTitleBar` / `iconify` / `hidden` | `/H` / `/I` / `/V` | タイトルバー非表示 / アイコン化 / 非表示起動 |
+| `windowX` / `windowY` | `/X=` / `/Y=` | ウィンドウ位置 / Window position |
+| `kanjiReceive` / `kanjiTransmit` | `/KR=` / `/KT=` | 漢字コード 受信/送信 |
+| `multicastName` | `/MN=` | マルチキャスト名 / Multicast name |
+| `osc52` | `/OSC52=` | クリップボード許可操作 / Clipboard access |
+| `autoWinClose` | `/AUTOWINCLOSE=` | 切断時に自動で閉じる / Auto close |
+| `disableLocalEcho` | `/E` | ローカルエコー無効 / Disable local echo |
+| `newConnectionDialog` | `/ES` `/DS` | 新しい接続ダイアログ 表示/非表示 |
+
+接続側 (`connect`) は `binary`(`/B`)・`waitcom`(`/WAITCOM`)・`timeout`(`/TIMEOUT=`)・`proto: "namedpipe"`(`/PIPE`) にも対応します。スキーマ未対応のオプションは `connect.options` に生で書けます。
+
+```jsonc
+{
+  "type": "ttl", "request": "launch", "name": "Run TTL Macro",
+  "program": "${file}",
+  "connect": { "proto": "ssh", "host": "192.168.0.100", "port": 22, "timeout": 15 },
+  "windowTitle": "Deploy", "logFile": "${workspaceFolder}/session.log", "hidden": false
+}
+```
+
 ## 対応構文 / Supported Syntax
 
 | 構文 | 例 |
