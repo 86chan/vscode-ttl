@@ -8,6 +8,7 @@
 
 import { describe, it, expect } from 'vitest';
 import {
+  buildConnectArgs,
   buildTeraTermLaunch,
   DEFAULT_TERATERM_DIRS,
   resolveTeraTermDir,
@@ -46,6 +47,73 @@ describe('resolveTeraTermDir', () => {
   });
 });
 
+describe('buildConnectArgs', () => {
+  it('ssh: host:port と /ssh を生成する', () => {
+    expect(buildConnectArgs({ proto: 'ssh', host: '192.168.0.100', port: 22 })).toEqual([
+      '192.168.0.100:22',
+      '/ssh',
+    ]);
+  });
+
+  it('ssh: port 省略時は host のみ + /ssh', () => {
+    expect(buildConnectArgs({ proto: 'ssh', host: 'myhost' })).toEqual(['myhost', '/ssh']);
+  });
+
+  it('telnet: host:port と /nossh /T=1 を生成する', () => {
+    expect(buildConnectArgs({ proto: 'telnet', host: 'myhost', port: 23 })).toEqual([
+      'myhost:23',
+      '/nossh',
+      '/T=1',
+    ]);
+  });
+
+  it('console: 指定したシリアルパラメータを /Cxxx= オプションに変換する', () => {
+    const args = buildConnectArgs({
+      proto: 'console',
+      comport: 3,
+      speed: 115200,
+      cdatabit: 8,
+      cparity: 'none',
+      cstopbit: 1,
+      cflowctrl: 'hard',
+      cdelayperchar: 0,
+      cdelayperline: 5,
+    });
+    expect(args).toEqual([
+      '/C=3',
+      '/BAUD=115200',
+      '/CDATABIT=8',
+      '/CPARITY=none',
+      '/CSTOPBIT=1',
+      '/CFLOWCTRL=hard',
+      '/CDELAYPERCHAR=0',
+      '/CDELAYPERLINE=5',
+    ]);
+  });
+
+  it('console: 未指定の項目はオプションを出さない', () => {
+    expect(buildConnectArgs({ proto: 'console', comport: 1 })).toEqual(['/C=1']);
+  });
+
+  it('proto 省略時は comport があれば console と推測する', () => {
+    expect(buildConnectArgs({ comport: 5, speed: 9600 })).toEqual(['/C=5', '/BAUD=9600']);
+  });
+
+  it('proto 省略時は host があれば ssh と推測する', () => {
+    expect(buildConnectArgs({ host: 'h', port: 22 })).toEqual(['h:22', '/ssh']);
+  });
+
+  it('options は生のまま末尾に付与する', () => {
+    expect(
+      buildConnectArgs({ proto: 'ssh', host: 'h', options: ['/auth=password', '/user=admin'] }),
+    ).toEqual(['h', '/ssh', '/auth=password', '/user=admin']);
+  });
+
+  it('空の接続設定では何も生成しない', () => {
+    expect(buildConnectArgs({})).toEqual([]);
+  });
+});
+
 describe('buildTeraTermLaunch', () => {
   const DIR = 'C:\\Program Files\\teraterm5';
   const MACRO = 'C:\\Users\\me\\scripts\\login.ttl';
@@ -54,26 +122,12 @@ describe('buildTeraTermLaunch', () => {
     expect(buildTeraTermLaunch('D:\\tt', MACRO).executable).toBe('D:\\tt\\ttermpro.exe');
   });
 
-  it('host 指定時は host・接続オプション・/M= の順で引数を組み立てる', () => {
-    const launch = buildTeraTermLaunch(DIR, MACRO, '192.168.1.10:22', ['/ssh', '/user=admin']);
-    expect(launch.args).toEqual(['192.168.1.10:22', '/ssh', '/user=admin', `/M=${MACRO}`]);
+  it('接続オプション・/M= の順で引数を組み立てる', () => {
+    const launch = buildTeraTermLaunch(DIR, MACRO, ['192.168.0.100:22', '/ssh']);
+    expect(launch.args).toEqual(['192.168.0.100:22', '/ssh', `/M=${MACRO}`]);
   });
 
-  it('host・connectOptions ともに無ければ /M= のみ', () => {
+  it('接続オプションが無ければ /M= のみ', () => {
     expect(buildTeraTermLaunch(DIR, MACRO).args).toEqual([`/M=${MACRO}`]);
-  });
-
-  it('シリアル接続: host 無しでも connectOptions（/C= /BAUD=）を付与する', () => {
-    const launch = buildTeraTermLaunch(DIR, MACRO, '', ['/C=1', '/BAUD=115200']);
-    expect(launch.args).toEqual(['/C=1', '/BAUD=115200', `/M=${MACRO}`]);
-  });
-
-  it('host が空白のみでも connectOptions は付与する', () => {
-    expect(buildTeraTermLaunch(DIR, MACRO, '   ', ['/C=3']).args).toEqual(['/C=3', `/M=${MACRO}`]);
-  });
-
-  it('host の前後空白はトリムする', () => {
-    const launch = buildTeraTermLaunch(DIR, MACRO, '  host:22  ');
-    expect(launch.args).toEqual(['host:22', `/M=${MACRO}`]);
   });
 });
