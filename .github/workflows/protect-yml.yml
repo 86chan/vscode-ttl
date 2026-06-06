@@ -3,7 +3,7 @@ name: Protect yml
 on:
   pull_request:
     paths:
-      - '**/*.yml'
+      - '.github/workflows/*.yml'
 
 permissions:
   contents: read
