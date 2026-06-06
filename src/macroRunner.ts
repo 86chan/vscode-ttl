@@ -61,14 +61,18 @@ export interface TeraTermLaunch {
  * `ttermpro.exe` の起動コマンドを組み立てる
  *
  * @remarks
- * `host` が指定されていれば `ttermpro.exe <host> <connectOptions...> /M=<program>` となり、接続しつつマクロを実行する。
- * `host` が空なら `ttermpro.exe /M=<program>` のみ（接続はマクロ内の `connect` に委ねる）。
+ * 引数は `<host?> <connectOptions...> /M=<program>` の順。
+ * - TCP/IP 接続: `host` に接続先（例 `192.168.1.10:22`）、`connectOptions` に `['/ssh', ...]` を指定。
+ * - シリアル接続: `host` は空のまま、`connectOptions` に `['/C=1', '/BAUD=115200']` 等を指定。
+ * - `host` も `connectOptions` も無ければ `ttermpro.exe /M=<program>` のみ（接続はマクロ内の `connect` に委ねる）。
+ *
+ * `connectOptions` は `host` の有無に関係なく常に付与する（シリアル接続は host を持たないため）。
  * 実行ファイルは Windows パス規則で導出する。
  *
  * @param teraTermDir - 解決済みの Tera Term インストールディレクトリ
  * @param program - 実行するマクロファイルの絶対パス
- * @param host - 接続先（例: `192.168.1.10:22`）。未指定/空なら接続引数を付けない
- * @param connectOptions - 追加の接続オプション（例: `['/ssh', '/user=admin']`）
+ * @param host - TCP/IP 接続先（例: `192.168.1.10:22`）。未指定/空なら付与しない
+ * @param connectOptions - 接続オプション（例: `['/ssh']` や `['/C=1', '/BAUD=115200']`）
  * @returns 実行ファイルと引数
  */
 export function buildTeraTermLaunch(
@@ -80,8 +84,9 @@ export function buildTeraTermLaunch(
   const args: string[] = [];
   const trimmedHost = host?.trim();
   if (trimmedHost !== undefined && trimmedHost.length > 0) {
-    args.push(trimmedHost, ...connectOptions);
+    args.push(trimmedHost);
   }
+  args.push(...connectOptions);
   args.push(`/M=${program}`);
   return {
     executable: nodePath.win32.join(teraTermDir, TERATERM_EXE),
