@@ -9,9 +9,11 @@ import * as vscode from 'vscode';
 import { collectDocumentWords, TTL_IDENTIFIER_PATTERN } from './completionUtils';
 import { analyzeTtl, DEFAULT_MAX_NESTING_DEPTH, type TtlDiagnostic } from './diagnosticsUtils';
 import {
+  buildConnectArgs,
   buildTeraTermLaunch,
   DEFAULT_TERATERM_DIRS,
   resolveTeraTermDir,
+  type TtlConnect,
 } from './macroRunner';
 import { type FormatOptions, formatTtl } from './formatUtils';
 import { extractLabelDefinition, extractLabelReferences } from './labelUtils';
@@ -735,12 +737,13 @@ class TtlDebugConfigurationProvider implements vscode.DebugConfigurationProvider
       return undefined;
     }
 
-    const host = typeof config.host === 'string' ? config.host : undefined;
-    const connectOptions = Array.isArray(config.connectOptions)
-      ? config.connectOptions.filter((option): option is string => typeof option === 'string')
-      : [];
+    const connect: TtlConnect =
+      typeof config.connect === 'object' && config.connect !== null
+        ? (config.connect as TtlConnect)
+        : {};
+    const connectArgs = buildConnectArgs(connect);
 
-    const { executable, args } = buildTeraTermLaunch(teraTermDir, program, host, connectOptions);
+    const { executable, args } = buildTeraTermLaunch(teraTermDir, program, connectArgs);
     try {
       const child = childProcess.spawn(executable, args, {
         detached: true,
