@@ -2,48 +2,54 @@
  * TTL マクロ実行のためのパス解決ユーティリティ（VS Code API 非依存）
  *
  * @remarks
- * `ttpmacro.exe` の場所を、ユーザー設定または一般的なインストール先から決定する純粋ロジックを集約し、
- * テスト容易性を確保する。実際のプロセス起動は VS Code 層（extension.ts）で行う。
+ * Tera Term の実行ファイルが置かれたディレクトリを、ユーザー設定または一般的なインストール先から決定する
+ * 純粋ロジックを集約し、テスト容易性を確保する。実際のプロセス起動は VS Code 層（extension.ts）で行う。
  */
 
 import * as nodePath from 'node:path';
 
+/** マクロエンジンの実行ファイル名 */
+const TTPMACRO_EXE = 'ttpmacro.exe';
+
+/** Tera Term 本体（端末）の実行ファイル名 */
+const TERATERM_EXE = 'ttermpro.exe';
+
 /**
- * `ttpmacro.exe` の一般的なインストール先候補
+ * Tera Term の一般的なインストールディレクトリ候補
  *
  * @remarks
  * Tera Term 5 系・4 系および 32bit/64bit のインストール先を順に探索する。
- * `ttpmacro.exe` は `ttermpro.exe` と同じフォルダに置かれる。
+ * このディレクトリに `ttpmacro.exe` と `ttermpro.exe` が同居している。
  */
-export const DEFAULT_TTPMACRO_PATHS: readonly string[] = [
-  'C:\\Program Files\\teraterm5\\ttpmacro.exe',
-  'C:\\Program Files (x86)\\teraterm5\\ttpmacro.exe',
-  'C:\\Program Files\\teraterm\\ttpmacro.exe',
-  'C:\\Program Files (x86)\\teraterm\\ttpmacro.exe',
+export const DEFAULT_TERATERM_DIRS: readonly string[] = [
+  'C:\\Program Files\\teraterm5',
+  'C:\\Program Files (x86)\\teraterm5',
+  'C:\\Program Files\\teraterm',
+  'C:\\Program Files (x86)\\teraterm',
 ];
 
 /**
- * 使用する `ttpmacro.exe` の実行パスを解決
+ * 使用する Tera Term のインストールディレクトリを解決
  *
  * @remarks
  * - 設定値が指定されていれば、それを最優先で尊重する（存在チェックはせず、誤りは起動失敗として表面化させる）。
- * - 設定が空のときのみ、既定候補を順に存在チェックして最初に見つかったものを採用する。
+ * - 設定が空のときのみ、既定候補のうち `ttpmacro.exe` が存在する最初のディレクトリを採用する。
  *
- * @param configuredPath - 設定 `ttl.macroExecutablePath` の値（空文字可）
- * @param candidates - 自動探索する既定候補のパス配列
+ * @param configuredDir - 設定 `ttl.teraTermDir` の値（空文字可）
+ * @param candidates - 自動探索する既定候補のディレクトリ配列
  * @param exists - パスの存在を判定する関数
- * @returns 使用する実行パス、または見つからない場合は null
+ * @returns 使用するディレクトリ、または見つからない場合は null
  */
-export function resolveMacroExecutable(
-  configuredPath: string,
+export function resolveTeraTermDir(
+  configuredDir: string,
   candidates: readonly string[],
   exists: (path: string) => boolean,
 ): string | null {
-  const trimmed = configuredPath.trim();
+  const trimmed = configuredDir.trim();
   if (trimmed.length > 0) return trimmed;
 
-  for (const candidate of candidates) {
-    if (exists(candidate)) return candidate;
+  for (const dir of candidates) {
+    if (exists(nodePath.win32.join(dir, TTPMACRO_EXE))) return dir;
   }
   return null;
 }
@@ -70,24 +76,26 @@ export interface MacroLaunch {
  * 起動方式に応じて実行ファイルと引数を組み立てる
  *
  * @remarks
- * `teraterm` 方式では、`ttpmacro.exe` と同じフォルダにある `ttermpro.exe` を Windows パス規則で導出する。
+ * 実行ファイルは Tera Term ディレクトリから Windows パス規則で導出する。
  *
- * @param ttpmacroPath - 解決済みの `ttpmacro.exe` パス
+ * @param teraTermDir - 解決済みの Tera Term インストールディレクトリ
  * @param macroFilePath - 実行するマクロファイルの絶対パス
  * @param mode - 起動方式
  * @returns 実行ファイルと引数
  */
 export function buildMacroLaunch(
-  ttpmacroPath: string,
+  teraTermDir: string,
   macroFilePath: string,
   mode: RunMacroMode,
 ): MacroLaunch {
   if (mode === 'teraterm') {
-    const teraTermPath = nodePath.win32.join(
-      nodePath.win32.dirname(ttpmacroPath),
-      'ttermpro.exe',
-    );
-    return { executable: teraTermPath, args: [`/M=${macroFilePath}`] };
+    return {
+      executable: nodePath.win32.join(teraTermDir, TERATERM_EXE),
+      args: [`/M=${macroFilePath}`],
+    };
   }
-  return { executable: ttpmacroPath, args: [macroFilePath] };
+  return {
+    executable: nodePath.win32.join(teraTermDir, TTPMACRO_EXE),
+    args: [macroFilePath],
+  };
 }
