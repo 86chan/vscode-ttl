@@ -238,7 +238,8 @@
                       }
                     }
                   }
-                ]
+                ],
+                "unevaluatedProperties": false
               },
               "windowTitle": {
                 "type": "string",
