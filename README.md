@@ -11,6 +11,7 @@
 - **参照検索** — ラベルの定義・参照（`goto`/`call`）の一覧を表示 (Shift+F12)
 - **アウトライン / シンボル** — ラベル定義と `include` をパンくず・アウトライン・シンボル検索（Ctrl+Shift+O）に表示
 - **include リンク** — `include 'path'` のパスを Ctrl+クリックで開く
+- **マクロ実行（デバッグ構成）** — `launch.json` の「構成の追加」に **TTL Macro (Tera Term)** が並び、F5 / ▶ で現在のマクロを Tera Term で実行。接続先（`host`）やマクロ（`program`）を構成の引数で指定（[使い方](#マクロ実行--running-macros)）
 - **コード整形** — `if`/`for`/`while`/`do` などのブロック構造に応じて自動インデント。コメント内に書かれた Markdown テーブルも全角文字を考慮して桁揃え (Shift+Alt+F)
 - **診断（エラー/警告）** — 無効な演算子（`&&`/`++`/`+=` など）、システム変数（`result` など）への代入、条件式での単独 `=`（比較は `==` を推奨）、ブロックの閉じ忘れ（`endif`/`next` など）、深すぎるネスト（既定 2 段）、未知のコマンド（近いコマンドを提案）、未定義ラベルへの `goto`/`call`（include 先も解決）、重複したラベル定義を検出
 
@@ -25,6 +26,7 @@
 - **Find All References** — list a label's definition and references (`goto`/`call`) (Shift+F12)
 - **Outline / Symbols** — labels and `include`s shown in breadcrumbs, outline, and symbol search (Ctrl+Shift+O)
 - **Include Links** — Ctrl+click the path in `include 'path'` to open the file
+- **Run Macro (debug config)** — **TTL Macro (Tera Term)** appears in launch.json's "Add Configuration", and F5 / ▶ runs the current macro with Tera Term. Specify the connection target (`host`) and macro (`program`) as configuration arguments ([usage](#マクロ実行--running-macros))
 - **Code Formatting** — auto-indent based on block structures such as `if`/`for`/`while`/`do`, plus alignment of Markdown tables written inside comments (full-width aware) (Shift+Alt+F)
 - **Diagnostics (Errors/Warnings)** — detects invalid operators (`&&`, `++`, `+=`, etc.), assignments to system variables (e.g. `result`), a single `=` used for comparison (suggests `==`), unclosed blocks (missing `endif`/`next`, etc.), excessive nesting (default depth 2, configurable via `ttl.maxNestingDepth`), unknown commands (suggests the closest command), `goto`/`call` to undefined labels (includes resolved), and duplicate label definitions
 
@@ -54,6 +56,40 @@ Individual diagnostics can be toggled (all default `true`):
 "ttl.diagnostics.undefinedLabel": true,
 "ttl.diagnostics.unknownCommand": true,
 "ttl.diagnostics.duplicateLabel": true
+```
+
+## マクロ実行 / Running Macros
+
+`launch.json` のデバッグ構成として実行します。**実行とデバッグ** パネルで「launch.json ファイルを作成」→ **TTL Macro (Tera Term)** を選ぶか、`launch.json` の「構成の追加」から追加します。F5 または ▶ で起動します（Windows + Tera Term が必要）。
+
+Run macros as a debug configuration. In the **Run and Debug** view, "create a launch.json file" → pick **TTL Macro (Tera Term)**, or use "Add Configuration" in `launch.json`. Launch with F5 or ▶ (requires Windows + Tera Term).
+
+```jsonc
+{
+  "type": "ttl",
+  "request": "launch",
+  "name": "Run TTL Macro",
+  "program": "${file}",           // 実行するマクロ / macro to run
+  "host": "192.168.1.10:22",       // 接続先（空ならマクロ内の connect に委ねる）/ connection target (empty = macro connects itself)
+  "connectOptions": ["/ssh", "/auth=password", "/user=admin"],
+  "teraTermDir": ""                 // 空なら自動探索 / auto-detected when empty
+}
+```
+
+- `host` を空にすると `ttermpro.exe /M=<file>` のみで起動し、接続はマクロ内の `connect` に任せます。
+- `host` に `${input:ttlHost}` を指定し、`launch.json` に `inputs` を足せば、実行時に接続先を入力できます。
+
+```jsonc
+// 接続先を都度入力する例 / prompt for the host on each run
+{
+  "configurations": [
+    { "type": "ttl", "request": "launch", "name": "Run TTL Macro (prompt host)",
+      "program": "${file}", "host": "${input:ttlHost}", "connectOptions": ["/ssh"] }
+  ],
+  "inputs": [
+    { "id": "ttlHost", "type": "promptString", "description": "接続先 / Host (e.g. 192.168.1.10:22)" }
+  ]
+}
 ```
 
 ## 対応構文 / Supported Syntax
