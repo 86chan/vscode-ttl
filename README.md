@@ -11,7 +11,7 @@
 - **参照検索** — ラベルの定義・参照（`goto`/`call`）の一覧を表示 (Shift+F12)
 - **アウトライン / シンボル** — ラベル定義と `include` をパンくず・アウトライン・シンボル検索（Ctrl+Shift+O）に表示
 - **include リンク** — `include 'path'` のパスを Ctrl+クリックで開く
-- **マクロ実行** — 現在の `.ttl` を `ttpmacro.exe` で実行（エディタ右上の ▶ ボタン、またはコマンド「Run TTL Macro」）。実行ファイルのパスは `ttl.macroExecutablePath` で指定（空なら一般的なインストール先を自動探索）
+- **マクロ実行（デバッグ構成）** — `launch.json` の「構成の追加」に **TTL Macro (Tera Term)** が並び、F5 / ▶ で現在のマクロを Tera Term で実行。接続（SSH/Telnet/シリアル）を構造化した `connect` で指定（[使い方](#マクロ実行--running-macros)）
 - **コード整形** — `if`/`for`/`while`/`do` などのブロック構造に応じて自動インデント。コメント内に書かれた Markdown テーブルも全角文字を考慮して桁揃え (Shift+Alt+F)
 - **診断（エラー/警告）** — 無効な演算子（`&&`/`++`/`+=` など）、システム変数（`result` など）への代入、条件式での単独 `=`（比較は `==` を推奨）、ブロックの閉じ忘れ（`endif`/`next` など）、深すぎるネスト（既定 2 段）、未知のコマンド（近いコマンドを提案）、未定義ラベルへの `goto`/`call`（include 先も解決）、重複したラベル定義を検出
 
@@ -26,7 +26,7 @@
 - **Find All References** — list a label's definition and references (`goto`/`call`) (Shift+F12)
 - **Outline / Symbols** — labels and `include`s shown in breadcrumbs, outline, and symbol search (Ctrl+Shift+O)
 - **Include Links** — Ctrl+click the path in `include 'path'` to open the file
-- **Run Macro** — run the current `.ttl` with `ttpmacro.exe` (▶ button in the editor title, or the "Run TTL Macro" command). Set the executable via `ttl.macroExecutablePath` (auto-detects common install locations when empty)
+- **Run Macro (debug config)** — **TTL Macro (Tera Term)** appears in launch.json's "Add Configuration", and F5 / ▶ runs the current macro with Tera Term. Describe the connection (SSH / Telnet / serial) with a structured `connect` object ([usage](#マクロ実行--running-macros))
 - **Code Formatting** — auto-indent based on block structures such as `if`/`for`/`while`/`do`, plus alignment of Markdown tables written inside comments (full-width aware) (Shift+Alt+F)
 - **Diagnostics (Errors/Warnings)** — detects invalid operators (`&&`, `++`, `+=`, etc.), assignments to system variables (e.g. `result`), a single `=` used for comparison (suggests `==`), unclosed blocks (missing `endif`/`next`, etc.), excessive nesting (default depth 2, configurable via `ttl.maxNestingDepth`), unknown commands (suggests the closest command), `goto`/`call` to undefined labels (includes resolved), and duplicate label definitions
 
@@ -58,12 +58,100 @@ Individual diagnostics can be toggled (all default `true`):
 "ttl.diagnostics.duplicateLabel": true
 ```
 
-マクロ実行に使う `ttpmacro.exe` のパス（空なら自動探索）。
+## マクロ実行 / Running Macros
 
-Path to `ttpmacro.exe` used to run macros (auto-detected when empty):
+`launch.json` のデバッグ構成として実行します。**実行とデバッグ** パネルで「launch.json ファイルを作成」→ **TTL Macro (Tera Term)** を選ぶか、`launch.json` の「構成の追加」から追加します。F5 または ▶ で起動します（Windows + Tera Term が必要）。
 
-```json
-"ttl.macroExecutablePath": "C:\\Program Files\\teraterm5\\ttpmacro.exe"
+Run macros as a debug configuration. In the **Run and Debug** view, "create a launch.json file" → pick **TTL Macro (Tera Term)**, or use "Add Configuration" in `launch.json`. Launch with F5 or ▶ (requires Windows + Tera Term).
+
+接続は構造化した `connect` オブジェクトで記述し、拡張が Tera Term の CLI オプションに変換します。`connect` を省略すると接続せずに起動し、接続はマクロ内の `connect` に委ねます。
+
+Describe the connection with a structured `connect` object; the extension translates it to Tera Term CLI options. Omit `connect` to launch without connecting (the macro's own `connect` handles it).
+
+```jsonc
+// SSH
+{
+  "type": "ttl", "request": "launch", "name": "Run TTL Macro (SSH)",
+  "program": "${file}",            // 実行するマクロ / macro to run
+  "connect": {
+    "proto": "ssh",                // "ssh" | "telnet" | "console"(=serial)
+    "host": "192.168.0.100",
+    "port": 22,
+    "options": ["/auth=password", "/user=admin"]  // 追加の生オプション / extra raw options
+  },
+  "teraTermDir": ""                 // 空なら自動探索 / auto-detected when empty
+}
+// → ttermpro.exe 192.168.0.100:22 /ssh /auth=password /user=admin /M=<file>
+```
+
+```jsonc
+// シリアル / Serial (console)
+{
+  "type": "ttl", "request": "launch", "name": "Run TTL Macro (Serial)",
+  "program": "${file}",
+  "connect": {
+    "proto": "console",
+    "comport": 3,        // COM ポート番号 / COM port (1–256)
+    "speed": 115200,     // ボーレート / baud
+    "cdatabit": 8,       // 7 | 8
+    "cparity": "none",   // none | odd | even | mark | space
+    "cstopbit": 1,       // 1 | 1.5 | 2
+    "cflowctrl": "hard"  // x | hard | none | rtscts | dsrdtr
+  }
+}
+// → ttermpro.exe /C=3 /BAUD=115200 /CDATABIT=8 /CPARITY=none /CSTOPBIT=1 /CFLOWCTRL=hard /M=<file>
+```
+
+`connect.host` に `${input:ttlHost}` を指定し、`launch.json` に `inputs` を足せば、実行時に接続先を入力できます。
+
+Use `${input:ttlHost}` for `connect.host` (with an `inputs` entry) to prompt for the host on each run:
+
+```jsonc
+{
+  "configurations": [
+    { "type": "ttl", "request": "launch", "name": "Run TTL Macro (prompt host)",
+      "program": "${file}", "connect": { "proto": "ssh", "host": "${input:ttlHost}", "port": 22 } }
+  ],
+  "inputs": [
+    { "id": "ttlHost", "type": "promptString", "description": "接続先 / Host (e.g. 192.168.0.100)" }
+  ]
+}
+```
+
+### その他のオプション / Other options
+
+接続以外の Tera Term 起動オプションも構成のトップレベルに指定できます（説明は VS Code の表示言語で日本語/英語に切り替わります）。
+
+Non-connection Tera Term options can be set at the top level of the configuration (descriptions are shown in Japanese or English depending on the VS Code display language).
+
+| 構成キー / key | Tera Term | 説明 / description |
+|---|---|---|
+| `windowTitle` | `/W=` | ウィンドウタイトル / Window title |
+| `setupFile` | `/F=` | 設定ファイル / Setup file |
+| `keyboardFile` | `/K=` | キーボード設定 / Keyboard setup file |
+| `logFile` / `noLog` | `/L=` / `/NOLOG` | ログ開始 / 開始しない |
+| `replayFile` | `/R=` | 再生ファイル / Replay file |
+| `fileTransferDir` | `/FD=` | 転送ディレクトリ / File transfer dir |
+| `theme` | `/THEME=` | テーマ / Theme file |
+| `vtIcon` / `tekIcon` | `/VTICON=` / `/TEKICON=` | ウィンドウアイコン / Window icons |
+| `hideTitleBar` / `iconify` / `hidden` | `/H` / `/I` / `/V` | タイトルバー非表示 / アイコン化 / 非表示起動 |
+| `windowX` / `windowY` | `/X=` / `/Y=` | ウィンドウ位置 / Window position |
+| `kanjiReceive` / `kanjiTransmit` | `/KR=` / `/KT=` | 漢字コード 受信/送信 |
+| `multicastName` | `/MN=` | マルチキャスト名 / Multicast name |
+| `osc52` | `/OSC52=` | クリップボード許可操作 / Clipboard access |
+| `autoWinClose` | `/AUTOWINCLOSE=` | 切断時に自動で閉じる / Auto close |
+| `disableLocalEcho` | `/E` | ローカルエコー無効 / Disable local echo |
+| `newConnectionDialog` | `/ES` `/DS` | 新しい接続ダイアログ 表示/非表示 |
+
+接続側 (`connect`) は `binary`(`/B`)・`waitcom`(`/WAITCOM`)・`timeout`(`/TIMEOUT=`)・`proto: "namedpipe"`(`/PIPE`) にも対応します。スキーマ未対応のオプションは `connect.options` に生で書けます。
+
+```jsonc
+{
+  "type": "ttl", "request": "launch", "name": "Run TTL Macro",
+  "program": "${file}",
+  "connect": { "proto": "ssh", "host": "192.168.0.100", "port": 22, "timeout": 15 },
+  "windowTitle": "Deploy", "logFile": "${workspaceFolder}/session.log", "hidden": false
+}
 ```
 
 ## 対応構文 / Supported Syntax
