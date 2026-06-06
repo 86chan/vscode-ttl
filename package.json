@@ -4,6 +4,7 @@
   "description": "TTL (Tera Term Language) language support: syntax highlighting, completions, hover docs, and label navigation.",
   "version": "0.0.3",
   "publisher": "ttl-lsp",
+  "license": "MIT",
   "engines": {
     "vscode": "^1.120.0"
   },
