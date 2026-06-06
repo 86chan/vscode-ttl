@@ -10,6 +10,7 @@ import { describe, it, expect } from 'vitest';
 import {
   buildConnectArgs,
   buildTeraTermLaunch,
+  buildTeraTermOptions,
   DEFAULT_TERATERM_DIRS,
   resolveTeraTermDir,
 } from '../macroRunner';
@@ -111,6 +112,68 @@ describe('buildConnectArgs', () => {
 
   it('空の接続設定では何も生成しない', () => {
     expect(buildConnectArgs({})).toEqual([]);
+  });
+
+  it('telnet: binary(/B) と timeout を付与する', () => {
+    expect(
+      buildConnectArgs({ proto: 'telnet', host: 'h', binary: true, timeout: 15 }),
+    ).toEqual(['h', '/nossh', '/T=1', '/B', '/TIMEOUT=15']);
+  });
+
+  it('console: waitcom(/WAITCOM) を付与する', () => {
+    expect(buildConnectArgs({ proto: 'console', comport: 1, waitcom: true })).toEqual([
+      '/C=1',
+      '/WAITCOM',
+    ]);
+  });
+
+  it('namedpipe: パスと /PIPE を生成する', () => {
+    expect(buildConnectArgs({ proto: 'namedpipe', host: '\\\\.\\pipe\\foo' })).toEqual([
+      '\\\\.\\pipe\\foo',
+      '/PIPE',
+    ]);
+  });
+});
+
+describe('buildTeraTermOptions', () => {
+  it('値オプションを /FLAG=value 形式で生成する', () => {
+    const args = buildTeraTermOptions({
+      windowTitle: 'My Session',
+      setupFile: 'C:\\tt\\my.ini',
+      logFile: 'C:\\logs\\a.log',
+      windowX: 100,
+      windowY: 50,
+      theme: 'dark',
+    });
+    expect(args).toEqual([
+      '/W=My Session',
+      '/F=C:\\tt\\my.ini',
+      '/L=C:\\logs\\a.log',
+      '/THEME=dark',
+      '/X=100',
+      '/Y=50',
+    ]);
+  });
+
+  it('真偽フラグは true のときだけ付与する', () => {
+    expect(buildTeraTermOptions({ hidden: true, iconify: true, hideTitleBar: true, noLog: true })).toEqual([
+      '/NOLOG',
+      '/H',
+      '/I',
+      '/V',
+    ]);
+    expect(buildTeraTermOptions({ hidden: false })).toEqual([]);
+  });
+
+  it('autoWinClose は on/off に変換する', () => {
+    expect(buildTeraTermOptions({ autoWinClose: true })).toEqual(['/AUTOWINCLOSE=on']);
+    expect(buildTeraTermOptions({ autoWinClose: false })).toEqual(['/AUTOWINCLOSE=off']);
+  });
+
+  it('newConnectionDialog は true=/ES, false=/DS, 未指定=なし', () => {
+    expect(buildTeraTermOptions({ newConnectionDialog: true })).toEqual(['/ES']);
+    expect(buildTeraTermOptions({ newConnectionDialog: false })).toEqual(['/DS']);
+    expect(buildTeraTermOptions({})).toEqual([]);
   });
 });
 

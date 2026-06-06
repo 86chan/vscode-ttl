@@ -58,44 +58,46 @@
             "properties": {
               "program": {
                 "type": "string",
-                "description": "Macro (.ttl) file to run.",
+                "description": "%ttl.dbg.program%",
                 "default": "${file}"
               },
               "connect": {
                 "type": "object",
-                "description": "Connection settings, translated to Tera Term command-line options. Omit to let the macro connect itself.",
+                "description": "%ttl.dbg.connect%",
                 "properties": {
                   "proto": {
                     "type": "string",
                     "enum": [
                       "ssh",
                       "telnet",
-                      "console"
+                      "console",
+                      "namedpipe"
                     ],
                     "enumDescriptions": [
-                      "SSH (TCP/IP)",
-                      "Telnet (TCP/IP)",
-                      "Serial / COM port"
+                      "%ttl.dbg.connect.proto.ssh%",
+                      "%ttl.dbg.connect.proto.telnet%",
+                      "%ttl.dbg.connect.proto.console%",
+                      "%ttl.dbg.connect.proto.namedpipe%"
                     ],
-                    "description": "Connection protocol (console = serial)."
+                    "description": "%ttl.dbg.connect.proto%"
                   },
                   "host": {
                     "type": "string",
-                    "description": "Host name or address (ssh / telnet)."
+                    "description": "%ttl.dbg.connect.host%"
                   },
                   "port": {
                     "type": "number",
-                    "description": "TCP port (ssh / telnet)."
+                    "description": "%ttl.dbg.connect.port%"
                   },
                   "comport": {
                     "type": "number",
                     "minimum": 1,
                     "maximum": 256,
-                    "description": "Serial COM port number (console)."
+                    "description": "%ttl.dbg.connect.comport%"
                   },
                   "speed": {
                     "type": "number",
-                    "description": "Serial baud rate (console)."
+                    "description": "%ttl.dbg.connect.speed%"
                   },
                   "cdatabit": {
                     "type": "number",
@@ -103,7 +105,7 @@
                       7,
                       8
                     ],
-                    "description": "Serial data bits (console)."
+                    "description": "%ttl.dbg.connect.cdatabit%"
                   },
                   "cparity": {
                     "type": "string",
@@ -114,7 +116,7 @@
                       "mark",
                       "space"
                     ],
-                    "description": "Serial parity (console)."
+                    "description": "%ttl.dbg.connect.cparity%"
                   },
                   "cstopbit": {
                     "type": "number",
@@ -123,7 +125,7 @@
                       1.5,
                       2
                     ],
-                    "description": "Serial stop bits (console)."
+                    "description": "%ttl.dbg.connect.cstopbit%"
                   },
                   "cflowctrl": {
                     "type": "string",
@@ -134,28 +136,128 @@
                       "rtscts",
                       "dsrdtr"
                     ],
-                    "description": "Serial flow control (console)."
+                    "description": "%ttl.dbg.connect.cflowctrl%"
                   },
                   "cdelayperchar": {
                     "type": "number",
-                    "description": "Per-character delay in ms (console)."
+                    "description": "%ttl.dbg.connect.cdelayperchar%"
                   },
                   "cdelayperline": {
                     "type": "number",
-                    "description": "Per-line delay in ms (console)."
+                    "description": "%ttl.dbg.connect.cdelayperline%"
+                  },
+                  "binary": {
+                    "type": "boolean",
+                    "description": "%ttl.dbg.connect.binary%"
+                  },
+                  "waitcom": {
+                    "type": "boolean",
+                    "description": "%ttl.dbg.connect.waitcom%"
+                  },
+                  "timeout": {
+                    "type": "number",
+                    "description": "%ttl.dbg.connect.timeout%"
                   },
                   "options": {
                     "type": "array",
                     "items": {
                       "type": "string"
                     },
-                    "description": "Extra raw Tera Term options appended as-is, e.g. [\"/auth=password\", \"/user=admin\"]."
+                    "description": "%ttl.dbg.connect.options%"
                   }
                 }
               },
+              "windowTitle": {
+                "type": "string",
+                "description": "%ttl.dbg.windowTitle%"
+              },
+              "setupFile": {
+                "type": "string",
+                "description": "%ttl.dbg.setupFile%"
+              },
+              "keyboardFile": {
+                "type": "string",
+                "description": "%ttl.dbg.keyboardFile%"
+              },
+              "logFile": {
+                "type": "string",
+                "description": "%ttl.dbg.logFile%"
+              },
+              "noLog": {
+                "type": "boolean",
+                "description": "%ttl.dbg.noLog%"
+              },
+              "replayFile": {
+                "type": "string",
+                "description": "%ttl.dbg.replayFile%"
+              },
+              "fileTransferDir": {
+                "type": "string",
+                "description": "%ttl.dbg.fileTransferDir%"
+              },
+              "theme": {
+                "type": "string",
+                "description": "%ttl.dbg.theme%"
+              },
+              "vtIcon": {
+                "type": "string",
+                "description": "%ttl.dbg.vtIcon%"
+              },
+              "tekIcon": {
+                "type": "string",
+                "description": "%ttl.dbg.tekIcon%"
+              },
+              "hideTitleBar": {
+                "type": "boolean",
+                "description": "%ttl.dbg.hideTitleBar%"
+              },
+              "iconify": {
+                "type": "boolean",
+                "description": "%ttl.dbg.iconify%"
+              },
+              "hidden": {
+                "type": "boolean",
+                "description": "%ttl.dbg.hidden%"
+              },
+              "windowX": {
+                "type": "number",
+                "description": "%ttl.dbg.windowX%"
+              },
+              "windowY": {
+                "type": "number",
+                "description": "%ttl.dbg.windowY%"
+              },
+              "kanjiReceive": {
+                "type": "string",
+                "description": "%ttl.dbg.kanjiReceive%"
+              },
+              "kanjiTransmit": {
+                "type": "string",
+                "description": "%ttl.dbg.kanjiTransmit%"
+              },
+              "multicastName": {
+                "type": "string",
+                "description": "%ttl.dbg.multicastName%"
+              },
+              "osc52": {
+                "type": "string",
+                "description": "%ttl.dbg.osc52%"
+              },
+              "autoWinClose": {
+                "type": "boolean",
+                "description": "%ttl.dbg.autoWinClose%"
+              },
+              "disableLocalEcho": {
+                "type": "boolean",
+                "description": "%ttl.dbg.disableLocalEcho%"
+              },
+              "newConnectionDialog": {
+                "type": "boolean",
+                "description": "%ttl.dbg.newConnectionDialog%"
+              },
               "teraTermDir": {
                 "type": "string",
-                "description": "Directory containing ttermpro.exe. Auto-detected (e.g. C:\\Program Files\\teraterm5) when empty.",
+                "description": "%ttl.dbg.teraTermDir%",
                 "default": ""
               }
             }

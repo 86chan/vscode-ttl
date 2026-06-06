@@ -2,8 +2,8 @@
  * TTL マクロ実行（Tera Term 起動）のための純粋ユーティリティ（VS Code API 非依存）
  *
  * @remarks
- * Tera Term の実行ディレクトリ解決、構造化された接続設定（`connect`）から CLI オプションへの変換、
- * および `ttermpro.exe` の起動引数の組み立てを集約し、テスト容易性を確保する。
+ * Tera Term の実行ディレクトリ解決、構造化された接続設定（`connect`）および一般オプションから
+ * CLI 引数への変換、`ttermpro.exe` の起動引数の組み立てを集約し、テスト容易性を確保する。
  */
 
 import * as nodePath from 'node:path';
@@ -49,8 +49,13 @@ export function resolveTeraTermDir(
   return null;
 }
 
-/** 接続プロトコル（`console` はシリアル接続） */
-export type TtlConnectProto = 'ssh' | 'telnet' | 'console';
+/** 値が指定されている（null/undefined でない）か */
+function isPresent<T>(value: T | null | undefined): value is T {
+  return value !== null && value !== undefined;
+}
+
+/** 接続プロトコル（`console` はシリアル、`namedpipe` は名前付きパイプ） */
+export type TtlConnectProto = 'ssh' | 'telnet' | 'console' | 'namedpipe';
 
 /**
  * 構造化された接続設定（launch.json の `connect`）
@@ -60,7 +65,7 @@ export type TtlConnectProto = 'ssh' | 'telnet' | 'console';
 export interface TtlConnect {
   /** 接続プロトコル。未指定なら comport/host から推測する */
   readonly proto?: TtlConnectProto;
-  /** 接続先ホスト（ssh / telnet） */
+  /** 接続先ホスト（ssh / telnet）または名前付きパイプのパス（namedpipe） */
   readonly host?: string;
   /** TCP ポート（ssh / telnet） */
   readonly port?: number;
@@ -80,13 +85,14 @@ export interface TtlConnect {
   readonly cdelayperchar?: number;
   /** 行間ディレイ ms（console） */
   readonly cdelayperline?: number;
+  /** Telnet バイナリオプション /B（telnet） */
+  readonly binary?: boolean;
+  /** シリアルポートが無ければ接続を待つ /WAITCOM（console） */
+  readonly waitcom?: boolean;
+  /** 接続タイムアウト秒 /TIMEOUT= */
+  readonly timeout?: number;
   /** 追加の生オプション（例: `['/auth=password', '/user=admin']`） */
   readonly options?: readonly string[];
-}
-
-/** 値が指定されている（null/undefined でない）か */
-function isPresent<T>(value: T | null | undefined): value is T {
-  return value !== null && value !== undefined;
 }
 
 /**
@@ -95,9 +101,10 @@ function isPresent<T>(value: T | null | undefined): value is T {
  * @remarks
  * - `ssh`: `<host>[:<port>] /ssh`
  * - `telnet`: `<host>[:<port>] /nossh /T=1`
- * - `console`（シリアル）: `/C=<comport> /BAUD=<speed> /CDATABIT=... /CPARITY=... ...`
+ * - `console`（シリアル）: `/C=<comport> /BAUD=<speed> /CDATABIT=... ...`
+ * - `namedpipe`: `<host(=pipe path)> /PIPE`
  * - `proto` 未指定時は、comport があれば console、host があれば ssh と推測する。
- * - `options` は最後に生のまま付与する。
+ * - `binary` / `waitcom` / `timeout` / `options` は最後に付与する。
  *
  * @param connect - 接続設定
  * @returns Tera Term の CLI オプション配列
@@ -107,6 +114,8 @@ export function buildConnectArgs(connect: TtlConnect): string[] {
   const proto: TtlConnectProto | undefined =
     connect.proto ??
     (isPresent(connect.comport) ? 'console' : isPresent(connect.host) ? 'ssh' : undefined);
+  const host = connect.host?.trim();
+  const hasHost = isPresent(host) && host.length > 0;
 
   if (proto === 'console') {
     if (isPresent(connect.comport)) args.push(`/C=${connect.comport}`);
@@ -117,24 +126,121 @@ export function buildConnectArgs(connect: TtlConnect): string[] {
     if (isPresent(connect.cflowctrl)) args.push(`/CFLOWCTRL=${connect.cflowctrl}`);
     if (isPresent(connect.cdelayperchar)) args.push(`/CDELAYPERCHAR=${connect.cdelayperchar}`);
     if (isPresent(connect.cdelayperline)) args.push(`/CDELAYPERLINE=${connect.cdelayperline}`);
+    if (connect.waitcom === true) args.push('/WAITCOM');
+  } else if (proto === 'namedpipe') {
+    if (hasHost) args.push(host);
+    args.push('/PIPE');
   } else if (proto === 'ssh' || proto === 'telnet') {
-    const host = connect.host?.trim();
-    if (isPresent(host) && host.length > 0) {
-      args.push(isPresent(connect.port) ? `${host}:${connect.port}` : host);
-    }
+    if (hasHost) args.push(isPresent(connect.port) ? `${host}:${connect.port}` : host);
     if (proto === 'ssh') {
       args.push('/ssh');
     } else {
       // SSH へのフォールバックを避けるため /nossh を付け、明示的に telnet を有効化
       args.push('/nossh', '/T=1');
+      if (connect.binary === true) args.push('/B');
     }
   }
+
+  if (isPresent(connect.timeout)) args.push(`/TIMEOUT=${connect.timeout}`);
 
   if (Array.isArray(connect.options)) {
     for (const option of connect.options) {
       if (typeof option === 'string') args.push(option);
     }
   }
+
+  return args;
+}
+
+/**
+ * 接続以外の一般的な Tera Term 起動オプション（launch.json のトップレベル）
+ *
+ * @remarks 各フィールドは Tera Term のコマンドラインオプションに対応する。
+ */
+export interface TeraTermOptions {
+  /** ウィンドウタイトル /W= */
+  readonly windowTitle?: string;
+  /** 設定ファイル /F= */
+  readonly setupFile?: string;
+  /** キーボード設定ファイル /K= */
+  readonly keyboardFile?: string;
+  /** 起動時にログ開始 /L= */
+  readonly logFile?: string;
+  /** 起動時にログを開始しない /NOLOG */
+  readonly noLog?: boolean;
+  /** 再生ファイル /R= */
+  readonly replayFile?: string;
+  /** ファイル転送ディレクトリ /FD= */
+  readonly fileTransferDir?: string;
+  /** テーマファイル /THEME= */
+  readonly theme?: string;
+  /** VT ウィンドウアイコン /VTICON= */
+  readonly vtIcon?: string;
+  /** TEK ウィンドウアイコン /TEKICON= */
+  readonly tekIcon?: string;
+  /** タイトルバーを隠す /H */
+  readonly hideTitleBar?: boolean;
+  /** アイコン状態で起動 /I */
+  readonly iconify?: boolean;
+  /** 非表示で起動 /V */
+  readonly hidden?: boolean;
+  /** ウィンドウ位置 X /X= */
+  readonly windowX?: number;
+  /** ウィンドウ位置 Y /Y= */
+  readonly windowY?: number;
+  /** 漢字コード（受信） /KR= */
+  readonly kanjiReceive?: string;
+  /** 漢字コード（送信） /KT= */
+  readonly kanjiTransmit?: string;
+  /** マルチキャスト名 /MN= */
+  readonly multicastName?: string;
+  /** クリップボードアクセス許可操作 /OSC52= */
+  readonly osc52?: string;
+  /** 切断時に自動でウィンドウを閉じる /AUTOWINCLOSE=on|off */
+  readonly autoWinClose?: boolean;
+  /** TCPLocalEcho/TCPCRSend を無効化 /E */
+  readonly disableLocalEcho?: boolean;
+  /** 起動時に「新しい接続」ダイアログを表示(true=/ES)／非表示(false=/DS) */
+  readonly newConnectionDialog?: boolean;
+}
+
+/**
+ * 一般的な Tera Term 起動オプションを CLI 引数配列に変換
+ *
+ * @param options - 一般オプション
+ * @returns Tera Term の CLI オプション配列
+ */
+export function buildTeraTermOptions(options: TeraTermOptions): string[] {
+  const args: string[] = [];
+
+  const pushValue = (flag: string, value: string | number | undefined): void => {
+    if (isPresent(value) && `${value}`.length > 0) args.push(`${flag}${value}`);
+  };
+
+  pushValue('/W=', options.windowTitle);
+  pushValue('/F=', options.setupFile);
+  pushValue('/K=', options.keyboardFile);
+  pushValue('/L=', options.logFile);
+  pushValue('/R=', options.replayFile);
+  pushValue('/FD=', options.fileTransferDir);
+  pushValue('/THEME=', options.theme);
+  pushValue('/VTICON=', options.vtIcon);
+  pushValue('/TEKICON=', options.tekIcon);
+  pushValue('/X=', options.windowX);
+  pushValue('/Y=', options.windowY);
+  pushValue('/KR=', options.kanjiReceive);
+  pushValue('/KT=', options.kanjiTransmit);
+  pushValue('/MN=', options.multicastName);
+  pushValue('/OSC52=', options.osc52);
+
+  if (options.noLog === true) args.push('/NOLOG');
+  if (options.hideTitleBar === true) args.push('/H');
+  if (options.iconify === true) args.push('/I');
+  if (options.hidden === true) args.push('/V');
+  if (options.disableLocalEcho === true) args.push('/E');
+  if (isPresent(options.autoWinClose)) args.push(`/AUTOWINCLOSE=${options.autoWinClose ? 'on' : 'off'}`);
+  if (options.newConnectionDialog === true) args.push('/ES');
+  else if (options.newConnectionDialog === false) args.push('/DS');
 
   return args;
 }
@@ -150,20 +256,20 @@ export interface TeraTermLaunch {
 /**
  * `ttermpro.exe` の起動コマンドを組み立てる
  *
- * @remarks 引数は `<接続オプション...> /M=<program>` の順。実行ファイルは Windows パス規則で導出する。
+ * @remarks 引数は `<オプション...> /M=<program>` の順。実行ファイルは Windows パス規則で導出する。
  *
  * @param teraTermDir - 解決済みの Tera Term インストールディレクトリ
  * @param program - 実行するマクロファイルの絶対パス
- * @param connectArgs - {@link buildConnectArgs} で生成した接続オプション（省略時は接続なし）
+ * @param optionArgs - 接続・一般オプションを連結した引数配列（省略時はオプションなし）
  * @returns 実行ファイルと引数
  */
 export function buildTeraTermLaunch(
   teraTermDir: string,
   program: string,
-  connectArgs: readonly string[] = [],
+  optionArgs: readonly string[] = [],
 ): TeraTermLaunch {
   return {
     executable: nodePath.win32.join(teraTermDir, TERATERM_EXE),
-    args: [...connectArgs, `/M=${program}`],
+    args: [...optionArgs, `/M=${program}`],
   };
 }
