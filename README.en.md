@@ -142,7 +142,10 @@ The connection side (`connect`) also supports `binary`(`/B`), `waitcom`(`/WAITCO
 
 ## Requirements
 
-VS Code 1.85.0 or later.
+- **Visual Studio Code**: 1.120.0 or later
+- **OS**: Windows (Required only for the macro execution feature. Language support features like syntax highlighting, code completion, and diagnostics work on macOS / Linux as well)
+- **Additional Software**: [Tera Term](https://teratermproject.github.io/) 4 or 5 (Required only for the macro execution feature to locate `ttermpro.exe`)
+
 
 ## License
 
