@@ -2,6 +2,15 @@ name: Build VSIX
 
 on:
   workflow_dispatch:
+    inputs:
+      anonymize:
+        description: 'Anonymize publisher and repository URL in package.json'
+        type: boolean
+        default: false
+      exclude_license:
+        description: 'Exclude LICENSE file from VSIX'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -30,6 +39,21 @@ jobs:
 
       - name: Unit tests
         run: npm test
+
+      - name: Anonymize package.json
+        if: inputs.anonymize
+        run: |
+          node -e "
+            const fs = require('fs');
+            const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+            pkg.publisher = 'anonymous';
+            delete pkg.repository;
+            fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+          "
+
+      - name: Exclude LICENSE
+        if: inputs.exclude_license
+        run: echo "LICENSE" >> .vscodeignore
 
       - name: Package VSIX
         run: |
