@@ -91,11 +91,11 @@ function buildHoverMarkdown(command: TtlCommand, language: 'ja' | 'en'): vscode.
   const markdown = new vscode.MarkdownString();
   // isTrusted は明示的に false のまま（command: URI によるコマンド実行を許可しない）
   markdown.appendCodeblock(command.signature, 'ttl');
-  markdown.appendMarkdown(selectDescription(command, language));
+  markdown.appendMarkdown(selectDescription(command, language).trim());
   const returns = selectReturns(command, language);
   if (returns !== undefined) {
     const heading = language === 'ja' ? '戻り値' : 'Return value';
-    markdown.appendMarkdown(`\n\n---\n\n**${heading}**\n\n${returns}`);
+    markdown.appendMarkdown(`\n\n---\n\n**${heading}**\n\n${returns.trim()}`);
   }
   return markdown;
 }

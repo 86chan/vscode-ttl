@@ -725,10 +725,10 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
   {
     name: 'fileopen',
     signature: 'fileopen <file handle> <filename> <append flag> [<readonly flag>]',
-    description: 'Opens a file in binary mode. Sets "result" to 0 on success.',
-    descriptionJa: 'ファイルをバイナリモードでオープンする。成功した場合、result に 0 が格納される',
-    returnsJa: 'ファイルハンドルを `<file handle>` に格納。オープンに失敗すると -1。',
-    returns: 'Stores the file handle in `<file handle>`; -1 if the file cannot be opened.',
+    description: 'Opens a file in binary mode.',
+    descriptionJa: 'ファイルをバイナリモードでオープンする',
+    returnsJa: 'ファイルハンドルを `<file handle>` に格納。オープンに失敗すると `<file handle>` に -1。',
+    returns: 'Stores the file handle in `<file handle>`; if the file cannot be opened, `<file handle>` is set to -1.',
     snippet: "fileopen ${1:fp} '${2:filename}' ${3:0}",
   },
   {
@@ -743,8 +743,8 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'filecreate <file handle> <filename>',
     description: 'Creates and opens a new file.',
     descriptionJa: 'ファイル <filename> を新しく作成しオープンする',
-    returnsJa: '`result` … 成功すると 0、失敗すると 0 以外。',
-    returns: '`result` … set to 0 on success, non-zero on failure.',
+    returnsJa: 'ファイルハンドルを `<file handle>` に格納（失敗時は -1）。`result` … 成功すると 0、失敗すると 0 以外。',
+    returns: 'Stores the file handle in `<file handle>` (-1 on failure). `result` … set to 0 on success, non-zero on failure.',
     snippet: "filecreate ${1:fp} '${2:filename}'",
   },
   {
@@ -752,8 +752,8 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'fileread <file handle> <read byte> <strvar>',
     description: 'Reads <read byte> bytes from the file into <strvar>.',
     descriptionJa: '<file handle> で指定されたファイルから指定したバイト数のデータを読み出す',
-    returnsJa: '`result` … 読み込み中にファイル終端へ達すると 1、それ以外は 0。',
-    returns: '`result` … set to 1 if the end of file is reached before reading completes, 0 otherwise.',
+    returnsJa: '読み込んだデータを `<strvar>` に格納。`result` … 読み込み中にファイル終端へ達すると 1、それ以外は 0。',
+    returns: 'Stores the read data in `<strvar>`. `result` … set to 1 if the end of file is reached before reading completes, 0 otherwise.',
     snippet: 'fileread ${1:fp} ${2:512} ${3:strvar}',
   },
   {
