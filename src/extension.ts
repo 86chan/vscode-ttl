@@ -4,6 +4,7 @@
 
 import * as childProcess from 'node:child_process';
 import * as nodeFs from 'node:fs';
+import * as nodeOs from 'node:os';
 import * as nodePath from 'node:path';
 import * as vscode from 'vscode';
 import { collectDocumentWords, TTL_IDENTIFIER_PATTERN } from './completionUtils';
@@ -12,6 +13,8 @@ import {
   buildConnectArgs,
   buildTeraTermLaunch,
   buildTeraTermOptions,
+  buildTtlConnectString,
+  buildTtpMacroLaunch,
   DEFAULT_TERATERM_DIRS,
   resolveTeraTermDir,
   type TeraTermOptions,
@@ -749,18 +752,58 @@ class TtlDebugConfigurationProvider implements vscode.DebugConfigurationProvider
       ...buildTeraTermOptions(config as unknown as TeraTermOptions),
     ];
 
-    const { executable, args } = buildTeraTermLaunch(teraTermDir, program, optionArgs);
+    const useTtpMacro = config.launcher === 'ttpmacro';
+    let executable: string;
+    let args: readonly string[];
+    let tmpFile: string | undefined;
+
+    if (useTtpMacro) {
+      const connectArgs = buildConnectArgs(connect);
+      let targetProgram = program;
+
+      if (connectArgs.length > 0) {
+        // connect 設定がある場合、ラッパーマクロを一時ファイルとして生成する。
+        // changedir でユーザーマクロのディレクトリに移動してから include することで、
+        // ユーザーマクロ内の相対パス include が正しく解決されるようにする。
+        const macroDir = nodePath.win32.dirname(program);
+        const connectStr = buildTtlConnectString(connect);
+        const wrapperContent =
+          `connect '${connectStr}'\n` +
+          `changedir '${macroDir}'\n` +
+          `include '${program}'\n`;
+        tmpFile = nodePath.win32.join(nodeOs.tmpdir(), `ttl-wrapper-${Date.now()}.ttl`);
+        nodeFs.writeFileSync(tmpFile, wrapperContent, 'utf8');
+        targetProgram = tmpFile;
+      }
+
+      ({ executable, args } = buildTtpMacroLaunch(teraTermDir, targetProgram));
+    } else {
+      ({ executable, args } = buildTeraTermLaunch(teraTermDir, program, optionArgs));
+    }
+
     try {
       const child = childProcess.spawn(executable, args, {
         detached: true,
         stdio: 'ignore',
       });
       child.once('error', error => {
+        if (tmpFile !== undefined) {
+          try { nodeFs.unlinkSync(tmpFile); } catch { /* ignore */ }
+        }
         void vscode.window.showErrorMessage(`マクロの起動に失敗しました: ${error.message}`);
       });
       child.unref();
+      if (tmpFile !== undefined) {
+        // ttpmacro.exe がラッパーマクロを読み込んだ後に削除する
+        setTimeout(() => {
+          try { nodeFs.unlinkSync(tmpFile!); } catch { /* ignore */ }
+        }, 3000);
+      }
       void vscode.window.showInformationMessage(`マクロを実行: ${nodePath.basename(program)}`);
     } catch (error) {
+      if (tmpFile !== undefined) {
+        try { nodeFs.unlinkSync(tmpFile); } catch { /* ignore */ }
+      }
       const message = error instanceof Error ? error.message : String(error);
       void vscode.window.showErrorMessage(`マクロの起動に失敗しました: ${message}`);
     }
