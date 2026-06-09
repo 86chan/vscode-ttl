@@ -1,0 +1,45 @@
+name: Build VSIX
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Owner only
+        if: github.actor != github.repository_owner
+        run: |
+          echo "This workflow can only be triggered by the repository owner."
+          exit 1
+
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci --ignore-scripts
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Package VSIX
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          npx @vscode/vsce package --no-dependencies --out "ttl-language-${VERSION}.vsix"
+          echo "VSIX_PATH=ttl-language-${VERSION}.vsix" >> "$GITHUB_ENV"
+
+      - name: Upload VSIX
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ttl-language-vsix
+          path: ${{ env.VSIX_PATH }}
+          retention-days: 1
