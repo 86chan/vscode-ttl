@@ -1081,12 +1081,12 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
   },
   {
     name: 'getttpos',
-    signature: 'getttpos <showflag> <window x> <window y> <window width> <window height> <client width> <client height>',
+    signature: 'getttpos <showflag> <window x> <window y> <window width> <window height> <client x> <client y> <client width> <client height>',
     description: 'Retrieves the position and size of the Tera Term window.',
     descriptionJa: 'Tera Term ウィンドウの位置とサイズを取得する',
     returnsJa: '`result` … 情報取得に成功すると 0、失敗すると -1。',
     returns: '`result` … set to 0 on success, -1 on failure.',
-    snippet: 'getttpos ${1:showflag} ${2:wx} ${3:wy} ${4:ww} ${5:wh} ${6:cw} ${7:ch}',
+    snippet: 'getttpos ${1:showflag} ${2:wx} ${3:wy} ${4:ww} ${5:wh} ${6:cx} ${7:cy} ${8:cw} ${9:ch}',
   },
   {
     name: 'gettitle',
@@ -1156,7 +1156,7 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
   // ── ログ ─────────────────────────────────────────────────────────────────────
   {
     name: 'logopen',
-    signature: 'logopen <filename> <binary flag> <append flag> [<plain text flag> [<timestamp flag>]]',
+    signature: 'logopen <filename> <binary flag> <append flag> [<plain text flag> [<timestamp flag> [<hide dialog flag> [<include screen buffer flag> [<timestamp type>]]]]]',
     description: 'Opens a log file and starts logging received characters.',
     descriptionJa: 'ログファイルを開いて受信文字のログ採取を開始する',
     returnsJa: '`result` … ログファイルを開けると 0、開けないと 1。*(4.62 以降)*',
