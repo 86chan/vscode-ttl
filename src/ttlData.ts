@@ -431,6 +431,8 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'strconcat <strvar> <string>',
     description: 'Appends a copy of <string> to the end of the string variable <strvar>.',
     descriptionJa: '文字列変数 <strvar> の文字列値の最後に文字列 <string> を継ぎ足す',
+    returnsJa: '`<string>` を末尾に連結した結果を `<strvar>` に格納。',
+    returns: 'Appends `<string>` to `<strvar>` in place.',
     snippet: 'strconcat ${1:strvar} ${2:string}',
   },
   {
@@ -438,6 +440,8 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'strcopy <string> <pos> <len> <strvar>',
     description: 'Copies a substring of <string> (starting at <pos>, length <len>) to <strvar>.',
     descriptionJa: '文字列 <string> の <pos> 文字目から <len> 文字分を文字列変数 <strvar> にコピーする',
+    returnsJa: '抽出した部分文字列を `<strvar>` に格納。',
+    returns: 'Stores the extracted substring in `<strvar>`.',
     snippet: 'strcopy ${1:string} ${2:1} ${3:len} ${4:strvar}',
   },
   {
@@ -481,6 +485,8 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'strremove <strvar> <index> <len>',
     description: 'Deletes <len> characters from <strvar> beginning at <index> (1-origin).',
     descriptionJa: '文字列変数 <strvar> の <index> 位置（1オリジン）から <len> 文字分を削除する',
+    returnsJa: '指定範囲を削除した文字列を `<strvar>` に格納。',
+    returns: 'Stores the string with the specified range removed in `<strvar>`.',
     snippet: 'strremove ${1:strvar} ${2:1} ${3:len}',
   },
   {
@@ -488,6 +494,8 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'strinsert <strvar> <index> <string>',
     description: 'Inserts <string> at position <index> (1-origin) in <strvar>.',
     descriptionJa: '文字列変数 <strvar> の <index> 位置（1オリジン）に文字列 <string> を挿入する',
+    returnsJa: '文字列を挿入した結果を `<strvar>` に格納。',
+    returns: 'Stores the string with the text inserted in `<strvar>`.',
     snippet: 'strinsert ${1:strvar} ${2:1} ${3:string}',
   },
   {
@@ -522,6 +530,8 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'strtrim <strvar> <trimchars>',
     description: 'Removes all leading and trailing occurrences of <trimchars> from <strvar>.',
     descriptionJa: '文字列変数 <strvar> の先頭と末尾から <trimchars> で指定された文字をすべて削除する',
+    returnsJa: 'トリム後の文字列を `<strvar>` に格納。',
+    returns: 'Stores the trimmed string in `<strvar>`.',
     snippet: "strtrim ${1:strvar} ' '",
   },
   {
@@ -529,6 +539,8 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'strspecial <strvar> [<strval>]',
     description: 'Converts special character sequences (like \\n, \\t) in the string to actual characters.',
     descriptionJa: '渡された文字列に含まれる特殊文字を変換する',
+    returnsJa: '特殊文字へ変換した結果を `<strvar>` に格納。',
+    returns: 'Stores the converted string in `<strvar>`.',
     snippet: 'strspecial ${1:strvar}',
   },
   {
@@ -536,6 +548,8 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'tolower <strvar> <string>',
     description: 'Converts all alphabetic characters in <string> to lower-case and returns the result in <strvar>.',
     descriptionJa: '<string> に含まれるアルファベットを全て小文字にし、<strvar> に代入する',
+    returnsJa: '小文字へ変換した結果を `<strvar>` に格納。',
+    returns: 'Stores the lower-cased string in `<strvar>`.',
     snippet: 'tolower ${1:strvar} ${2:string}',
   },
   {
@@ -543,6 +557,8 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'toupper <strvar> <string>',
     description: 'Converts all alphabetic characters in <string> to upper-case and returns the result in <strvar>.',
     descriptionJa: '<string> に含まれるアルファベットを全て大文字にし、<strvar> に代入する',
+    returnsJa: '大文字へ変換した結果を `<strvar>` に格納。',
+    returns: 'Stores the upper-cased string in `<strvar>`.',
     snippet: 'toupper ${1:strvar} ${2:string}',
   },
   {
@@ -550,6 +566,8 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'int2str <strvar> <integer value>',
     description: 'Converts <integer value> to its decimal string expression and stores it in <strvar>.',
     descriptionJa: '整数値 <integer value> を10進表現の文字列に変換して文字列型変数 <strvar> に代入する',
+    returnsJa: '文字列へ変換した結果を `<strvar>` に格納。',
+    returns: 'Stores the string representation in `<strvar>`.',
     snippet: 'int2str ${1:strvar} ${2:value}',
   },
   {
@@ -566,6 +584,8 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'str2code <intvar> <string>',
     description: 'Copies the ASCII code of the first character of <string> to <intvar>.',
     descriptionJa: '文字列 <string> が1文字の場合、その ASCII コードを整数変数 <intvar> に格納する',
+    returnsJa: 'ASCII コード（最大4文字分）を `<intvar>` に格納。',
+    returns: 'Stores the ASCII code(s) (up to 4 characters) in `<intvar>`.',
     snippet: 'str2code ${1:intvar} ${2:string}',
   },
   {
@@ -573,6 +593,8 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'code2str <strvar> <ASCII code>',
     description: 'Converts an ASCII code value to its character and stores it in <strvar>.',
     descriptionJa: '整数値 <ASCII code> に対応する文字を文字列変数 <strvar> に格納する',
+    returnsJa: 'ASCII コードに対応する文字列を `<strvar>` に格納。',
+    returns: 'Stores the characters for the given ASCII code(s) in `<strvar>`.',
     snippet: 'code2str ${1:strvar} ${2:code}',
   },
   {
@@ -587,6 +609,8 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'random <intvar> <max number>',
     description: 'Generates a random integer within the range 0..<max number> and assigns it to <intvar>.',
     descriptionJa: '0から<max number>までの整数の一様乱数を生成し、整数変数 <integer variable> へ代入する',
+    returnsJa: '生成した乱数を `<intvar>` に格納。',
+    returns: 'Stores the generated random number in `<intvar>`.',
     snippet: 'random ${1:intvar} ${2:100}',
   },
   {
@@ -594,6 +618,8 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'rotateleft <intvar> <intval> <count>',
     description: 'Rotates <intval> left by <count> bits and stores the result in <intvar>.',
     descriptionJa: '整数値 <intval> を左に <count> 桁ローテートした値を整数型変数 <intvar> にコピーする',
+    returnsJa: '左へローテートした結果を `<intvar>` に格納。',
+    returns: 'Stores the left-rotated value in `<intvar>`.',
     snippet: 'rotateleft ${1:intvar} ${2:intval} ${3:count}',
   },
   {
@@ -601,6 +627,8 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'rotateright <intvar> <intval> <count>',
     description: 'Rotates <intval> right by <count> bits and stores the result in <intvar>.',
     descriptionJa: '整数値 <intval> を右に <count> 桁ローテートした値を整数型変数 <intvar> にコピーする',
+    returnsJa: '右へローテートした結果を `<intvar>` に格納。',
+    returns: 'Stores the right-rotated value in `<intvar>`.',
     snippet: 'rotateright ${1:intvar} ${2:intval} ${3:count}',
   },
   {
@@ -699,6 +727,8 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'fileopen <file handle> <filename> <append flag> [<readonly flag>]',
     description: 'Opens a file in binary mode. Sets "result" to 0 on success.',
     descriptionJa: 'ファイルをバイナリモードでオープンする。成功した場合、result に 0 が格納される',
+    returnsJa: 'ファイルハンドルを `<file handle>` に格納。オープンに失敗すると -1。',
+    returns: 'Stores the file handle in `<file handle>`; -1 if the file cannot be opened.',
     snippet: "fileopen ${1:fp} '${2:filename}' ${3:0}",
   },
   {
@@ -928,6 +958,8 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'basename <strvar> <path>',
     description: 'Returns the trailing name component of a path.',
     descriptionJa: 'パス名 <path> からファイル名部分を <strvar> に格納する',
+    returnsJa: 'パスのファイル名部分を `<strvar>` に格納。',
+    returns: 'Stores the file-name part of the path in `<strvar>`.',
     snippet: 'basename ${1:strvar} ${2:path}',
   },
   {
@@ -935,6 +967,8 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'dirname <strvar> <path>',
     description: 'Returns the directory component of a path.',
     descriptionJa: 'パス名 <path> のディレクトリ名部分を <strvar> に格納する',
+    returnsJa: 'パスのディレクトリ名部分を `<strvar>` に格納。',
+    returns: 'Stores the directory part of the path in `<strvar>`.',
     snippet: 'dirname ${1:strvar} ${2:path}',
   },
   {
@@ -942,6 +976,8 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'makepath <strvar> <dir> <name>',
     description: 'Creates a full path name from a directory name and file name.',
     descriptionJa: 'ディレクトリ名 <dir> とファイル名 <name> からフルパス名を作成する',
+    returnsJa: '連結したパスを `<strvar>` に格納。',
+    returns: 'Stores the assembled path in `<strvar>`.',
     snippet: 'makepath ${1:strvar} ${2:dir} ${3:name}',
   },
   // ── 配列 ─────────────────────────────────────────────────────────────────────
@@ -995,6 +1031,8 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'uptime <intvar>',
     description: 'Retrieves the number of milliseconds that have elapsed since Windows was started.',
     descriptionJa: 'Windows OS の稼働時間（ミリ秒）を <intvar> に格納する',
+    returnsJa: 'OS の稼働時間（ミリ秒）を `<intvar>` に格納。',
+    returns: 'Stores the OS uptime in milliseconds in `<intvar>`.',
     snippet: 'uptime ${1:intvar}',
   },
   // ── 環境変数 ─────────────────────────────────────────────────────────────────
@@ -1003,6 +1041,8 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'getenv <envname> <strvar>',
     description: 'Retrieves the value of an environment variable and stores it in <strvar>.',
     descriptionJa: '環境変数 <envname> の値を文字列変数 <strvar> に格納する',
+    returnsJa: '環境変数の値を `<strvar>` に格納。',
+    returns: 'Stores the environment variable value in `<strvar>`.',
     snippet: "getenv '${1:PATH}' ${2:strvar}",
   },
   {
@@ -1017,6 +1057,8 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'expandenv <strvar> [<strval>]',
     description: 'Expands environment variable strings (%VARNAME%) in the string.',
     descriptionJa: '文字列内の環境変数文字列(%variableName%)を展開する',
+    returnsJa: '環境変数を展開した文字列を `<strvar>` に格納。',
+    returns: 'Stores the expanded string in `<strvar>`.',
     snippet: 'expandenv ${1:strvar}',
   },
   // ── システム情報 ─────────────────────────────────────────────────────────────
@@ -1034,6 +1076,8 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'gethostname <strvar>',
     description: 'Retrieves the destination hostname or IP address and stores it in <strvar>.',
     descriptionJa: 'Tera Term が接続しているホスト名（IPアドレス）を文字列変数 <strvar> に格納する',
+    returnsJa: 'ホスト名を `<strvar>` に格納。',
+    returns: 'Stores the host name in `<strvar>`.',
     snippet: 'gethostname ${1:strvar}',
   },
   {
@@ -1093,6 +1137,8 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'gettitle <strvar>',
     description: 'Retrieves the title text of Tera Term and stores it in <strvar>.',
     descriptionJa: 'Tera Term のウィンドウタイトルを文字列変数 <strvar> に格納する',
+    returnsJa: 'ウィンドウタイトルを `<strvar>` に格納。',
+    returns: 'Stores the window title in `<strvar>`.',
     snippet: 'gettitle ${1:strvar}',
   },
   {
@@ -1108,6 +1154,8 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'getdir <strvar>',
     description: 'Returns the current working directory for MACRO (not Tera Term).',
     descriptionJa: 'MACRO のカレントディレクトリを文字列変数 <strvar> に格納する',
+    returnsJa: 'MACRO のカレントディレクトリを `<strvar>` に格納。',
+    returns: 'Stores the current directory of MACRO in `<strvar>`.',
     snippet: 'getdir ${1:strvar}',
   },
   {
