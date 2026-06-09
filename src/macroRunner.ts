@@ -54,8 +54,8 @@ function isPresent<T>(value: T | null | undefined): value is T {
   return value !== null && value !== undefined;
 }
 
-/** 接続プロトコル（`console` はシリアル、`namedpipe` は名前付きパイプ） */
-export type TtlConnectProto = 'ssh' | 'telnet' | 'console' | 'namedpipe';
+/** 接続プロトコル（`serial` はシリアル、`namedpipe` は名前付きパイプ） */
+export type TtlConnectProto = 'ssh' | 'telnet' | 'serial' | 'namedpipe';
 
 /**
  * 構造化された接続設定（launch.json の `connect`）
@@ -69,25 +69,25 @@ export interface TtlConnect {
   readonly host?: string;
   /** TCP ポート（ssh / telnet） */
   readonly port?: number;
-  /** COM ポート番号 1〜256（console） */
+  /** COM ポート番号 1〜256（serial） */
   readonly comport?: number;
-  /** ボーレート（console） */
+  /** ボーレート（serial） */
   readonly speed?: number;
-  /** データビット 7 / 8（console） */
+  /** データビット 7 / 8（serial） */
   readonly cdatabit?: number;
-  /** パリティ none / odd / even / mark / space（console） */
+  /** パリティ none / odd / even / mark / space（serial） */
   readonly cparity?: string;
-  /** ストップビット 1 / 1.5 / 2（console） */
+  /** ストップビット 1 / 1.5 / 2（serial） */
   readonly cstopbit?: number;
-  /** フロー制御 x / hard / none / rtscts / dsrdtr（console） */
+  /** フロー制御 x / hard / none / rtscts / dsrdtr（serial） */
   readonly cflowctrl?: string;
-  /** 文字間ディレイ ms（console） */
+  /** 文字間ディレイ ms（serial） */
   readonly cdelayperchar?: number;
-  /** 行間ディレイ ms（console） */
+  /** 行間ディレイ ms（serial） */
   readonly cdelayperline?: number;
   /** Telnet バイナリオプション /B（telnet） */
   readonly binary?: boolean;
-  /** シリアルポートが無ければ接続を待つ /WAITCOM（console） */
+  /** シリアルポートが無ければ接続を待つ /WAITCOM（serial） */
   readonly waitcom?: boolean;
   /** 接続タイムアウト秒 /TIMEOUT= */
   readonly timeout?: number;
@@ -101,9 +101,9 @@ export interface TtlConnect {
  * @remarks
  * - `ssh`: `<host>[:<port>] /ssh`
  * - `telnet`: `<host>[:<port>] /nossh /T=1`
- * - `console`（シリアル）: `/C=<comport> /BAUD=<speed> /CDATABIT=... ...`
+ * - `serial`（シリアル）: `/C=<comport> /BAUD=<speed> /CDATABIT=... ...`
  * - `namedpipe`: `<host(=pipe path)> /PIPE`
- * - `proto` 未指定時は、comport があれば console、host があれば ssh と推測する。
+ * - `proto` 未指定時は、comport があれば serial、host があれば ssh と推測する。
  * - `binary` / `waitcom` / `timeout` / `options` は最後に付与する。
  *
  * @param connect - 接続設定
@@ -113,11 +113,11 @@ export function buildConnectArgs(connect: TtlConnect): string[] {
   const args: string[] = [];
   const proto: TtlConnectProto | undefined =
     connect.proto ??
-    (isPresent(connect.comport) ? 'console' : isPresent(connect.host) ? 'ssh' : undefined);
+    (isPresent(connect.comport) ? 'serial' : isPresent(connect.host) ? 'ssh' : undefined);
   const host = connect.host?.trim();
   const hasHost = isPresent(host) && host.length > 0;
 
-  if (proto === 'console') {
+  if (proto === 'serial') {
     if (isPresent(connect.comport)) args.push(`/C=${connect.comport}`);
     if (isPresent(connect.speed)) args.push(`/BAUD=${connect.speed}`);
     if (isPresent(connect.cdatabit)) args.push(`/CDATABIT=${connect.cdatabit}`);

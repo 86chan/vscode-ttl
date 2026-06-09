@@ -68,9 +68,9 @@ describe('buildConnectArgs', () => {
     ]);
   });
 
-  it('console: 指定したシリアルパラメータを /Cxxx= オプションに変換する', () => {
+  it('serial: 指定したシリアルパラメータを /Cxxx= オプションに変換する', () => {
     const args = buildConnectArgs({
-      proto: 'console',
+      proto: 'serial',
       comport: 3,
       speed: 115200,
       cdatabit: 8,
@@ -92,11 +92,11 @@ describe('buildConnectArgs', () => {
     ]);
   });
 
-  it('console: 未指定の項目はオプションを出さない', () => {
-    expect(buildConnectArgs({ proto: 'console', comport: 1 })).toEqual(['/C=1']);
+  it('serial: 未指定の項目はオプションを出さない', () => {
+    expect(buildConnectArgs({ proto: 'serial', comport: 1 })).toEqual(['/C=1']);
   });
 
-  it('proto 省略時は comport があれば console と推測する', () => {
+  it('proto 省略時は comport があれば serial と推測する', () => {
     expect(buildConnectArgs({ comport: 5, speed: 9600 })).toEqual(['/C=5', '/BAUD=9600']);
   });
 
@@ -120,8 +120,8 @@ describe('buildConnectArgs', () => {
     ).toEqual(['h', '/nossh', '/T=1', '/B', '/TIMEOUT=15']);
   });
 
-  it('console: waitcom(/WAITCOM) を付与する', () => {
-    expect(buildConnectArgs({ proto: 'console', comport: 1, waitcom: true })).toEqual([
+  it('serial: waitcom(/WAITCOM) を付与する', () => {
+    expect(buildConnectArgs({ proto: 'serial', comport: 1, waitcom: true })).toEqual([
       '/C=1',
       '/WAITCOM',
     ]);
