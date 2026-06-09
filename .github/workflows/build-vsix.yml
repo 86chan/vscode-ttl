@@ -33,9 +33,9 @@ jobs:
 
       - name: Package VSIX
         run: |
-          VERSION=$(node -p "require('./package.json').version")
-          npx @vscode/vsce package --no-dependencies --out "ttl-language-${VERSION}.vsix"
-          echo "VSIX_PATH=ttl-language-${VERSION}.vsix" >> "$GITHUB_ENV"
+          SHA=$(git rev-parse --short HEAD)
+          npx @vscode/vsce package --no-dependencies --out "ttl-language-${SHA}.vsix"
+          echo "VSIX_PATH=ttl-language-${SHA}.vsix" >> "$GITHUB_ENV"
 
       - name: Upload VSIX
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
