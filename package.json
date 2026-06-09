@@ -334,6 +334,19 @@
                 "type": "string",
                 "description": "%ttl.dbg.teraTermDir%",
                 "default": ""
+              },
+              "launcher": {
+                "type": "string",
+                "enum": [
+                  "ttermpro",
+                  "ttpmacro"
+                ],
+                "enumDescriptions": [
+                  "%ttl.dbg.launcher.ttermpro%",
+                  "%ttl.dbg.launcher.ttpmacro%"
+                ],
+                "default": "ttermpro",
+                "description": "%ttl.dbg.launcher%"
               }
             }
           }
@@ -379,6 +392,22 @@
                 "proto": "serial",
                 "comport": 1,
                 "speed": 115200
+              }
+            }
+          },
+          {
+            "label": "TTL: Run Macro via ttpmacro (SSH)",
+            "description": "Run the current TTL macro via ttpmacro.exe with SSH connection injected by the extension",
+            "body": {
+              "type": "ttl",
+              "request": "launch",
+              "name": "Run TTL Macro via ttpmacro (SSH)",
+              "launcher": "ttpmacro",
+              "program": "^\"\\${file}\"",
+              "connect": {
+                "proto": "ssh",
+                "host": "192.168.0.100",
+                "port": 22
               }
             }
           }

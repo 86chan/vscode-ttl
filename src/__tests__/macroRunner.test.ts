@@ -11,6 +11,8 @@ import {
   buildConnectArgs,
   buildTeraTermLaunch,
   buildTeraTermOptions,
+  buildTtlConnectString,
+  buildTtpMacroLaunch,
   DEFAULT_TERATERM_DIRS,
   resolveTeraTermDir,
 } from '../macroRunner';
@@ -192,5 +194,36 @@ describe('buildTeraTermLaunch', () => {
 
   it('接続オプションが無ければ /M= のみ', () => {
     expect(buildTeraTermLaunch(DIR, MACRO).args).toEqual([`/M=${MACRO}`]);
+  });
+});
+
+describe('buildTtlConnectString', () => {
+  it('SSH: buildConnectArgs の結果をスペース結合した文字列を返す', () => {
+    expect(buildTtlConnectString({ proto: 'ssh', host: '192.168.0.100', port: 22 })).toBe(
+      '192.168.0.100:22 /ssh',
+    );
+  });
+
+  it('serial: シリアルオプションをスペース結合する', () => {
+    expect(buildTtlConnectString({ proto: 'serial', comport: 3, speed: 115200 })).toBe(
+      '/C=3 /BAUD=115200',
+    );
+  });
+
+  it('空の接続設定では空文字列を返す', () => {
+    expect(buildTtlConnectString({})).toBe('');
+  });
+});
+
+describe('buildTtpMacroLaunch', () => {
+  const DIR = 'C:\\Program Files\\teraterm5';
+  const MACRO = 'C:\\Users\\me\\scripts\\login.ttl';
+
+  it('実行ファイルは ttpmacro.exe を Windows パス規則で導出する', () => {
+    expect(buildTtpMacroLaunch('D:\\tt', MACRO).executable).toBe('D:\\tt\\ttpmacro.exe');
+  });
+
+  it('引数はマクロパスのみ（接続オプションなし）', () => {
+    expect(buildTtpMacroLaunch(DIR, MACRO).args).toEqual([MACRO]);
   });
 });

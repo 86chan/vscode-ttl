@@ -11,6 +11,9 @@ import * as nodePath from 'node:path';
 /** Tera Term 本体（端末）の実行ファイル名 */
 const TERATERM_EXE = 'ttermpro.exe';
 
+/** Tera Term マクロ実行専用の実行ファイル名 */
+const TTPMACRO_EXE = 'ttpmacro.exe';
+
 /**
  * Tera Term の一般的なインストールディレクトリ候補
  *
@@ -271,5 +274,37 @@ export function buildTeraTermLaunch(
   return {
     executable: nodePath.win32.join(teraTermDir, TERATERM_EXE),
     args: [...optionArgs, `/M=${program}`],
+  };
+}
+
+/**
+ * 構造化された接続設定を TTL マクロの `connect` コマンド引数文字列に変換
+ *
+ * @remarks
+ * `buildConnectArgs` の結果をスペースで結合した文字列を返す。
+ * TTL の `connect 'string'` に直接渡すことを想定している。
+ *
+ * @param connect - 接続設定
+ * @returns TTL connect コマンドに渡す引数文字列（例: `'192.168.0.100:22 /ssh'`）
+ */
+export function buildTtlConnectString(connect: TtlConnect): string {
+  return buildConnectArgs(connect).join(' ');
+}
+
+/**
+ * `ttpmacro.exe` の起動コマンドを組み立てる
+ *
+ * @remarks
+ * 接続オプションは `ttpmacro.exe` に渡さない。接続は TTL マクロ内の `connect` コマンドで行う。
+ * 実行ファイルは Windows パス規則で導出する。
+ *
+ * @param teraTermDir - 解決済みの Tera Term インストールディレクトリ
+ * @param program - 実行するマクロファイルの絶対パス
+ * @returns 実行ファイルと引数
+ */
+export function buildTtpMacroLaunch(teraTermDir: string, program: string): TeraTermLaunch {
+  return {
+    executable: nodePath.win32.join(teraTermDir, TTPMACRO_EXE),
+    args: [program],
   };
 }

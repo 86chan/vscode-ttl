@@ -42,5 +42,8 @@
   "ttl.dbg.autoWinClose": "Automatically close the window on disconnection. (/AUTOWINCLOSE=on|off)",
   "ttl.dbg.disableLocalEcho": "Disable the TCPLocalEcho and TCPCRSend options. (/E)",
   "ttl.dbg.newConnectionDialog": "Show (true, /ES) or hide (false, /DS) the 'New connection' dialog on startup. Note: usually suppressed when a macro is given.",
-  "ttl.dbg.teraTermDir": "Directory containing ttermpro.exe. Auto-detected (e.g. C:\\Program Files\\teraterm5) when empty."
+  "ttl.dbg.teraTermDir": "Directory containing ttermpro.exe. Auto-detected (e.g. C:\\Program Files\\teraterm5) when empty.",
+  "ttl.dbg.launcher": "Launcher executable. 'ttermpro' passes the macro via /M= to ttermpro.exe (default). 'ttpmacro' launches ttpmacro.exe and injects the connect command via a temporary wrapper macro.",
+  "ttl.dbg.launcher.ttermpro": "ttermpro.exe /M= (default)",
+  "ttl.dbg.launcher.ttpmacro": "ttpmacro.exe — connection injected via wrapper macro"
 }
