@@ -53,7 +53,7 @@ Describe the connection with a structured `connect` object; the extension transl
   "type": "ttl", "request": "launch", "name": "Run TTL Macro (SSH)",
   "program": "${file}",            // macro to run
   "connect": {
-    "proto": "ssh",                // "ssh" | "telnet" | "console"(=serial)
+    "proto": "ssh",                // "ssh" | "telnet" | "serial"
     "host": "192.168.0.100",
     "port": 22,
     "options": ["/auth=password", "/user=admin"]  // extra raw options
@@ -64,12 +64,12 @@ Describe the connection with a structured `connect` object; the extension transl
 ```
 
 ```jsonc
-// Serial (console)
+// Serial
 {
   "type": "ttl", "request": "launch", "name": "Run TTL Macro (Serial)",
   "program": "${file}",
   "connect": {
-    "proto": "console",
+    "proto": "serial",
     "comport": 3,        // COM port (1–256)
     "speed": 115200,     // baud
     "cdatabit": 8,       // 7 | 8

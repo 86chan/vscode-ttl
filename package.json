@@ -71,13 +71,13 @@
                     "enum": [
                       "ssh",
                       "telnet",
-                      "console",
+                      "serial",
                       "namedpipe"
                     ],
                     "enumDescriptions": [
                       "%ttl.dbg.connect.proto.ssh%",
                       "%ttl.dbg.connect.proto.telnet%",
-                      "%ttl.dbg.connect.proto.console%",
+                      "%ttl.dbg.connect.proto.serial%",
                       "%ttl.dbg.connect.proto.namedpipe%"
                     ],
                     "description": "%ttl.dbg.connect.proto%"
@@ -149,7 +149,7 @@
                       ],
                       "properties": {
                         "proto": {
-                          "const": "console"
+                          "const": "serial"
                         }
                       }
                     },
@@ -376,7 +376,7 @@
               "name": "Run TTL Macro (Serial)",
               "program": "^\"\\${file}\"",
               "connect": {
-                "proto": "console",
+                "proto": "serial",
                 "comport": 1,
                 "speed": 115200
               }
