@@ -67,6 +67,20 @@ function selectDescription(command: TtlCommand, language: 'ja' | 'en'): string {
 }
 
 /**
+ * コマンドの戻り値説明を表示言語に応じて選択
+ *
+ * @param command - TTLコマンド定義
+ * @param language - 表示言語
+ * @returns 選択された戻り値説明、または未定義の場合は undefined
+ */
+function selectReturns(command: TtlCommand, language: 'ja' | 'en'): string | undefined {
+  if (language === 'ja' && command.returnsJa !== undefined) {
+    return command.returnsJa;
+  }
+  return command.returns;
+}
+
+/**
  * コマンドのホバーテキストを生成
  *
  * @param command - TTLコマンド定義
@@ -78,6 +92,11 @@ function buildHoverMarkdown(command: TtlCommand, language: 'ja' | 'en'): vscode.
   // isTrusted は明示的に false のまま（command: URI によるコマンド実行を許可しない）
   markdown.appendCodeblock(command.signature, 'ttl');
   markdown.appendMarkdown(selectDescription(command, language));
+  const returns = selectReturns(command, language);
+  if (returns !== undefined) {
+    const heading = language === 'ja' ? '戻り値' : 'Return value';
+    markdown.appendMarkdown(`\n\n---\n\n**${heading}**\n\n${returns}`);
+  }
   return markdown;
 }
 
