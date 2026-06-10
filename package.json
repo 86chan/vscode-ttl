@@ -339,11 +339,13 @@
                 "type": "string",
                 "enum": [
                   "ttermpro",
-                  "ttpmacro"
+                  "ttpmacro",
+                  "ttpmacro-attach"
                 ],
                 "enumDescriptions": [
                   "%ttl.dbg.launcher.ttermpro%",
-                  "%ttl.dbg.launcher.ttpmacro%"
+                  "%ttl.dbg.launcher.ttpmacro%",
+                  "%ttl.dbg.launcher.ttpmacro-attach%"
                 ],
                 "default": "ttermpro",
                 "description": "%ttl.dbg.launcher%"
@@ -409,6 +411,17 @@
                 "host": "192.168.0.100",
                 "port": 22
               }
+            }
+          },
+          {
+            "label": "TTL: Run Macro in existing Tera Term (ttpmacro-attach)",
+            "description": "Run the current TTL macro in an already-running ttermpro.exe session via ttpmacro.exe /D=",
+            "body": {
+              "type": "ttl",
+              "request": "launch",
+              "name": "Run TTL Macro (attach)",
+              "launcher": "ttpmacro-attach",
+              "program": "^\"\\${file}\""
             }
           }
         ]
