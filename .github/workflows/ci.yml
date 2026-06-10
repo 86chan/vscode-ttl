@@ -38,7 +38,7 @@ jobs:
         run: npm test
 
       - name: Package debug VSIX
-        run: npx @vscode/vsce package --no-dependencies --pre-release --out ttl-language-debug.vsix
+        run: npx @vscode/vsce package --no-dependencies --pre-release --allow-missing-repository --out ttl-language-debug.vsix
 
       - name: Upload debug VSIX
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4

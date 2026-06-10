@@ -43,7 +43,8 @@
   "ttl.dbg.disableLocalEcho": "TCPLocalEcho / TCPCRSend の設定を無効にします。（/E）",
   "ttl.dbg.newConnectionDialog": "起動時に「新しい接続」ダイアログを表示(true=/ES)／非表示(false=/DS)します。※マクロ指定時は通常抑制されます。",
   "ttl.dbg.teraTermDir": "ttermpro.exe があるディレクトリ。空のとき自動探索します（例: C:\\Program Files\\teraterm5）。",
-  "ttl.dbg.launcher": "起動に使用する実行ファイル。'ttermpro' は ttermpro.exe に /M= でマクロを渡します（デフォルト）。'ttpmacro' は ttpmacro.exe を使用し、connect コマンドを含むラッパーマクロを自動生成して接続設定を注入します。",
+  "ttl.dbg.launcher": "起動に使用する実行ファイル。'ttermpro' は ttermpro.exe に /M= でマクロを渡します（デフォルト）。'ttpmacro' は ttpmacro.exe を使用し、connect コマンドを含むラッパーマクロを自動生成して接続設定を注入します。'ttpmacro-attach' は起動中の ttermpro.exe セッションに ttpmacro.exe /D= でアタッチします。",
   "ttl.dbg.launcher.ttermpro": "ttermpro.exe /M=（デフォルト）",
-  "ttl.dbg.launcher.ttpmacro": "ttpmacro.exe — ラッパーマクロで接続を注入"
+  "ttl.dbg.launcher.ttpmacro": "ttpmacro.exe — ラッパーマクロで接続を注入",
+  "ttl.dbg.launcher.ttpmacro-attach": "ttpmacro.exe /D= — 起動済みの ttermpro.exe ウィンドウにアタッチ"
 }
