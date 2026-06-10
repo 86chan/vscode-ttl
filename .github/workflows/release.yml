@@ -35,7 +35,7 @@ jobs:
       - name: Package release VSIX
         env:
           TAG: ${{ github.ref_name }}
-        run: npx @vscode/vsce package --no-dependencies --out "ttl-language-${TAG}.vsix"
+        run: npx @vscode/vsce package --no-dependencies --allow-missing-repository --out "ttl-language-${TAG}.vsix"
 
       - name: Publish GitHub Release
         env:
