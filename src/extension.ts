@@ -14,8 +14,10 @@ import {
   buildTeraTermLaunch,
   buildTeraTermOptions,
   buildTtlConnectString,
+  buildTtpMacroAttachLaunch,
   buildTtpMacroLaunch,
   DEFAULT_TERATERM_DIRS,
+  ENUM_VT_WINDOWS_PS_SCRIPT,
   resolveTeraTermDir,
   type TeraTermOptions,
   type TtlConnect,
@@ -717,10 +719,10 @@ class TtlDebugConfigurationProvider implements vscode.DebugConfigurationProvider
    * @param config - 変数置換済みのデバッグ構成
    * @returns 常に undefined（セッションは開始しない）
    */
-  resolveDebugConfigurationWithSubstitutedVariables(
+  async resolveDebugConfigurationWithSubstitutedVariables(
     _folder: vscode.WorkspaceFolder | undefined,
     config: vscode.DebugConfiguration,
-  ): vscode.ProviderResult<vscode.DebugConfiguration> {
+  ): Promise<vscode.DebugConfiguration | undefined> {
     const program = typeof config.program === 'string' ? config.program.trim() : '';
     if (program === '') {
       void vscode.window.showErrorMessage(
@@ -752,12 +754,19 @@ class TtlDebugConfigurationProvider implements vscode.DebugConfigurationProvider
       ...buildTeraTermOptions(config as unknown as TeraTermOptions),
     ];
 
-    const useTtpMacro = config.launcher === 'ttpmacro';
+    const launcher = config.launcher === 'ttpmacro' ? 'ttpmacro'
+      : config.launcher === 'ttpmacro-attach' ? 'ttpmacro-attach'
+      : 'ttermpro';
+
     let executable: string;
     let args: readonly string[];
     let tmpFile: string | undefined;
 
-    if (useTtpMacro) {
+    if (launcher === 'ttpmacro-attach') {
+      const picked = await this.pickTeraTermWindow();
+      if (picked === undefined) return undefined;
+      ({ executable, args } = buildTtpMacroAttachLaunch(teraTermDir, picked, program));
+    } else if (launcher === 'ttpmacro') {
       const connectArgs = buildConnectArgs(connect);
       let targetProgram = program;
 
@@ -810,6 +819,62 @@ class TtlDebugConfigurationProvider implements vscode.DebugConfigurationProvider
 
     // デバッグセッションは開始しない（起動のみ）
     return undefined;
+  }
+
+  /**
+   * PowerShell で起動中の ttermpro.exe ウィンドウを列挙し、QuickPick で選択させる
+   *
+   * @returns 選択された HWND の 8 桁大文字 16 進文字列。キャンセルまたはエラー時は undefined。
+   */
+  private async pickTeraTermWindow(): Promise<string | undefined> {
+    const psScript = ENUM_VT_WINDOWS_PS_SCRIPT;
+    const tmpPs = nodePath.join(nodeOs.tmpdir(), `ttl-enumwnd-${Date.now()}.ps1`);
+    nodeFs.writeFileSync(tmpPs, psScript, 'utf8');
+
+    let stdout: string;
+    try {
+      stdout = await new Promise<string>((resolve, reject) => {
+        childProcess.execFile(
+          'powershell.exe',
+          ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', tmpPs],
+          { encoding: 'utf8' },
+          (err, out) => { err ? reject(err) : resolve(out); },
+        );
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      void vscode.window.showErrorMessage(`Tera Term ウィンドウの列挙に失敗しました: ${msg}`);
+      return undefined;
+    } finally {
+      try { nodeFs.unlinkSync(tmpPs); } catch { /* ignore */ }
+    }
+
+    // 出力は "HWND_HEX\tWindowTitle" の行リスト（空行を除外）
+    const windows = stdout
+      .split(/\r?\n/)
+      .map(line => line.trim())
+      .filter(line => line.length > 0)
+      .map(line => {
+        const tab = line.indexOf('\t');
+        const hwnd = tab >= 0 ? line.slice(0, tab) : line;
+        const title = tab >= 0 ? line.slice(tab + 1) : line;
+        return { hwnd, title };
+      });
+
+    if (windows.length === 0) {
+      void vscode.window.showErrorMessage(
+        '起動中の Tera Term ウィンドウが見つかりません。先に Tera Term を起動してください。',
+      );
+      return undefined;
+    }
+
+    if (windows.length === 1) return windows[0].hwnd;
+
+    const items = windows.map(w => ({ label: w.title, description: `HWND: ${w.hwnd}`, hwnd: w.hwnd }));
+    const picked = await vscode.window.showQuickPick(items, {
+      placeHolder: 'マクロを実行する Tera Term ウィンドウを選択してください',
+    });
+    return picked?.hwnd;
   }
 }
 

@@ -308,3 +308,61 @@ export function buildTtpMacroLaunch(teraTermDir: string, program: string): TeraT
     args: [program],
   };
 }
+
+/**
+ * 起動中の ttermpro.exe ウィンドウ（クラス名 `VTWin32`）を列挙する PowerShell スクリプト
+ *
+ * @remarks
+ * 標準出力に `<HWND_8桁HEX>\t<ウィンドウタイトル>` の形式で 1 行ずつ出力する。
+ * HWND は Tera Term の DDE トピック名と同じ形式（32 bit 値を大文字 8 桁 16 進）。
+ */
+export const ENUM_VT_WINDOWS_PS_SCRIPT = `\
+Add-Type -TypeDefinition @'
+using System;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
+using System.Text;
+public static class TtWinEnum {
+    public delegate bool EnumWndProc(IntPtr h, IntPtr l);
+    [DllImport("user32.dll")] public static extern bool EnumWindows(EnumWndProc p, IntPtr l);
+    [DllImport("user32.dll", CharSet=CharSet.Auto)] public static extern int GetClassName(IntPtr h, StringBuilder s, int n);
+    [DllImport("user32.dll", CharSet=CharSet.Auto)] public static extern int GetWindowText(IntPtr h, StringBuilder s, int n);
+    [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr h);
+    public static string[] Find() {
+        var r = new List<string>();
+        EnumWindows((h, l) => {
+            var c = new StringBuilder(256); GetClassName(h, c, 256);
+            if (c.ToString() != "VTWin32" || !IsWindowVisible(h)) return true;
+            var t = new StringBuilder(256); GetWindowText(h, t, 256);
+            r.Add(((uint)h.ToInt64()).ToString("X8") + "\\t" + t);
+            return true;
+        }, IntPtr.Zero);
+        return r.ToArray();
+    }
+}
+'@ -ErrorAction SilentlyContinue
+[TtWinEnum]::Find()
+`;
+
+/**
+ * 起動済みの ttermpro.exe セッションにアタッチして `ttpmacro.exe` を起動するコマンドを組み立てる
+ *
+ * @remarks
+ * ttermpro.exe の DDE トピック名は VT ウィンドウの HWND を 8 桁大文字 16 進でエンコードしたもの。
+ * ttpmacro.exe に `/D=<hwndHex>` を渡すと、既存セッションに DDE でリンクして実行する。
+ *
+ * @param teraTermDir - 解決済みの Tera Term インストールディレクトリ
+ * @param hwndHex - 対象 ttermpro.exe の HWND（8 桁大文字 16 進、例: `"001A0042"`）
+ * @param program - 実行するマクロファイルの絶対パス
+ * @returns 実行ファイルと引数
+ */
+export function buildTtpMacroAttachLaunch(
+  teraTermDir: string,
+  hwndHex: string,
+  program: string,
+): TeraTermLaunch {
+  return {
+    executable: nodePath.win32.join(teraTermDir, TTPMACRO_EXE),
+    args: [`/D=${hwndHex}`, program],
+  };
+}
