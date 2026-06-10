@@ -58,7 +58,8 @@ jobs:
       - name: Package VSIX
         run: |
           SHA=$(git rev-parse --short HEAD)
-          npx @vscode/vsce package --no-dependencies --out "ttl-language-${SHA}.vsix"
+          EXTRA_FLAGS=${{ inputs.anonymize && '"--allow-missing-repository"' || '""' }}
+          npx @vscode/vsce package --no-dependencies $EXTRA_FLAGS --out "ttl-language-${SHA}.vsix"
           echo "VSIX_PATH=ttl-language-${SHA}.vsix" >> "$GITHUB_ENV"
 
       - name: Upload VSIX
