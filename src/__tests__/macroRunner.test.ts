@@ -12,8 +12,10 @@ import {
   buildTeraTermLaunch,
   buildTeraTermOptions,
   buildTtlConnectString,
+  buildTtpMacroAttachLaunch,
   buildTtpMacroLaunch,
   DEFAULT_TERATERM_DIRS,
+  ENUM_VT_WINDOWS_PS_SCRIPT,
   resolveTeraTermDir,
 } from '../macroRunner';
 
@@ -225,5 +227,31 @@ describe('buildTtpMacroLaunch', () => {
 
   it('引数はマクロパスのみ（接続オプションなし）', () => {
     expect(buildTtpMacroLaunch(DIR, MACRO).args).toEqual([MACRO]);
+  });
+});
+
+describe('buildTtpMacroAttachLaunch', () => {
+  const DIR = 'C:\\Program Files\\teraterm5';
+  const MACRO = 'C:\\Users\\me\\scripts\\login.ttl';
+  const HWND = '001A0042';
+
+  it('実行ファイルは ttpmacro.exe を Windows パス規則で導出する', () => {
+    expect(buildTtpMacroAttachLaunch(DIR, HWND, MACRO).executable).toBe(
+      `${DIR}\\ttpmacro.exe`,
+    );
+  });
+
+  it('引数は /D=<hwndHex> <macro> の順', () => {
+    expect(buildTtpMacroAttachLaunch(DIR, HWND, MACRO).args).toEqual([`/D=${HWND}`, MACRO]);
+  });
+});
+
+describe('ENUM_VT_WINDOWS_PS_SCRIPT', () => {
+  it('VTWin32 クラス名を含む', () => {
+    expect(ENUM_VT_WINDOWS_PS_SCRIPT).toContain('VTWin32');
+  });
+
+  it('HWND を X8 形式（8 桁 16 進）でフォーマットする', () => {
+    expect(ENUM_VT_WINDOWS_PS_SCRIPT).toContain('X8');
   });
 });
