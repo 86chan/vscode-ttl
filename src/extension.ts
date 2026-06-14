@@ -1,6 +1,4 @@
-/**
- * TTL (Tera Term Language) VS Code 拡張機能のエントリポイント
- */
+// TTL (Tera Term Language) VS Code 拡張機能のエントリポイント
 
 import * as childProcess from 'node:child_process';
 import * as nodeFs from 'node:fs';
