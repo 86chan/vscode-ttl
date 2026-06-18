@@ -412,6 +412,49 @@ describe('analyzeTtl - 未定義ラベル参照', () => {
   });
 });
 
+describe('analyzeTtl - 同一ファイル限定モード（requireLabelInSameFile）', () => {
+  it('include 先にしか定義が無いラベルを error として検出する', () => {
+    const diagnostics = analyzeTtl('call remote_proc', {
+      externalLabels: new Set(['remote_proc']),
+      requireLabelInSameFile: true,
+    });
+    const errors = diagnostics.filter(d => d.code === 'label-not-in-file');
+    expect(errors).toHaveLength(1);
+    expect(errors[0].severity).toBe('error');
+  });
+
+  it('通常モードでは include 先のラベルを受理する（比較用）', () => {
+    const diagnostics = analyzeTtl('call remote_proc', {
+      externalLabels: new Set(['remote_proc']),
+    });
+    expect(diagnostics.filter(d => d.code === 'label-not-in-file')).toHaveLength(0);
+    expect(diagnostics.filter(d => d.code === 'undefined-label')).toHaveLength(0);
+  });
+
+  it('同一ファイル内に定義があれば検出しない', () => {
+    const text = ['call do_login', ':do_login', 'return'].join('\n');
+    const diagnostics = analyzeTtl(text, { requireLabelInSameFile: true });
+    expect(diagnostics.filter(d => d.code === 'label-not-in-file')).toHaveLength(0);
+  });
+
+  it('どこにも定義の無いラベルも error として検出する', () => {
+    const diagnostics = analyzeTtl('goto missing', { requireLabelInSameFile: true });
+    const errors = diagnostics.filter(d => d.code === 'label-not-in-file');
+    expect(errors).toHaveLength(1);
+    expect(errors[0].severity).toBe('error');
+    // 通常の undefined-label（warning）は重複して出さない
+    expect(diagnostics.filter(d => d.code === 'undefined-label')).toHaveLength(0);
+  });
+
+  it('checkUndefinedLabels=false なら同一ファイル限定モードでも検出しない', () => {
+    const diagnostics = analyzeTtl('goto missing', {
+      requireLabelInSameFile: true,
+      checkUndefinedLabels: false,
+    });
+    expect(diagnostics.filter(d => d.code === 'label-not-in-file')).toHaveLength(0);
+  });
+});
+
 describe('analyzeTtl - 正常なスクリプト', () => {
   it('問題のないスクリプトでは診断を生成しない', () => {
     const text = [

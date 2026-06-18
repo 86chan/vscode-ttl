@@ -461,6 +461,11 @@
           "default": true,
           "description": "Warn when goto/call references a label with no matching definition (includes are resolved). Suppressed automatically when an included file cannot be resolved."
         },
+        "ttl.diagnostics.requireLabelInSameFile": {
+          "type": "boolean",
+          "default": false,
+          "description": "Require goto/call labels to be defined in the same file. When enabled, labels found only in included files are NOT accepted and any reference without a same-file definition is reported as an error. Takes effect only when ttl.diagnostics.undefinedLabel is enabled."
+        },
         "ttl.diagnostics.unknownCommand": {
           "type": "boolean",
           "default": true,

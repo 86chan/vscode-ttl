@@ -465,11 +465,14 @@ function findDuplicateLabels(maskedLines: readonly string[]): TtlDiagnostic[] {
  *
  * @param maskedLines - マスク済みの行テキスト配列
  * @param externalLabels - include 先など外部で定義済みのラベル名（小文字）
+ * @param sameFileOnly - true の場合、include 先の定義を受理せず同一ファイル内の定義のみを許可し
+ *   （externalLabels は無視）、見つからない参照を error として報告する
  * @returns 検出した診断の配列
  */
 function findUndefinedLabels(
   maskedLines: readonly string[],
   externalLabels: ReadonlySet<string>,
+  sameFileOnly: boolean,
 ): TtlDiagnostic[] {
   const localLabels = new Set<string>();
   for (const maskedLine of maskedLines) {
@@ -480,14 +483,17 @@ function findUndefinedLabels(
   const diagnostics: TtlDiagnostic[] = [];
   maskedLines.forEach((maskedLine, lineIndex) => {
     for (const ref of extractLabelReferences(maskedLine)) {
-      if (localLabels.has(ref.name) || externalLabels.has(ref.name)) continue;
+      if (localLabels.has(ref.name)) continue;
+      if (!sameFileOnly && externalLabels.has(ref.name)) continue;
       diagnostics.push({
         line: lineIndex,
         startCharacter: ref.nameStart,
         endCharacter: ref.nameStart + ref.name.length,
-        message: `ラベル ':${ref.name}' の定義が見つかりません`,
-        severity: 'warning',
-        code: 'undefined-label',
+        message: sameFileOnly
+          ? `ラベル ':${ref.name}' の定義が同一ファイル内に見つかりません`
+          : `ラベル ':${ref.name}' の定義が見つかりません`,
+        severity: sameFileOnly ? 'error' : 'warning',
+        code: sameFileOnly ? 'label-not-in-file' : 'undefined-label',
       });
     }
   });
@@ -607,6 +613,11 @@ export interface AnalyzeOptions {
   readonly externalLabels?: ReadonlySet<string>;
   /** 定義の無いラベル参照を検査するか（既定 true、include 解決が不完全な場合は false 推奨） */
   readonly checkUndefinedLabels?: boolean;
+  /**
+   * ラベルを同一ファイル内で完結させることを要求するか（既定 false）。
+   * true の場合、include 先の定義を受理せず、同一ファイルに定義の無い参照を error として報告する。
+   */
+  readonly requireLabelInSameFile?: boolean;
   /** 未知のコマンドを検査するか（既定 true） */
   readonly checkUnknownCommand?: boolean;
   /** 重複したラベル定義を検査するか（既定 true） */
@@ -629,6 +640,7 @@ const EMPTY_LABEL_SET: ReadonlySet<string> = new Set<string>();
 export function analyzeTtl(text: string, options: AnalyzeOptions = {}): TtlDiagnostic[] {
   const maxNestingDepth = options.maxNestingDepth ?? DEFAULT_MAX_NESTING_DEPTH;
   const checkUndefinedLabels = options.checkUndefinedLabels ?? true;
+  const requireLabelInSameFile = options.requireLabelInSameFile ?? false;
   const checkUnknownCommand = options.checkUnknownCommand ?? true;
   const checkDuplicateLabel = options.checkDuplicateLabel ?? true;
   const externalLabels = options.externalLabels ?? EMPTY_LABEL_SET;
@@ -647,7 +659,9 @@ export function analyzeTtl(text: string, options: AnalyzeOptions = {}): TtlDiagn
   });
 
   if (checkDuplicateLabel) diagnostics.push(...findDuplicateLabels(maskedLines));
-  if (checkUndefinedLabels) diagnostics.push(...findUndefinedLabels(maskedLines, externalLabels));
+  if (checkUndefinedLabels) {
+    diagnostics.push(...findUndefinedLabels(maskedLines, externalLabels, requireLabelInSameFile));
+  }
   diagnostics.push(...findBlockStructureIssues(maskedLines, maxNestingDepth));
 
   return diagnostics;

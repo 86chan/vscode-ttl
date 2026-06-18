@@ -735,11 +735,13 @@ async function refreshDiagnostics(
   const checkUnknownCommand = config.get<boolean>('diagnostics.unknownCommand', true);
   const checkDuplicateLabel = config.get<boolean>('diagnostics.duplicateLabel', true);
   const undefinedLabelEnabled = config.get<boolean>('diagnostics.undefinedLabel', true);
+  const requireLabelInSameFile = config.get<boolean>('diagnostics.requireLabelInSameFile', false);
 
   const text = document.getText();
   const version = document.version;
 
-  const { labels: externalLabels, complete } = undefinedLabelEnabled
+  // 同一ファイル限定モードでは include 先を参照しないため、include 解決は不要
+  const { labels: externalLabels, complete } = undefinedLabelEnabled && !requireLabelInSameFile
     ? await collectIncludedLabels(document.uri, text)
     : { labels: new Set<string>(), complete: true };
 
@@ -752,7 +754,9 @@ async function refreshDiagnostics(
       maxNestingDepth,
       externalLabels,
       // include 解決が不完全なときは誤検知を避けるため undefined-label を抑制
-      checkUndefinedLabels: undefinedLabelEnabled && complete,
+      // （同一ファイル限定モードは include 解決に依存しないため complete を要求しない）
+      checkUndefinedLabels: undefinedLabelEnabled && (requireLabelInSameFile || complete),
+      requireLabelInSameFile,
       checkUnknownCommand,
       checkDuplicateLabel,
     }).map(toVscodeDiagnostic),
