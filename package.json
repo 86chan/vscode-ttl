@@ -451,6 +451,11 @@
           "minimum": 0,
           "description": "Maximum allowed block nesting depth before a warning is reported. Set to 0 to disable the check."
         },
+        "ttl.includeRootDir": {
+          "type": "string",
+          "default": "",
+          "description": "Base directory for resolving include paths on include navigation. Empty = auto-detect the top-level parent macro by scanning the workspace. A relative path is resolved against the workspace folder; an absolute path is used as-is."
+        },
         "ttl.diagnostics.undefinedLabel": {
           "type": "boolean",
           "default": true,

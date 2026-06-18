@@ -1,0 +1,2 @@
+; grandchild1.ttl
+include 'sub/subsub/grandchild1.ttl'

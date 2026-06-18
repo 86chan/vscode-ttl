@@ -26,6 +26,8 @@ import {
   collectLabelOccurrences,
   extractDocumentSymbols,
   extractIncludeDirectives,
+  resolveIncludeRootFile,
+  resolveIncludeTarget,
   type TtlSymbol,
 } from './navigationUtils';
 import {
@@ -372,6 +374,50 @@ class TtlDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
 }
 
 /**
+ * include ジャンプの基準ディレクトリを解決する
+ *
+ * @remarks
+ * Tera Term の include はカレントディレクトリが最上位（エントリポイント）の親マクロの
+ * 位置を基準とする。設定 `ttl.includeRootDir` があればそれを優先し、無ければワークスペースを
+ * 走査して対象ドキュメントの最上位の親マクロを特定し、そのディレクトリを基準とする。
+ * いずれも解決できない場合はドキュメント自身のディレクトリ（従来挙動）にフォールバックする。
+ *
+ * @param document - include 文を含む対象ドキュメント
+ * @returns include パス解決の基準ディレクトリ（絶対パス）
+ */
+async function resolveIncludeBaseDir(document: vscode.TextDocument): Promise<string> {
+  const ownDir = nodePath.dirname(document.uri.fsPath);
+
+  // 1. 設定による上書き（絶対パスはそのまま、相対パスはワークスペースフォルダ基準）
+  const configured = vscode.workspace
+    .getConfiguration('ttl')
+    .get<string>('includeRootDir', '')
+    .trim();
+  if (configured.length > 0) {
+    if (nodePath.isAbsolute(configured)) return configured;
+    const folder = vscode.workspace.getWorkspaceFolder(document.uri);
+    return folder !== undefined ? nodePath.resolve(folder.uri.fsPath, configured) : ownDir;
+  }
+
+  // 2. 自動検出: ワークスペースの全 .ttl から include グラフを構築し最上位の親を特定
+  try {
+    const files = await vscode.workspace.findFiles('**/*.ttl');
+    const includeMap = new Map<string, readonly string[]>();
+    for (const fileUri of files) {
+      const text = (await vscode.workspace.openTextDocument(fileUri)).getText();
+      includeMap.set(
+        fileUri.fsPath,
+        extractIncludeDirectives(text).map(include => include.path),
+      );
+    }
+    const rootFile = resolveIncludeRootFile(document.uri.fsPath, includeMap);
+    return nodePath.dirname(rootFile);
+  } catch {
+    return ownDir;
+  }
+}
+
+/**
  * TTL ドキュメントリンクプロバイダ
  *
  * @remarks include 'path' のパス部分を Ctrl+クリックで開けるリンクにする
@@ -383,14 +429,14 @@ class TtlDocumentLinkProvider implements vscode.DocumentLinkProvider {
    * @param document - 対象ドキュメント
    * @returns include パスへのリンク配列
    */
-  provideDocumentLinks(document: vscode.TextDocument): vscode.DocumentLink[] {
-    const fileDir = nodePath.dirname(document.uri.fsPath);
+  async provideDocumentLinks(document: vscode.TextDocument): Promise<vscode.DocumentLink[]> {
+    const baseDir = await resolveIncludeBaseDir(document);
     return extractIncludeDirectives(document.getText()).map(include => {
       const range = new vscode.Range(
         new vscode.Position(include.line, include.startCharacter),
         new vscode.Position(include.line, include.endCharacter),
       );
-      const target = vscode.Uri.file(nodePath.resolve(fileDir, include.path));
+      const target = vscode.Uri.file(resolveIncludeTarget(baseDir, include.path));
       const link = new vscode.DocumentLink(range, target);
       link.tooltip = 'include 先を開く';
       return link;

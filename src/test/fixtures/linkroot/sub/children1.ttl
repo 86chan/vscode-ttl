@@ -1,0 +1,3 @@
+; children1.ttl
+include 'sub/children2'
+include 'children2'

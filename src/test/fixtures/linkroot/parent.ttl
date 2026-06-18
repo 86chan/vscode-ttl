@@ -1,0 +1,3 @@
+; parent.ttl (最上位の親マクロ)
+include 'sub/children1'
+include 'sub/subsub/grandchild1'
