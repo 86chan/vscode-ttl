@@ -12,6 +12,7 @@ import { describe, it, expect } from 'vitest';
 import {
   TTL_COMMANDS,
   TTL_COMMANDS_MAP,
+  TTL_DOC_HEADER_SNIPPETS,
   TTL_STRUCTURAL_KEYWORDS,
   TTL_SYSTEM_VARIABLES,
 } from '../ttlData';
@@ -103,6 +104,53 @@ describe('TTL_COMMANDS_MAP', () => {
   it('sendln のシグネチャが正しい形式', () => {
     const sendln = TTL_COMMANDS_MAP.get('sendln');
     expect(sendln?.signature).toMatch(/sendln/i);
+  });
+});
+
+describe('TTL_DOC_HEADER_SNIPPETS', () => {
+  it('行頭・行中の 2 種類を提供する', () => {
+    expect(TTL_DOC_HEADER_SNIPPETS).toHaveLength(2);
+  });
+
+  it('各スニペットが label/detail/documentation/body を持つ', () => {
+    for (const snippet of TTL_DOC_HEADER_SNIPPETS) {
+      expect(snippet.label.trim()).not.toBe('');
+      expect(snippet.detail.trim()).not.toBe('');
+      expect(snippet.documentation.trim()).not.toBe('');
+      expect(snippet.body.trim()).not.toBe('');
+    }
+  });
+
+  it('body の各行が ; で始まるか空白/タブストップのみ（TTL の行コメントは ;）', () => {
+    for (const snippet of TTL_DOC_HEADER_SNIPPETS) {
+      const lines = snippet.body.split('\n');
+      for (const line of lines) {
+        const isComment = line.startsWith(';');
+        const isTabStopOnly = /^\$0$/.test(line.trim()) || line.trim() === '';
+        expect(isComment || isTabStopOnly, `unexpected line: "${line}"`).toBe(true);
+      }
+    }
+  });
+
+  it('行頭スニペットに概要プレースホルダと必須変数/生成変数の表が含まれる', () => {
+    const header = TTL_DOC_HEADER_SNIPPETS[0];
+    expect(header.body).toContain('${1:概要}');
+    expect(header.body).toContain('; 必須変数:');
+    expect(header.body).toContain('; 生成変数:');
+    expect(header.body).toContain('; | 変数名 | R/W | 概要 |');
+  });
+
+  it('行中スニペットにセクション区切りが含まれる', () => {
+    const divider = TTL_DOC_HEADER_SNIPPETS[1];
+    expect(divider.body).toContain('; -------------------');
+    expect(divider.body).toContain('${1:概要}');
+  });
+
+  it('body の ${ がすべて有効なスニペット構文', () => {
+    for (const snippet of TTL_DOC_HEADER_SNIPPETS) {
+      if (!snippet.body.includes('${')) continue;
+      expect(/\$\{\d+[:|/}]/.test(snippet.body)).toBe(true);
+    }
   });
 });
 

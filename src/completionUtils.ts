@@ -28,6 +28,25 @@ const RESERVED_WORDS: ReadonlySet<string> = new Set<string>([
   ...TTL_SYSTEM_VARIABLES,
 ]);
 
+/** ドキュメントヘッダ補完のトリガ（行頭の空白＋連続スラッシュのみ）のパターン */
+const DOC_HEADER_TRIGGER_PATTERN = /^(\s*)\/{1,3}$/;
+
+/**
+ * カーソル直前のテキストがドキュメントヘッダ補完のトリガかを判定
+ *
+ * @remarks
+ * 行頭の空白に続けて 1〜3 個のスラッシュのみが入力されている場合に、
+ * 置換すべきスラッシュの開始位置（インデント直後の桁）を返す。
+ * `///` を `;` ベースのテンプレートで置換するために使用する。
+ *
+ * @param lineTextBeforeCursor - カーソル位置までの行テキスト
+ * @returns スラッシュ開始位置、またはトリガでない場合は undefined
+ */
+export function resolveDocHeaderTriggerStart(lineTextBeforeCursor: string): number | undefined {
+  const match = DOC_HEADER_TRIGGER_PATTERN.exec(lineTextBeforeCursor);
+  return match === null ? undefined : match[1].length;
+}
+
 /**
  * ドキュメント本文からユーザー定義の識別子を抽出
  *
