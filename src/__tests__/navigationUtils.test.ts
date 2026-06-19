@@ -11,6 +11,8 @@ import {
   collectLabelOccurrences,
   extractDocumentSymbols,
   extractIncludeDirectives,
+  resolveIncludeRootFile,
+  resolveIncludeTarget,
 } from '../navigationUtils';
 
 describe('extractIncludeDirectives', () => {
@@ -108,5 +110,60 @@ describe('collectLabelOccurrences', () => {
 
   it('該当ラベルがなければ空配列を返す', () => {
     expect(collectLabelOccurrences(source, 'missing')).toHaveLength(0);
+  });
+});
+
+describe('resolveIncludeTarget', () => {
+  it('拡張子が無い場合は .ttl を補完する', () => {
+    expect(resolveIncludeTarget('/ws', 'sub/children1')).toBe('/ws/sub/children1.ttl');
+  });
+
+  it('既に .ttl が付いていればそのまま解決する', () => {
+    expect(resolveIncludeTarget('/ws', 'sub/file.ttl')).toBe('/ws/sub/file.ttl');
+  });
+
+  it('基準ディレクトリからの相対解決を行う', () => {
+    expect(resolveIncludeTarget('/ws/sub', '../parent.ttl')).toBe('/ws/parent.ttl');
+  });
+});
+
+describe('resolveIncludeRootFile', () => {
+  // parent.ttl をルートとするユーザー例の構成
+  const parent = '/ws/parent.ttl';
+  const children1 = '/ws/sub/children1.ttl';
+  const children2 = '/ws/sub/children2.ttl';
+  const grandchild1 = '/ws/sub/subsub/grandchild1.ttl';
+
+  it('子・孫のルートが最上位の親(parent)になる', () => {
+    const map = new Map<string, readonly string[]>([
+      [parent, ['sub/children1', 'sub/subsub/grandchild1']],
+      [children1, ['sub/children2']],
+      [children2, []],
+      [grandchild1, []],
+    ]);
+    expect(resolveIncludeRootFile(children1, map)).toBe(parent);
+    expect(resolveIncludeRootFile(grandchild1, map)).toBe(parent);
+  });
+
+  it('親を持たないファイルは自分自身がルートになる', () => {
+    const map = new Map<string, readonly string[]>([
+      [parent, ['sub/children1']],
+      [children1, []],
+    ]);
+    // children2 はどのファイルからも include されていない
+    expect(resolveIncludeRootFile(children2, map)).toBe(children2);
+    // parent はルート（自分自身）
+    expect(resolveIncludeRootFile(parent, map)).toBe(parent);
+  });
+
+  it('循環 include でも無限ループせず停止する', () => {
+    const a = '/ws/a.ttl';
+    const b = '/ws/b.ttl';
+    const map = new Map<string, readonly string[]>([
+      [a, ['b']],
+      [b, ['a']],
+    ]);
+    // 停止して何らかのルートを返すこと（例外・無限ループにならない）
+    expect([a, b]).toContain(resolveIncludeRootFile(a, map));
   });
 });

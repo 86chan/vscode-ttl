@@ -6,6 +6,7 @@
  * VS Code 型に依存せず行・列の数値情報のみを返し、テスト容易性を確保する。
  */
 
+import * as nodePath from 'node:path';
 import { extractLabelDefinition, extractLabelReferences, stripLineComment } from './labelUtils';
 
 /** include 文のパターン（シングルクォート内のパス） */
@@ -155,4 +156,62 @@ export function collectLabelOccurrences(text: string, name: string): LabelOccurr
   });
 
   return results;
+}
+
+/**
+ * include パスを基準ディレクトリから絶対 fsPath へ解決
+ *
+ * @remarks
+ * Tera Term では include 先の拡張子を省略できるため、拡張子が無い場合は `.ttl` を補完する。
+ *
+ * @param baseDir - 解決の基準ディレクトリ（最上位の親マクロのディレクトリ）
+ * @param includePath - include で指定された相対パス
+ * @returns 解決後の絶対パス
+ */
+export function resolveIncludeTarget(baseDir: string, includePath: string): string {
+  const withExtension = nodePath.extname(includePath) === '' ? `${includePath}.ttl` : includePath;
+  return nodePath.resolve(baseDir, withExtension);
+}
+
+/**
+ * 対象ファイルの「最上位の親マクロ」ファイルを特定する
+ *
+ * @remarks
+ * Tera Term の include はカレントディレクトリが最上位（エントリポイント）の親マクロの
+ * 位置を基準とする。各ファイルの include を、その親の基準ディレクトリで解決しながら
+ * 不動点反復で「ルート（最上位の親）」を下位へ伝播させる。親を持たないファイルは
+ * 自分自身がルートとなる（＝従来同等のフォールバック）。
+ *
+ * @param targetFsPath - ルートを求めたいファイルの絶対パス
+ * @param includeMap - 各 .ttl ファイル fsPath → そのファイルが持つ include パス文字列の配列
+ * @returns 最上位の親マクロファイルの絶対パス（親が無ければ targetFsPath 自身）
+ */
+export function resolveIncludeRootFile(
+  targetFsPath: string,
+  includeMap: ReadonlyMap<string, readonly string[]>,
+): string {
+  // rootOf[f] = 現時点で判明している f のルート（最上位の親）ファイル
+  const rootOf = new Map<string, string>();
+  for (const fsPath of includeMap.keys()) rootOf.set(fsPath, fsPath);
+  if (!rootOf.has(targetFsPath)) rootOf.set(targetFsPath, targetFsPath);
+
+  // 循環 include を含むケースでも停止するよう反復回数に上限を設ける
+  const maxIterations = includeMap.size + 1;
+  let changed = true;
+  for (let iteration = 0; changed && iteration < maxIterations; iteration++) {
+    changed = false;
+    for (const [parent, includes] of includeMap) {
+      const parentRoot = rootOf.get(parent) ?? parent;
+      const baseDir = nodePath.dirname(parentRoot);
+      for (const includePath of includes) {
+        const childFs = resolveIncludeTarget(baseDir, includePath);
+        if (!rootOf.has(childFs)) continue; // ワークスペース外（実体なし）は無視
+        if (rootOf.get(childFs) === parentRoot) continue;
+        rootOf.set(childFs, parentRoot);
+        changed = true;
+      }
+    }
+  }
+
+  return rootOf.get(targetFsPath) ?? targetFsPath;
 }

@@ -26,6 +26,8 @@ import {
   collectLabelOccurrences,
   extractDocumentSymbols,
   extractIncludeDirectives,
+  resolveIncludeRootFile,
+  resolveIncludeTarget,
   type TtlSymbol,
 } from './navigationUtils';
 import {
@@ -110,12 +112,14 @@ function buildHoverMarkdown(command: TtlCommand, language: 'ja' | 'en'): vscode.
  * @param startUri - 探索の起点となるドキュメントの URI
  * @param startText - 起点ドキュメントの全文
  * @param labelName - 探索するラベル名（小文字）
+ * @param sameFileOnly - true の場合 include 先を辿らず起点ファイル内のみを探索する
  * @returns ラベル定義の位置、または見つからない場合は undefined
  */
 async function findLabelDefinitionAcrossFiles(
   startUri: vscode.Uri,
   startText: string,
   labelName: string,
+  sameFileOnly: boolean,
 ): Promise<vscode.Location | undefined> {
   const visited = new Set<string>();
   const queue: Array<{ readonly uri: vscode.Uri; readonly text: string }> = [
@@ -137,6 +141,9 @@ async function findLabelDefinitionAcrossFiles(
         new vscode.Position(definition.line, definition.startCharacter),
       );
     }
+
+    // 同一ファイル限定モードでは include 先を探索しない
+    if (sameFileOnly) continue;
 
     const fileDir = nodePath.dirname(current.uri.fsPath);
     for (const include of extractIncludeDirectives(current.text)) {
@@ -272,6 +279,8 @@ class TtlHoverProvider implements vscode.HoverProvider {
  * @remarks
  * goto/call コマンドのラベル参照から定義へジャンプできるようにする。
  * 同一ファイル内に定義がない場合は include 先（再帰的に）も探索する。
+ * `ttl.requireLabelInSameFile` が有効な場合は include 先を辿らず
+ * 同一ファイル内のみを探索する。
  */
 class TtlDefinitionProvider implements vscode.DefinitionProvider {
   /**
@@ -294,7 +303,10 @@ class TtlDefinitionProvider implements vscode.DefinitionProvider {
     if (!LABEL_REFERENCE_PREFIX.test(textBeforeWord)) return undefined;
 
     const labelName = document.getText(range).toLowerCase();
-    return findLabelDefinitionAcrossFiles(document.uri, document.getText(), labelName);
+    const sameFileOnly = vscode.workspace
+      .getConfiguration('ttl')
+      .get<boolean>('requireLabelInSameFile', false);
+    return findLabelDefinitionAcrossFiles(document.uri, document.getText(), labelName, sameFileOnly);
   }
 }
 
@@ -372,6 +384,50 @@ class TtlDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
 }
 
 /**
+ * include ジャンプの基準ディレクトリを解決する
+ *
+ * @remarks
+ * Tera Term の include はカレントディレクトリが最上位（エントリポイント）の親マクロの
+ * 位置を基準とする。設定 `ttl.includeRootDir` があればそれを優先し、無ければワークスペースを
+ * 走査して対象ドキュメントの最上位の親マクロを特定し、そのディレクトリを基準とする。
+ * いずれも解決できない場合はドキュメント自身のディレクトリ（従来挙動）にフォールバックする。
+ *
+ * @param document - include 文を含む対象ドキュメント
+ * @returns include パス解決の基準ディレクトリ（絶対パス）
+ */
+async function resolveIncludeBaseDir(document: vscode.TextDocument): Promise<string> {
+  const ownDir = nodePath.dirname(document.uri.fsPath);
+
+  // 1. 設定による上書き（絶対パスはそのまま、相対パスはワークスペースフォルダ基準）
+  const configured = vscode.workspace
+    .getConfiguration('ttl')
+    .get<string>('includeRootDir', '')
+    .trim();
+  if (configured.length > 0) {
+    if (nodePath.isAbsolute(configured)) return configured;
+    const folder = vscode.workspace.getWorkspaceFolder(document.uri);
+    return folder !== undefined ? nodePath.resolve(folder.uri.fsPath, configured) : ownDir;
+  }
+
+  // 2. 自動検出: ワークスペースの全 .ttl から include グラフを構築し最上位の親を特定
+  try {
+    const files = await vscode.workspace.findFiles('**/*.ttl');
+    const includeMap = new Map<string, readonly string[]>();
+    for (const fileUri of files) {
+      const text = (await vscode.workspace.openTextDocument(fileUri)).getText();
+      includeMap.set(
+        fileUri.fsPath,
+        extractIncludeDirectives(text).map(include => include.path),
+      );
+    }
+    const rootFile = resolveIncludeRootFile(document.uri.fsPath, includeMap);
+    return nodePath.dirname(rootFile);
+  } catch {
+    return ownDir;
+  }
+}
+
+/**
  * TTL ドキュメントリンクプロバイダ
  *
  * @remarks include 'path' のパス部分を Ctrl+クリックで開けるリンクにする
@@ -383,14 +439,14 @@ class TtlDocumentLinkProvider implements vscode.DocumentLinkProvider {
    * @param document - 対象ドキュメント
    * @returns include パスへのリンク配列
    */
-  provideDocumentLinks(document: vscode.TextDocument): vscode.DocumentLink[] {
-    const fileDir = nodePath.dirname(document.uri.fsPath);
+  async provideDocumentLinks(document: vscode.TextDocument): Promise<vscode.DocumentLink[]> {
+    const baseDir = await resolveIncludeBaseDir(document);
     return extractIncludeDirectives(document.getText()).map(include => {
       const range = new vscode.Range(
         new vscode.Position(include.line, include.startCharacter),
         new vscode.Position(include.line, include.endCharacter),
       );
-      const target = vscode.Uri.file(nodePath.resolve(fileDir, include.path));
+      const target = vscode.Uri.file(resolveIncludeTarget(baseDir, include.path));
       const link = new vscode.DocumentLink(range, target);
       link.tooltip = 'include 先を開く';
       return link;
@@ -689,11 +745,13 @@ async function refreshDiagnostics(
   const checkUnknownCommand = config.get<boolean>('diagnostics.unknownCommand', true);
   const checkDuplicateLabel = config.get<boolean>('diagnostics.duplicateLabel', true);
   const undefinedLabelEnabled = config.get<boolean>('diagnostics.undefinedLabel', true);
+  const requireLabelInSameFile = config.get<boolean>('requireLabelInSameFile', false);
 
   const text = document.getText();
   const version = document.version;
 
-  const { labels: externalLabels, complete } = undefinedLabelEnabled
+  // 同一ファイル限定モードでは include 先を参照しないため、include 解決は不要
+  const { labels: externalLabels, complete } = undefinedLabelEnabled && !requireLabelInSameFile
     ? await collectIncludedLabels(document.uri, text)
     : { labels: new Set<string>(), complete: true };
 
@@ -706,7 +764,9 @@ async function refreshDiagnostics(
       maxNestingDepth,
       externalLabels,
       // include 解決が不完全なときは誤検知を避けるため undefined-label を抑制
-      checkUndefinedLabels: undefinedLabelEnabled && complete,
+      // （同一ファイル限定モードは include 解決に依存しないため complete を要求しない）
+      checkUndefinedLabels: undefinedLabelEnabled && (requireLabelInSameFile || complete),
+      requireLabelInSameFile,
       checkUnknownCommand,
       checkDuplicateLabel,
     }).map(toVscodeDiagnostic),

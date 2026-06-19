@@ -451,6 +451,16 @@
           "minimum": 0,
           "description": "Maximum allowed block nesting depth before a warning is reported. Set to 0 to disable the check."
         },
+        "ttl.includeRootDir": {
+          "type": "string",
+          "default": "",
+          "description": "Base directory for resolving include paths on include navigation. Empty = auto-detect the top-level parent macro by scanning the workspace. A relative path is resolved against the workspace folder; an absolute path is used as-is."
+        },
+        "ttl.requireLabelInSameFile": {
+          "type": "boolean",
+          "default": false,
+          "description": "Require goto/call labels to be defined in the same file. When enabled, labels found only in included files are NOT accepted: go-to-definition (F12) searches the current file only, and references without a same-file definition are reported as errors (the error diagnostic also requires ttl.diagnostics.undefinedLabel to be enabled)."
+        },
         "ttl.diagnostics.undefinedLabel": {
           "type": "boolean",
           "default": true,
