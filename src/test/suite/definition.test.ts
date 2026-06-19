@@ -68,3 +68,42 @@ describe('定義ジャンプ', () => {
     assert.strictEqual(definitions.length, 0, '定義が返らないこと');
   });
 });
+
+describe('定義ジャンプ - 同一ファイル限定（requireLabelInSameFile）', () => {
+  // 各テストの前後で設定を復元する
+  let original: boolean | undefined;
+
+  beforeEach(async () => {
+    const config = vscode.workspace.getConfiguration('ttl');
+    original = config.get<boolean>('requireLabelInSameFile');
+    await config.update('requireLabelInSameFile', true, vscode.ConfigurationTarget.Global);
+  });
+
+  afterEach(async () => {
+    await vscode.workspace
+      .getConfiguration('ttl')
+      .update('requireLabelInSameFile', original, vscode.ConfigurationTarget.Global);
+  });
+
+  it('同一ファイル内の定義へは従来どおりジャンプできる', async () => {
+    const uri = vscode.Uri.file(MAIN_TTL);
+    await vscode.workspace.openTextDocument(uri);
+
+    const position = new vscode.Position(2, 'call '.length + 2);
+    const definitions = await getDefinitions(uri, position);
+
+    assert.ok(definitions.length > 0, '同一ファイルの定義は見つかること');
+    assert.strictEqual(definitions[0].uri.fsPath, MAIN_TTL, '同一ファイルを指すこと');
+  });
+
+  it('include 先にしか定義の無いラベルへはジャンプしない', async () => {
+    const uri = vscode.Uri.file(MAIN_TTL);
+    await vscode.workspace.openTextDocument(uri);
+
+    // 4行目 "call remote_proc"（remote_proc は def_helper.ttl にのみ定義）
+    const position = new vscode.Position(3, 'call '.length + 2);
+    const definitions = await getDefinitions(uri, position);
+
+    assert.strictEqual(definitions.length, 0, 'include 先は探索されず定義が返らないこと');
+  });
+});

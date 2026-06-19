@@ -456,15 +456,15 @@
           "default": "",
           "description": "Base directory for resolving include paths on include navigation. Empty = auto-detect the top-level parent macro by scanning the workspace. A relative path is resolved against the workspace folder; an absolute path is used as-is."
         },
+        "ttl.requireLabelInSameFile": {
+          "type": "boolean",
+          "default": false,
+          "description": "Require goto/call labels to be defined in the same file. When enabled, labels found only in included files are NOT accepted: go-to-definition (F12) searches the current file only, and references without a same-file definition are reported as errors (the error diagnostic also requires ttl.diagnostics.undefinedLabel to be enabled)."
+        },
         "ttl.diagnostics.undefinedLabel": {
           "type": "boolean",
           "default": true,
           "description": "Warn when goto/call references a label with no matching definition (includes are resolved). Suppressed automatically when an included file cannot be resolved."
-        },
-        "ttl.diagnostics.requireLabelInSameFile": {
-          "type": "boolean",
-          "default": false,
-          "description": "Require goto/call labels to be defined in the same file. When enabled, labels found only in included files are NOT accepted and any reference without a same-file definition is reported as an error. Takes effect only when ttl.diagnostics.undefinedLabel is enabled."
         },
         "ttl.diagnostics.unknownCommand": {
           "type": "boolean",

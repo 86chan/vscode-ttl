@@ -112,12 +112,14 @@ function buildHoverMarkdown(command: TtlCommand, language: 'ja' | 'en'): vscode.
  * @param startUri - 探索の起点となるドキュメントの URI
  * @param startText - 起点ドキュメントの全文
  * @param labelName - 探索するラベル名（小文字）
+ * @param sameFileOnly - true の場合 include 先を辿らず起点ファイル内のみを探索する
  * @returns ラベル定義の位置、または見つからない場合は undefined
  */
 async function findLabelDefinitionAcrossFiles(
   startUri: vscode.Uri,
   startText: string,
   labelName: string,
+  sameFileOnly: boolean,
 ): Promise<vscode.Location | undefined> {
   const visited = new Set<string>();
   const queue: Array<{ readonly uri: vscode.Uri; readonly text: string }> = [
@@ -139,6 +141,9 @@ async function findLabelDefinitionAcrossFiles(
         new vscode.Position(definition.line, definition.startCharacter),
       );
     }
+
+    // 同一ファイル限定モードでは include 先を探索しない
+    if (sameFileOnly) continue;
 
     const fileDir = nodePath.dirname(current.uri.fsPath);
     for (const include of extractIncludeDirectives(current.text)) {
@@ -274,6 +279,8 @@ class TtlHoverProvider implements vscode.HoverProvider {
  * @remarks
  * goto/call コマンドのラベル参照から定義へジャンプできるようにする。
  * 同一ファイル内に定義がない場合は include 先（再帰的に）も探索する。
+ * `ttl.requireLabelInSameFile` が有効な場合は include 先を辿らず
+ * 同一ファイル内のみを探索する。
  */
 class TtlDefinitionProvider implements vscode.DefinitionProvider {
   /**
@@ -296,7 +303,10 @@ class TtlDefinitionProvider implements vscode.DefinitionProvider {
     if (!LABEL_REFERENCE_PREFIX.test(textBeforeWord)) return undefined;
 
     const labelName = document.getText(range).toLowerCase();
-    return findLabelDefinitionAcrossFiles(document.uri, document.getText(), labelName);
+    const sameFileOnly = vscode.workspace
+      .getConfiguration('ttl')
+      .get<boolean>('requireLabelInSameFile', false);
+    return findLabelDefinitionAcrossFiles(document.uri, document.getText(), labelName, sameFileOnly);
   }
 }
 
@@ -735,7 +745,7 @@ async function refreshDiagnostics(
   const checkUnknownCommand = config.get<boolean>('diagnostics.unknownCommand', true);
   const checkDuplicateLabel = config.get<boolean>('diagnostics.duplicateLabel', true);
   const undefinedLabelEnabled = config.get<boolean>('diagnostics.undefinedLabel', true);
-  const requireLabelInSameFile = config.get<boolean>('diagnostics.requireLabelInSameFile', false);
+  const requireLabelInSameFile = config.get<boolean>('requireLabelInSameFile', false);
 
   const text = document.getText();
   const version = document.version;

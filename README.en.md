@@ -41,10 +41,10 @@ Individual diagnostics can be toggled (all default `true`):
 "ttl.diagnostics.duplicateLabel": true
 ```
 
-To require labels to be self-contained within a single file, enable the following (default `false`). When enabled, labels defined only in included files are NOT accepted, and any `goto`/`call` without a same-file definition is reported as an error (only effective when `ttl.diagnostics.undefinedLabel` is enabled).
+To require labels to be self-contained within a single file, enable the following (default `false`). When enabled, labels defined only in included files are NOT accepted: go-to-definition (F12) searches the current file only, and any `goto`/`call` without a same-file definition is reported as an error (the error diagnostic also requires `ttl.diagnostics.undefinedLabel` to be enabled).
 
 ```json
-"ttl.diagnostics.requireLabelInSameFile": false
+"ttl.requireLabelInSameFile": false
 ```
 
 The base directory for resolving include links can be fixed. When empty (default), the top-level parent macro is auto-detected by scanning the workspace. A relative path is resolved against the workspace folder; an absolute path is used as-is.
