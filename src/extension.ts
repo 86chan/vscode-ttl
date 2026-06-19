@@ -5,7 +5,11 @@ import * as nodeFs from 'node:fs';
 import * as nodeOs from 'node:os';
 import * as nodePath from 'node:path';
 import * as vscode from 'vscode';
-import { collectDocumentWords, TTL_IDENTIFIER_PATTERN } from './completionUtils';
+import {
+  collectDocumentWords,
+  resolveDocHeaderTriggerStart,
+  TTL_IDENTIFIER_PATTERN,
+} from './completionUtils';
 import { analyzeTtl, DEFAULT_MAX_NESTING_DEPTH, type TtlDiagnostic } from './diagnosticsUtils';
 import {
   buildConnectArgs,
@@ -33,6 +37,7 @@ import {
 import {
   type TtlCommand,
   TTL_COMMANDS_MAP,
+  TTL_DOC_HEADER_SNIPPETS,
   TTL_STRUCTURAL_KEYWORDS,
   TTL_SYSTEM_VARIABLES,
 } from './ttlData';
@@ -179,12 +184,43 @@ class TtlCompletionProvider implements vscode.CompletionItemProvider {
     document: vscode.TextDocument,
     position: vscode.Position,
   ): vscode.CompletionItem[] {
+    // `///` トリガ時はドキュメントヘッダスニペットのみを提示し、入力したスラッシュを置換する
+    const lineTextBeforeCursor = document
+      .lineAt(position.line)
+      .text.slice(0, position.character);
+    const triggerStart = resolveDocHeaderTriggerStart(lineTextBeforeCursor);
+    if (triggerStart !== undefined) {
+      const range = new vscode.Range(
+        new vscode.Position(position.line, triggerStart),
+        position,
+      );
+      return this.buildDocHeaderItems(range);
+    }
+
     const language = resolveDisplayLanguage();
     const commandItems = this.buildCommandItems(language);
     const keywordItems = this.buildKeywordItems();
     const variableItems = this.buildVariableItems();
     const documentWordItems = this.buildDocumentWordItems(document, position);
     return [...commandItems, ...keywordItems, ...variableItems, ...documentWordItems];
+  }
+
+  /**
+   * ドキュメントヘッダスニペットの補完候補を生成
+   *
+   * @param range - 入力済みのスラッシュを置換する範囲
+   * @returns ドキュメントヘッダスニペットの補完候補
+   */
+  private buildDocHeaderItems(range: vscode.Range): vscode.CompletionItem[] {
+    return TTL_DOC_HEADER_SNIPPETS.map(snippet => {
+      const item = new vscode.CompletionItem(snippet.label, vscode.CompletionItemKind.Snippet);
+      item.detail = snippet.detail;
+      item.documentation = new vscode.MarkdownString(snippet.documentation);
+      item.insertText = new vscode.SnippetString(snippet.body);
+      item.filterText = snippet.label;
+      item.range = range;
+      return item;
+    });
   }
 
   private buildCommandItems(language: 'ja' | 'en'): vscode.CompletionItem[] {
@@ -994,7 +1030,7 @@ export function activate(context: vscode.ExtensionContext): void {
   }
 
   context.subscriptions.push(
-    vscode.languages.registerCompletionItemProvider(selector, new TtlCompletionProvider()),
+    vscode.languages.registerCompletionItemProvider(selector, new TtlCompletionProvider(), '/'),
     vscode.languages.registerHoverProvider(selector, new TtlHoverProvider()),
     vscode.languages.registerDefinitionProvider(selector, new TtlDefinitionProvider()),
     vscode.languages.registerReferenceProvider(selector, new TtlReferenceProvider()),

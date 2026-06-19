@@ -20,6 +20,25 @@ export interface TtlCommand {
   readonly snippet?: string;
 }
 
+/**
+ * ドキュメントヘッダ用スニペットの定義
+ *
+ * @remarks
+ * 他言語の `///` ドキュメントコメントのように、`///` をトリガとして
+ * `;` ベースの定型ヘッダを挿入するためのスニペット。TTL の行コメントは
+ * `;` のみのため、入力した `///` は本文（`body`）で置換される。
+ */
+export interface TtlDocHeaderSnippet {
+  /** 補完リストでの表示名 */
+  readonly label: string;
+  /** 補完候補の詳細（種別の補足） */
+  readonly detail: string;
+  /** 補完候補のドキュメント説明 */
+  readonly documentation: string;
+  /** VSCodeスニペット形式の挿入本文（`;` ベース） */
+  readonly body: string;
+}
+
 /** TTLコマンド定義リスト */
 export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
   // ── 制御フロー ──────────────────────────────────────────────────────────────
@@ -1679,3 +1698,51 @@ export const TTL_SYSTEM_VARIABLES = [
   'params', 'paramcnt',
   'timeout', 'mtimeout',
 ] as const satisfies ReadonlyArray<string>;
+
+/**
+ * ドキュメントヘッダ用スニペット一覧
+ *
+ * @remarks
+ * `///` 入力で補完候補に並ぶ。行頭（ファイル/関数の大きなヘッダ）と
+ * 行中（セクション区切り）の 2 種類を提供する。
+ */
+export const TTL_DOC_HEADER_SNIPPETS = [
+  {
+    label: '/// ドキュメントヘッダ (行頭)',
+    detail: 'TTL doc header block',
+    documentation: '概要・説明・前提条件・必須変数/生成変数の表を含む定型ヘッダを挿入します。',
+    body: [
+      '; ==================================================',
+      '; ${1:概要}',
+      ';',
+      '; ${2:説明}',
+      ';',
+      '; 前提条件:',
+      ';   - ${3:なにか}',
+      ';',
+      '; 必須変数:',
+      '; | 変数名 | R/W | 概要 |',
+      '; | ------ | :-: | ---- |',
+      '; |        |     |      |',
+      ';',
+      '; 生成変数:',
+      '; | 変数名 | R/W | 概要 |',
+      '; | ------ | :-: | ---- |',
+      '; |        |     |      |',
+      ';',
+      '; ==================================================',
+      '$0',
+    ].join('\n'),
+  },
+  {
+    label: '/// セクション区切り (行中)',
+    detail: 'TTL section divider',
+    documentation: '短いセクション区切りコメントを挿入します。',
+    body: [
+      '; -------------------',
+      '; ${1:概要}',
+      '; -------------------',
+      '$0',
+    ].join('\n'),
+  },
+] as const satisfies ReadonlyArray<TtlDocHeaderSnippet>;

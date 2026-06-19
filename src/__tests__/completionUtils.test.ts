@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { collectDocumentWords } from '../completionUtils';
+import { collectDocumentWords, resolveDocHeaderTriggerStart } from '../completionUtils';
 
 describe('collectDocumentWords', () => {
   it('ユーザーが定義した変数名を候補として抽出すること', () => {
@@ -85,5 +85,35 @@ describe('collectDocumentWords', () => {
 
     // Assert: Set による一意化で 1 件のみ
     expect(occurrences).toHaveLength(1);
+  });
+});
+
+describe('resolveDocHeaderTriggerStart', () => {
+  it('行頭のスラッシュのみのときスラッシュ開始位置を返す', () => {
+    // Arrange & Act & Assert: 1〜3個のスラッシュを許容する
+    expect(resolveDocHeaderTriggerStart('/')).toBe(0);
+    expect(resolveDocHeaderTriggerStart('//')).toBe(0);
+    expect(resolveDocHeaderTriggerStart('///')).toBe(0);
+  });
+
+  it('先頭インデントを除いたスラッシュ開始位置を返す', () => {
+    // Arrange: スペース/タブのインデントに続くスラッシュ
+    expect(resolveDocHeaderTriggerStart('  //')).toBe(2);
+    expect(resolveDocHeaderTriggerStart('\t/')).toBe(1);
+  });
+
+  it('スラッシュの後ろに文字があるときは undefined', () => {
+    expect(resolveDocHeaderTriggerStart('///x')).toBeUndefined();
+    expect(resolveDocHeaderTriggerStart('//abc')).toBeUndefined();
+  });
+
+  it('スラッシュ前に非空白文字があるときは undefined', () => {
+    expect(resolveDocHeaderTriggerStart('abc/')).toBeUndefined();
+    expect(resolveDocHeaderTriggerStart("include 'a/")).toBeUndefined();
+  });
+
+  it('スラッシュがない、または空文字のときは undefined', () => {
+    expect(resolveDocHeaderTriggerStart('')).toBeUndefined();
+    expect(resolveDocHeaderTriggerStart('  ')).toBeUndefined();
   });
 });
