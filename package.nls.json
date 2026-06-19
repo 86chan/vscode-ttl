@@ -46,5 +46,15 @@
   "ttl.dbg.launcher": "Launcher executable. 'ttermpro' passes the macro via /M= to ttermpro.exe (default). 'ttpmacro' launches ttpmacro.exe and injects the connect command via a temporary wrapper macro. 'ttpmacro-attach' attaches to an already-running ttermpro.exe session via ttpmacro.exe /D=.",
   "ttl.dbg.launcher.ttermpro": "ttermpro.exe /M= (default)",
   "ttl.dbg.launcher.ttpmacro": "ttpmacro.exe — connection injected via wrapper macro",
-  "ttl.dbg.launcher.ttpmacro-attach": "ttpmacro.exe /D= — attach to an existing ttermpro.exe window"
+  "ttl.dbg.launcher.ttpmacro-attach": "ttpmacro.exe /D= — attach to an existing ttermpro.exe window",
+  "ttl.config.language": "Language for hover documentation. 'auto' uses the VS Code display language.",
+  "ttl.config.language.auto": "Detect language from VS Code UI setting",
+  "ttl.config.language.ja": "Always show Japanese documentation",
+  "ttl.config.language.en": "Always show English documentation",
+  "ttl.config.maxNestingDepth": "Maximum allowed block nesting depth before a warning is reported. Set to 0 to disable the check.",
+  "ttl.config.includeRootDir": "Base directory for resolving include paths on include navigation. Empty = auto-detect the top-level parent macro by scanning the workspace. A relative path is resolved against the workspace folder; an absolute path is used as-is.",
+  "ttl.config.requireLabelInSameFile": "Require goto/call labels to be defined in the same file. When enabled, labels found only in included files are NOT accepted: go-to-definition (F12) searches the current file only, and references without a same-file definition are reported as errors (the error diagnostic also requires ttl.diagnostics.undefinedLabel to be enabled).",
+  "ttl.config.diagnostics.undefinedLabel": "Warn when goto/call references a label with no matching definition (includes are resolved). Suppressed automatically when an included file cannot be resolved.",
+  "ttl.config.diagnostics.unknownCommand": "Warn when a line starts with an unknown command, suggesting the closest known command.",
+  "ttl.config.diagnostics.duplicateLabel": "Warn when the same label is defined more than once."
 }

@@ -46,5 +46,15 @@
   "ttl.dbg.launcher": "起動に使用する実行ファイル。'ttermpro' は ttermpro.exe に /M= でマクロを渡します（デフォルト）。'ttpmacro' は ttpmacro.exe を使用し、connect コマンドを含むラッパーマクロを自動生成して接続設定を注入します。'ttpmacro-attach' は起動中の ttermpro.exe セッションに ttpmacro.exe /D= でアタッチします。",
   "ttl.dbg.launcher.ttermpro": "ttermpro.exe /M=（デフォルト）",
   "ttl.dbg.launcher.ttpmacro": "ttpmacro.exe — ラッパーマクロで接続を注入",
-  "ttl.dbg.launcher.ttpmacro-attach": "ttpmacro.exe /D= — 起動済みの ttermpro.exe ウィンドウにアタッチ"
+  "ttl.dbg.launcher.ttpmacro-attach": "ttpmacro.exe /D= — 起動済みの ttermpro.exe ウィンドウにアタッチ",
+  "ttl.config.language": "ホバードキュメントの言語。'auto' は VS Code の表示言語設定を使用します。",
+  "ttl.config.language.auto": "VS Code の UI 設定から言語を検出",
+  "ttl.config.language.ja": "常に日本語ドキュメントを表示",
+  "ttl.config.language.en": "常に英語ドキュメントを表示",
+  "ttl.config.maxNestingDepth": "警告を報告するブロックの最大ネスト深度。0 にするとチェックを無効にします。",
+  "ttl.config.includeRootDir": "インクルードナビゲーション時のインクルードパス解決のベースディレクトリ。空の場合はワークスペースをスキャンしてトップレベルの親マクロを自動検出します。相対パスはワークスペースフォルダーを基準に解決し、絶対パスはそのまま使用されます。",
+  "ttl.config.requireLabelInSameFile": "goto/call のラベルを同じファイル内に定義することを要求します。有効にすると、インクルードファイルにしか存在しないラベルは受け付けられません。定義へ移動（F12）は現在のファイルのみを検索し、同じファイルに定義がない参照はエラーとして報告されます（エラー診断には ttl.diagnostics.undefinedLabel の有効化も必要です）。",
+  "ttl.config.diagnostics.undefinedLabel": "goto/call が定義と一致しないラベルを参照している場合に警告します（インクルードは解決されます）。インクルードファイルが解決できない場合は自動的に抑制されます。",
+  "ttl.config.diagnostics.unknownCommand": "行が不明なコマンドで始まっている場合に、最も近い既知のコマンドを提案して警告します。",
+  "ttl.config.diagnostics.duplicateLabel": "同じラベルが複数回定義されている場合に警告します。"
 }

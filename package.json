@@ -438,43 +438,43 @@
             "en"
           ],
           "enumDescriptions": [
-            "Detect language from VS Code UI setting",
-            "Always show Japanese documentation",
-            "Always show English documentation"
+            "%ttl.config.language.auto%",
+            "%ttl.config.language.ja%",
+            "%ttl.config.language.en%"
           ],
           "default": "auto",
-          "description": "Language for hover documentation. 'auto' uses the VS Code display language."
+          "description": "%ttl.config.language%"
         },
         "ttl.maxNestingDepth": {
           "type": "integer",
           "default": 2,
           "minimum": 0,
-          "description": "Maximum allowed block nesting depth before a warning is reported. Set to 0 to disable the check."
+          "description": "%ttl.config.maxNestingDepth%"
         },
         "ttl.includeRootDir": {
           "type": "string",
           "default": "",
-          "description": "Base directory for resolving include paths on include navigation. Empty = auto-detect the top-level parent macro by scanning the workspace. A relative path is resolved against the workspace folder; an absolute path is used as-is."
+          "description": "%ttl.config.includeRootDir%"
         },
         "ttl.requireLabelInSameFile": {
           "type": "boolean",
           "default": false,
-          "description": "Require goto/call labels to be defined in the same file. When enabled, labels found only in included files are NOT accepted: go-to-definition (F12) searches the current file only, and references without a same-file definition are reported as errors (the error diagnostic also requires ttl.diagnostics.undefinedLabel to be enabled)."
+          "description": "%ttl.config.requireLabelInSameFile%"
         },
         "ttl.diagnostics.undefinedLabel": {
           "type": "boolean",
           "default": true,
-          "description": "Warn when goto/call references a label with no matching definition (includes are resolved). Suppressed automatically when an included file cannot be resolved."
+          "description": "%ttl.config.diagnostics.undefinedLabel%"
         },
         "ttl.diagnostics.unknownCommand": {
           "type": "boolean",
           "default": true,
-          "description": "Warn when a line starts with an unknown command, suggesting the closest known command."
+          "description": "%ttl.config.diagnostics.unknownCommand%"
         },
         "ttl.diagnostics.duplicateLabel": {
           "type": "boolean",
           "default": true,
-          "description": "Warn when the same label is defined more than once."
+          "description": "%ttl.config.diagnostics.duplicateLabel%"
         }
       }
     }
