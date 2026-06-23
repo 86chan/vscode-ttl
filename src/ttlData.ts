@@ -2366,6 +2366,25 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'getdate <strvar> [<format> [<timezone>]]',
     description: 'Returns the current date in <strvar>. Default format is "YYYY-MM-DD".',
     descriptionJa: '現在の日付を文字列変数 <strvar> に格納する。デフォルト形式は "YYYY-MM-DD"',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the current date.',
+        descriptionJa: '現在の日付を格納する文字列変数。',
+      },
+      {
+        name: '<format>',
+        description: 'The date format string (default "YYYY-MM-DD").',
+        descriptionJa: '日付の書式文字列（既定は "YYYY-MM-DD"）。',
+        optional: true,
+      },
+      {
+        name: '<timezone>',
+        description: 'The timezone applied when formatting the date.',
+        descriptionJa: '日付の整形に適用するタイムゾーン。',
+        optional: true,
+      },
+    ],
     returnsJa: '日付を `<strvar>` に格納。`<format>` 指定時は `result` … 0=成功, 1=長さ超過などで失敗, 2=書式不正（`<format>` 省略時は `result` 不変）。',
     returns: 'Stores the date in `<strvar>`. When `<format>` is given, `result` … 0=success, 1=failed (e.g. length over the limit), 2=invalid format (unchanged when `<format>` is omitted).',
     snippet: 'getdate ${1:strvar}',
@@ -2375,6 +2394,25 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'gettime <strvar> [<format> [<timezone>]]',
     description: 'Returns the current time in <strvar>. Default format is "HH:MM:SS".',
     descriptionJa: '現在の時刻を文字列変数 <strvar> に格納する。デフォルト形式は "HH:MM:SS"',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the current time.',
+        descriptionJa: '現在の時刻を格納する文字列変数。',
+      },
+      {
+        name: '<format>',
+        description: 'The time format string (default "HH:MM:SS").',
+        descriptionJa: '時刻の書式文字列（既定は "HH:MM:SS"）。',
+        optional: true,
+      },
+      {
+        name: '<timezone>',
+        description: 'The timezone applied when formatting the time.',
+        descriptionJa: '時刻の整形に適用するタイムゾーン。',
+        optional: true,
+      },
+    ],
     returnsJa: '時刻を `<strvar>` に格納。`<format>` 指定時は `result` … 0=成功, 1=長さ超過などで失敗, 2=書式不正（`<format>` 省略時は `result` 不変）。',
     returns: 'Stores the time in `<strvar>`. When `<format>` is given, `result` … 0=success, 1=failed (e.g. length over the limit), 2=invalid format (unchanged when `<format>` is omitted).',
     snippet: 'gettime ${1:strvar}',
@@ -2384,18 +2422,39 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'setdate <date>',
     description: 'Sets the system date. The format of <date> should be "YYYY-MM-DD".',
     descriptionJa: 'システムの日付を変更する。<date> の形式は "YYYY-MM-DD"',
+    parameters: [
+      {
+        name: '<date>',
+        description: 'The system date to set, in "YYYY-MM-DD" format.',
+        descriptionJa: 'システムに設定する日付（"YYYY-MM-DD" 形式）。',
+      },
+    ],
   },
   {
     name: 'settime',
     signature: 'settime <time>',
     description: 'Sets the system time. The format of <time> should be "HH:MM:SS".',
     descriptionJa: 'システムの時刻を変更する。<time> の形式は "HH:MM:SS"',
+    parameters: [
+      {
+        name: '<time>',
+        description: 'The system time to set, in "HH:MM:SS" format.',
+        descriptionJa: 'システムに設定する時刻（"HH:MM:SS" 形式）。',
+      },
+    ],
   },
   {
     name: 'uptime',
     signature: 'uptime <intvar>',
     description: 'Retrieves the number of milliseconds that have elapsed since Windows was started.',
     descriptionJa: 'Windows OS の稼働時間（ミリ秒）を <intvar> に格納する',
+    parameters: [
+      {
+        name: '<intvar>',
+        description: 'The integer variable that receives the OS uptime in milliseconds.',
+        descriptionJa: 'OS の稼働時間（ミリ秒）を格納する整数変数。',
+      },
+    ],
     returnsJa: 'OS の稼働時間（ミリ秒）を `<intvar>` に格納。',
     returns: 'Stores the OS uptime in milliseconds in `<intvar>`.',
     snippet: 'uptime ${1:intvar}',
@@ -2406,6 +2465,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'getenv <envname> <strvar>',
     description: 'Retrieves the value of an environment variable and stores it in <strvar>.',
     descriptionJa: '環境変数 <envname> の値を文字列変数 <strvar> に格納する',
+    parameters: [
+      {
+        name: '<envname>',
+        description: 'The name of the environment variable to read.',
+        descriptionJa: '読み取る環境変数の名前。',
+      },
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the environment variable value.',
+        descriptionJa: '環境変数の値を格納する文字列変数。',
+      },
+    ],
     returnsJa: '環境変数の値を `<strvar>` に格納。',
     returns: 'Stores the environment variable value in `<strvar>`.',
     snippet: "getenv '${1:PATH}' ${2:strvar}",
@@ -2415,6 +2486,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'setenv <envname> <strval>',
     description: 'Sets an environment variable. Effective only within the macro.',
     descriptionJa: '環境変数 <envname> に <strval> をセットする（マクロ内でのみ有効）',
+    parameters: [
+      {
+        name: '<envname>',
+        description: 'The name of the environment variable to set.',
+        descriptionJa: '設定する環境変数の名前。',
+      },
+      {
+        name: '<strval>',
+        description: 'The value to assign to the environment variable.',
+        descriptionJa: '環境変数に設定する値。',
+      },
+    ],
     snippet: "setenv '${1:VAR}' '${2:value}'",
   },
   {
@@ -2422,6 +2505,19 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'expandenv <strvar> [<strval>]',
     description: 'Expands environment variable strings (%VARNAME%) in the string.',
     descriptionJa: '文字列内の環境変数文字列(%variableName%)を展開する',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable holding the string to expand, which also receives the result.',
+        descriptionJa: '展開する文字列を保持し、結果を格納する文字列変数。',
+      },
+      {
+        name: '<strval>',
+        description: 'The source string to expand; if omitted, <strvar> is expanded in place.',
+        descriptionJa: '展開元の文字列。省略時は <strvar> をそのまま展開する。',
+        optional: true,
+      },
+    ],
     returnsJa: '環境変数を展開した文字列を `<strvar>` に格納。',
     returns: 'Stores the expanded string in `<strvar>`.',
     snippet: 'expandenv ${1:strvar}',
