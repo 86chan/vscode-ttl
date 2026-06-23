@@ -3181,6 +3181,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'bplussend <filename>',
     description: 'Sends a file to the host with the B-Plus protocol.',
     descriptionJa: 'ファイル <filename> を B-Plus プロトコルで送信する',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The file to send.',
+        descriptionJa: '送信するファイル。',
+      },
+    ],
     returnsJa: '`result` … 転送が成功すると 1、失敗すると 0。',
     returns: '`result` … set to 1 on a successful transfer, 0 otherwise.',
     snippet: "bplussend '${1:filename}'",
@@ -3198,6 +3205,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'quickvansend <filename>',
     description: 'Sends a file to the host with the Quick-VAN protocol.',
     descriptionJa: 'ファイル <filename> を Quick-VAN プロトコルで送信する',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The file to send.',
+        descriptionJa: '送信するファイル。',
+      },
+    ],
     returnsJa: '`result` … 転送が成功すると 1、失敗すると 0。',
     returns: '`result` … set to 1 on a successful transfer, 0 otherwise.',
     snippet: "quickvansend '${1:filename}'",
@@ -3215,6 +3229,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'kmtsend <filename>',
     description: 'Sends a file to the host with the Kermit protocol.',
     descriptionJa: 'ファイル <filename> を Kermit プロトコルで送信する',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The file to send.',
+        descriptionJa: '送信するファイル。',
+      },
+    ],
     returnsJa: '`result` … 転送が成功すると 1、失敗すると 0。',
     returns: '`result` … set to 1 on a successful transfer, 0 otherwise.',
     snippet: "kmtsend '${1:filename}'",
@@ -3224,6 +3245,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'kmtget <filename>',
     description: 'Gets a file from the host using the Kermit Get command.',
     descriptionJa: 'ファイル <filename> を Kermit Get コマンドを使用してホストから受信する',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The file to get from the host.',
+        descriptionJa: 'ホストから受信するファイル。',
+      },
+    ],
     returnsJa: '`result` … 転送が成功すると 1、失敗すると 0。',
     returns: '`result` … set to 1 on a successful transfer, 0 otherwise.',
     snippet: "kmtget '${1:filename}'",
@@ -3241,6 +3269,23 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'xmodemrecv <filename> <binary flag> <option>',
     description: 'Receives a file from the host with the XMODEM protocol.',
     descriptionJa: 'XMODEM プロトコルでファイル <filename> を受信する',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The file to receive.',
+        descriptionJa: '受信するファイル。',
+      },
+      {
+        name: '<binary flag>',
+        description: 'Non-zero receives in binary mode; zero performs text (new-line) conversion.',
+        descriptionJa: '0 以外でバイナリ受信、0 でテキスト（改行）変換受信する。',
+      },
+      {
+        name: '<option>',
+        description: 'The XMODEM mode: 1=checksum, 2=CRC, 3=1K.',
+        descriptionJa: 'XMODEM のモード（1=checksum, 2=CRC, 3=1K）。',
+      },
+    ],
     returnsJa: '`result` … 転送が成功すると 1、失敗すると 0。',
     returns: '`result` … set to 1 on a successful transfer, 0 otherwise.',
   },
@@ -3249,6 +3294,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'xmodemsend <filename> <option>',
     description: 'Sends a file to the host with the XMODEM protocol.',
     descriptionJa: 'XMODEM プロトコルでファイル <filename> を送信する',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The file to send.',
+        descriptionJa: '送信するファイル。',
+      },
+      {
+        name: '<option>',
+        description: 'The XMODEM mode: 1=checksum, 2=CRC, 3=1K.',
+        descriptionJa: 'XMODEM のモード（1=checksum, 2=CRC, 3=1K）。',
+      },
+    ],
     returnsJa: '`result` … 転送が成功すると 1、失敗すると 0。',
     returns: '`result` … set to 1 on a successful transfer, 0 otherwise.',
     snippet: "xmodemsend '${1:filename}' ${2:0}",
@@ -3266,6 +3323,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'ymodemsend <filename>',
     description: 'Sends a file to the host with the YMODEM protocol.',
     descriptionJa: 'ファイル <filename> を YMODEM プロトコルで送信する',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The file to send.',
+        descriptionJa: '送信するファイル。',
+      },
+    ],
     returnsJa: '`result` … 転送が成功すると 1、失敗すると 0。',
     returns: '`result` … set to 1 on a successful transfer, 0 otherwise.',
     snippet: "ymodemsend '${1:filename}'",
@@ -3283,6 +3347,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'zmodemsend <filename> <binary flag>',
     description: 'Sends a file to the host with the ZMODEM protocol.',
     descriptionJa: 'ファイル <filename> を ZMODEM プロトコルで送信する',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The file to send.',
+        descriptionJa: '送信するファイル。',
+      },
+      {
+        name: '<binary flag>',
+        description: 'Non-zero sends in binary mode; zero performs text (new-line) conversion.',
+        descriptionJa: '0 以外でバイナリ送信、0 でテキスト（改行）変換送信する。',
+      },
+    ],
     returnsJa: '`result` … 転送が成功すると 1、失敗すると 0。',
     returns: '`result` … set to 1 on a successful transfer, 0 otherwise.',
     snippet: "zmodemsend '${1:filename}' ${2:0}",
@@ -3292,6 +3368,19 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'scprecv <remote filename> [<local filename>]',
     description: 'Receives a file from the host with the SCP protocol.',
     descriptionJa: 'ファイル <remote filename> を SCP プロトコルで受信する',
+    parameters: [
+      {
+        name: '<remote filename>',
+        description: 'The file on the host to receive.',
+        descriptionJa: '受信するホスト上のファイル。',
+      },
+      {
+        name: '<local filename>',
+        description: 'The local path to save the received file. If omitted, the remote file name is used.',
+        descriptionJa: '受信ファイルを保存するローカルパス。省略時はリモートのファイル名を使う。',
+        optional: true,
+      },
+    ],
     snippet: "scprecv '${1:remote filename}'",
   },
   {
@@ -3299,6 +3388,19 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'scpsend <filename> [<destination filename>]',
     description: 'Sends a file to the host with the SCP protocol.',
     descriptionJa: 'ファイル <filename> を SCP プロトコルで送信する',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The local file to send.',
+        descriptionJa: '送信するローカルファイル。',
+      },
+      {
+        name: '<destination filename>',
+        description: 'The destination path on the host. If omitted, the source file name is used.',
+        descriptionJa: 'ホスト上の保存先パス。省略時は送信元のファイル名を使う。',
+        optional: true,
+      },
+    ],
     snippet: "scpsend '${1:filename}'",
   },
   // ── シリアル通信設定 ─────────────────────────────────────────────────────────
