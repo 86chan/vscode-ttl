@@ -1714,6 +1714,29 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'fileopen <file handle> <filename> <append flag> [<readonly flag>]',
     description: 'Opens a file in binary mode.',
     descriptionJa: 'ファイルをバイナリモードでオープンする',
+    parameters: [
+      {
+        name: '<file handle>',
+        description: 'The variable that receives the file handle when the file is opened successfully.',
+        descriptionJa: 'ファイルが正しくオープンされた場合にファイルハンドルが格納される変数。',
+      },
+      {
+        name: '<filename>',
+        description: 'The file to open. If it does not exist, it is created and then opened.',
+        descriptionJa: '開くファイル名。ファイルが存在しない場合は新たに作成されてからオープンされる。',
+      },
+      {
+        name: '<append flag>',
+        description: 'Zero sets the file pointer to the beginning of the file; non-zero sets it to the end.',
+        descriptionJa: '0 を指定するとファイルポインタをファイルの始めに、0 以外を指定するとファイルの最後にセットする。',
+      },
+      {
+        name: '<readonly flag>',
+        description: 'Zero opens the file in read/write mode; non-zero opens it in read-only mode.',
+        descriptionJa: '0 を指定すると読み書きモード、0 以外を指定すると読み取り専用モードでファイルを開く。',
+        optional: true,
+      },
+    ],
     returnsJa: 'ファイルハンドルを `<file handle>` に格納。オープンに失敗すると `<file handle>` に -1。',
     returns: 'Stores the file handle in `<file handle>`; if the file cannot be opened, `<file handle>` is set to -1.',
     snippet: "fileopen ${1:fp} '${2:filename}' ${3:0}",
@@ -1723,6 +1746,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'fileclose <file handle>',
     description: 'Closes the file specified by <file handle>.',
     descriptionJa: 'ファイルハンドル <file handle> で指定されるファイルをクローズする',
+    parameters: [
+      {
+        name: '<file handle>',
+        description: 'The handle of the file to close.',
+        descriptionJa: 'クローズするファイルのハンドル。',
+      },
+    ],
     snippet: 'fileclose ${1:fp}',
   },
   {
@@ -1730,6 +1760,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'filecreate <file handle> <filename>',
     description: 'Creates and opens a new file.',
     descriptionJa: 'ファイル <filename> を新しく作成しオープンする',
+    parameters: [
+      {
+        name: '<file handle>',
+        description: 'The variable that receives the file handle of the created file.',
+        descriptionJa: '作成したファイルのハンドルを格納する変数。',
+      },
+      {
+        name: '<filename>',
+        description: 'The file to create and open.',
+        descriptionJa: '新しく作成してオープンするファイル。',
+      },
+    ],
     returnsJa: 'ファイルハンドルを `<file handle>` に格納（失敗時は -1）。`result` … 成功すると 0、失敗すると 0 以外。',
     returns: 'Stores the file handle in `<file handle>` (-1 on failure). `result` … set to 0 on success, non-zero on failure.',
     snippet: "filecreate ${1:fp} '${2:filename}'",
@@ -1739,6 +1781,23 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'fileread <file handle> <read byte> <strvar>',
     description: 'Reads <read byte> bytes from the file into <strvar>.',
     descriptionJa: '<file handle> で指定されたファイルから指定したバイト数のデータを読み出す',
+    parameters: [
+      {
+        name: '<file handle>',
+        description: 'The handle of the file to read from.',
+        descriptionJa: '読み出すファイルのハンドル。',
+      },
+      {
+        name: '<read byte>',
+        description: 'The number of bytes to read.',
+        descriptionJa: '読み出すバイト数。',
+      },
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the read data.',
+        descriptionJa: '読み込んだデータを格納する文字列変数。',
+      },
+    ],
     returnsJa: '読み込んだデータを `<strvar>` に格納。`result` … 読み込み中にファイル終端へ達すると 1、それ以外は 0。',
     returns: 'Stores the read data in `<strvar>`. `result` … set to 1 if the end of file is reached before reading completes, 0 otherwise.',
     snippet: 'fileread ${1:fp} ${2:512} ${3:strvar}',
@@ -1748,6 +1807,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'filereadln <file handle> <strvar>',
     description: 'Reads one line from the file into <strvar>.',
     descriptionJa: 'ファイルから一行読む。読み込まれた行は文字列変数 <strvar> に格納される',
+    parameters: [
+      {
+        name: '<file handle>',
+        description: 'The handle of the file to read from.',
+        descriptionJa: '読み出すファイルのハンドル。',
+      },
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the read line.',
+        descriptionJa: '読み込んだ行を格納する文字列変数。',
+      },
+    ],
     returnsJa: '読み込んだ行を `<strvar>` に格納。ファイル終端に達すると `result` に 1、それ以外は 0（改行のみの行では `<strvar>` は空、`result` は 0）。',
     returns: 'Stores the line in `<strvar>`. `result` is set to 1 at end of file, 0 otherwise (a newline-only line yields an empty `<strvar>` and `result` 0).',
     snippet: 'filereadln ${1:fp} ${2:strvar}',
@@ -1757,6 +1828,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'filewrite <file handle> <data>',
     description: 'Writes <data> to the file.',
     descriptionJa: 'ファイルハンドル <file handle> で指定されるファイルへ <data> を書き込む',
+    parameters: [
+      {
+        name: '<file handle>',
+        description: 'The handle of the file to write to.',
+        descriptionJa: '書き込むファイルのハンドル。',
+      },
+      {
+        name: '<data>',
+        description: 'The data to write to the file.',
+        descriptionJa: 'ファイルへ書き込むデータ。',
+      },
+    ],
     snippet: 'filewrite ${1:fp} ${2:data}',
   },
   {
@@ -1764,6 +1847,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'filewriteln <file handle> <data>',
     description: 'Writes <data> and CR+LF to the file.',
     descriptionJa: 'ファイルへ <data> と改行文字 (CR+LF) を書き込む',
+    parameters: [
+      {
+        name: '<file handle>',
+        description: 'The handle of the file to write to.',
+        descriptionJa: '書き込むファイルのハンドル。',
+      },
+      {
+        name: '<data>',
+        description: 'The data to write to the file (followed by CR+LF).',
+        descriptionJa: 'ファイルへ書き込むデータ（末尾に CR+LF が付く）。',
+      },
+    ],
     snippet: 'filewriteln ${1:fp} ${2:data}',
   },
   {
@@ -1771,6 +1866,23 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'fileseek <file handle> <offset> <origin>',
     description: 'Moves the file pointer. <origin>: 0=beginning, 1=current, 2=end.',
     descriptionJa: 'ファイルポインタを移動する。<origin>: 0=先頭, 1=現在位置, 2=末尾',
+    parameters: [
+      {
+        name: '<file handle>',
+        description: 'The handle of the file whose pointer is moved.',
+        descriptionJa: 'ファイルポインタを移動するファイルのハンドル。',
+      },
+      {
+        name: '<offset>',
+        description: 'The number of bytes to move the file pointer.',
+        descriptionJa: 'ファイルポインタを移動するバイト数。',
+      },
+      {
+        name: '<origin>',
+        description: 'The reference point: 0=beginning, 1=current position, 2=end.',
+        descriptionJa: '移動の基準位置（0=先頭, 1=現在位置, 2=末尾）。',
+      },
+    ],
     snippet: 'fileseek ${1:fp} ${2:0} ${3:0}',
   },
   {
@@ -1778,6 +1890,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'fileseekback <file handle>',
     description: 'Moves the file pointer to the position marked by "filemarkptr".',
     descriptionJa: '"filemarkptr" コマンドで保存したファイルポインタ位置に戻る',
+    parameters: [
+      {
+        name: '<file handle>',
+        description: 'The handle of the file whose pointer is restored.',
+        descriptionJa: 'ファイルポインタを戻すファイルのハンドル。',
+      },
+    ],
     snippet: 'fileseekback ${1:fp}',
   },
   {
@@ -1785,6 +1904,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'filemarkptr <file handle>',
     description: 'Marks the current file pointer position.',
     descriptionJa: 'オープンされているファイルの現在のファイルポインタを保存する',
+    parameters: [
+      {
+        name: '<file handle>',
+        description: 'The handle of the open file whose current pointer is saved.',
+        descriptionJa: '現在のファイルポインタを保存するファイルのハンドル。',
+      },
+    ],
     snippet: 'filemarkptr ${1:fp}',
   },
   {
@@ -1792,6 +1918,30 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'filestat <filename> <size> [<mtime>] [<drive>]',
     description: 'Obtains information about a file or directory.',
     descriptionJa: 'ファイルもしくはフォルダの統計情報を取得する',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The file or directory to query.',
+        descriptionJa: '統計情報を取得するファイルまたはフォルダ。',
+      },
+      {
+        name: '<size>',
+        description: 'The integer variable that receives the file size.',
+        descriptionJa: 'ファイルサイズを格納する整数変数。',
+      },
+      {
+        name: '<mtime>',
+        description: 'The string variable that receives the last modification time.',
+        descriptionJa: '最終更新日時を格納する文字列変数。',
+        optional: true,
+      },
+      {
+        name: '<drive>',
+        description: 'The string variable that receives the drive letter.',
+        descriptionJa: 'ドライブ文字を格納する文字列変数。',
+        optional: true,
+      },
+    ],
     returnsJa: 'ファイル情報を各変数に格納。取得に失敗すると `result` に -1。',
     returns: 'Stores file information in the given variables. `result` is set to -1 on failure.',
     snippet: "filestat '${1:filename}' ${2:size}",
@@ -1801,6 +1951,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'filestrseek <file handle> <string>',
     description: 'Searches for <string> in the file from the current position forward.',
     descriptionJa: 'ファイルから文字列 <string> を前方検索する',
+    parameters: [
+      {
+        name: '<file handle>',
+        description: 'The handle of the file to search.',
+        descriptionJa: '検索するファイルのハンドル。',
+      },
+      {
+        name: '<string>',
+        description: 'The string to search for.',
+        descriptionJa: '検索する文字列。',
+      },
+    ],
     returnsJa: '`result` … 文字列が見つかると 1（ファイルポインタは直後へ移動）、見つからないと 0（移動なし）。',
     returns: '`result` … set to 1 if the string is found (the file pointer moves just after it), 0 if not (pointer unchanged).',
     snippet: "filestrseek ${1:fp} '${2:string}'",
@@ -1810,6 +1972,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'filestrseek2 <file handle> <string>',
     description: 'Searches for <string> in the file from the current position backward.',
     descriptionJa: 'ファイルから文字列 <string> を後方検索する',
+    parameters: [
+      {
+        name: '<file handle>',
+        description: 'The handle of the file to search.',
+        descriptionJa: '検索するファイルのハンドル。',
+      },
+      {
+        name: '<string>',
+        description: 'The string to search for.',
+        descriptionJa: '検索する文字列。',
+      },
+    ],
     returnsJa: '`result` … 文字列が見つかると 1（ファイルポインタは直前へ移動）、見つからないと 0（移動なし）。実行前にファイルポインタがすでに 0 の場合も 0。',
     returns: '`result` … set to 1 if the string is found (the file pointer moves just before it), 0 if not (pointer unchanged). Also 0 if the file pointer is already at position 0 before execution.',
     snippet: "filestrseek2 ${1:fp} '${2:string}'",
@@ -1819,6 +1993,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'filetruncate <filename> <size>',
     description: 'Changes the size of a file to <size> bytes.',
     descriptionJa: 'ファイル <filename> をサイズ <size> バイトの大きさに変更する',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The file to resize.',
+        descriptionJa: 'サイズを変更するファイル。',
+      },
+      {
+        name: '<size>',
+        description: 'The new file size, in bytes.',
+        descriptionJa: '変更後のファイルサイズ（バイト）。',
+      },
+    ],
     returnsJa: '`result` … サイズ変更に成功すると 0、失敗すると -1。',
     returns: '`result` … set to 0 if the size change succeeds, -1 on error.',
   },
@@ -1827,6 +2013,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'filecopy <file1> <file2>',
     description: 'Copies <file1> to <file2>. Sets "result" to 0 on success.',
     descriptionJa: 'ファイル <file1> をコピーし、ファイル <file2> を作成する',
+    parameters: [
+      {
+        name: '<file1>',
+        description: 'The source file to copy.',
+        descriptionJa: 'コピー元のファイル。',
+      },
+      {
+        name: '<file2>',
+        description: 'The destination file to create.',
+        descriptionJa: '作成するコピー先のファイル。',
+      },
+    ],
     returnsJa: '`result` … 成功で 0、失敗で 0 以外（-1〜-4 はファイル名不正・同名・コピー失敗などの状態コード）。',
     returns: '`result` … 0 on success, non-zero on failure (-1 to -4 indicate status such as an invalid file name, identical names, or copy failure).',
     snippet: "filecopy '${1:file1}' '${2:file2}'",
@@ -1836,6 +2034,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'filerename <file1> <file2>',
     description: 'Renames <file1> to <file2>. Sets "result" to 0 on success.',
     descriptionJa: 'ファイル <file1> を <file2> という名前に変更する',
+    parameters: [
+      {
+        name: '<file1>',
+        description: 'The file to rename.',
+        descriptionJa: '名前を変更するファイル。',
+      },
+      {
+        name: '<file2>',
+        description: 'The new file name.',
+        descriptionJa: '変更後のファイル名。',
+      },
+    ],
     returnsJa: '`result` … 成功すると 0、失敗すると 0 以外。',
     returns: '`result` … set to 0 on success, non-zero on failure.',
     snippet: "filerename '${1:file1}' '${2:file2}'",
@@ -1845,6 +2055,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'filedelete <filename>',
     description: 'Deletes the specified file. Sets "result" to 0 on success.',
     descriptionJa: 'ファイル <filename> を削除する',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The file to delete.',
+        descriptionJa: '削除するファイル。',
+      },
+    ],
     returnsJa: '`result` … 成功すると 0、失敗すると 0 以外。',
     returns: '`result` … set to 0 on success, non-zero on failure.',
     snippet: "filedelete '${1:filename}'",
@@ -1854,6 +2071,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'filesearch <filename>',
     description: 'Searches for a file or folder. Sets "result" to 1 if found, 0 if not.',
     descriptionJa: 'ファイルまたはフォルダが存在するか調べる。存在する場合は result に 1 が返る',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The file or folder to check for existence.',
+        descriptionJa: '存在を確認するファイルまたはフォルダ。',
+      },
+    ],
     returnsJa: '`result` … ファイルが存在すれば 1、存在しなければ 0。',
     returns: '`result` … set to 1 if the file exists, 0 if not.',
     snippet: "filesearch '${1:filename}'",
@@ -1863,6 +2087,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'fileconcat <file1> <file2>',
     description: 'Appends a copy of <file2> to the end of <file1>.',
     descriptionJa: 'ファイル <file2> の内容をファイル <file1> の最後に追加する',
+    parameters: [
+      {
+        name: '<file1>',
+        description: 'The file to which the contents of <file2> are appended.',
+        descriptionJa: '<file2> の内容を末尾に追加する先のファイル。',
+      },
+      {
+        name: '<file2>',
+        description: 'The file whose contents are appended to <file1>.',
+        descriptionJa: '<file1> の末尾に追加する内容を持つファイル。',
+      },
+    ],
     returnsJa: '`result` … 成功すると 0、失敗すると 0 以外。',
     returns: '`result` … set to 0 on success, non-zero on failure.',
     snippet: "fileconcat '${1:file1}' '${2:file2}'",
@@ -1872,6 +2108,19 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'filelock <file handle> [<timeout>]',
     description: 'Locks the file for exclusive access.',
     descriptionJa: 'ファイル全体をロックし、他のプロセスからのアクセスを禁止する',
+    parameters: [
+      {
+        name: '<file handle>',
+        description: 'The handle of the file to lock.',
+        descriptionJa: 'ロックするファイルのハンドル。',
+      },
+      {
+        name: '<timeout>',
+        description: 'The maximum time, in milliseconds, to wait for the lock.',
+        descriptionJa: 'ロック取得を待つ最大時間（ミリ秒）。',
+        optional: true,
+      },
+    ],
     returnsJa: '`result` … ロックに成功すると 0、失敗すると 1。',
     returns: '`result` … set to 0 when the lock succeeds, 1 when it fails.',
     snippet: 'filelock ${1:fp}',
@@ -1881,6 +2130,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'fileunlock <file handle>',
     description: 'Unlocks the file.',
     descriptionJa: 'ファイル全体のロックを解除する',
+    parameters: [
+      {
+        name: '<file handle>',
+        description: 'The handle of the file to unlock.',
+        descriptionJa: 'ロックを解除するファイルのハンドル。',
+      },
+    ],
     returnsJa: '`result` … 解除に成功すると 0、失敗すると 1。',
     returns: '`result` … set to 0 when the unlock succeeds, 1 when it fails.',
     snippet: 'fileunlock ${1:fp}',
