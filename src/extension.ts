@@ -35,6 +35,7 @@ import {
   type TtlSymbol,
 } from './navigationUtils';
 import {
+  buildReferenceUrl,
   type TtlCommand,
   TTL_COMMANDS_MAP,
   TTL_DOC_HEADER_SNIPPETS,
@@ -104,6 +105,9 @@ function buildHoverMarkdown(command: TtlCommand, language: 'ja' | 'en'): vscode.
     const heading = language === 'ja' ? '戻り値' : 'Return value';
     markdown.appendMarkdown(`\n\n---\n\n**${heading}**\n\n${returns.trim()}`);
   }
+  const referenceUrl = buildReferenceUrl(command, language);
+  const referenceLabel = language === 'ja' ? '公式ドキュメント' : 'Official documentation';
+  markdown.appendMarkdown(`\n\n---\n\n[${referenceLabel}](${referenceUrl})`);
   return markdown;
 }
 

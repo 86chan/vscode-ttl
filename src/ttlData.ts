@@ -1665,6 +1665,42 @@ export const TTL_COMMANDS_MAP: ReadonlyMap<string, TtlCommand> = new Map(
   TTL_COMMANDS.map(command => [command.name.toLowerCase(), command])
 );
 
+/** 公式マクロリファレンスのベース URL（言語コードを埋め込む） */
+const REFERENCE_BASE_URL = 'https://teratermproject.github.io/manual/5';
+
+/**
+ * コマンド名 → リファレンスページ名のオーバーライド
+ *
+ * @remarks
+ * 大半のコマンドは `<コマンド名>.html` に対応するが、複数のキーワードを
+ * 1 ページにまとめた「結合ページ」のみ名前と一致しないため、ここで補正する。
+ */
+const REFERENCE_PAGE_OVERRIDES: ReadonlyMap<string, string> = new Map([
+  ['if', 'ifthenelseif'],
+  ['for', 'fornext'],
+  ['do', 'doloop'],
+  ['findfirst', 'findoperations'],
+  ['findnext', 'findoperations'],
+  ['findclose', 'findoperations'],
+  ['checksum8file', 'checksum8'],
+  ['checksum16file', 'checksum16'],
+  ['checksum32file', 'checksum32'],
+  ['crc16file', 'crc16'],
+  ['crc32file', 'crc32'],
+]);
+
+/**
+ * コマンドの公式マクロリファレンスページの URL を生成
+ *
+ * @param command - TTLコマンド定義
+ * @param language - 表示言語
+ * @returns 公式ドキュメントページの URL
+ */
+export function buildReferenceUrl(command: TtlCommand, language: 'ja' | 'en'): string {
+  const page = REFERENCE_PAGE_OVERRIDES.get(command.name) ?? command.name;
+  return `${REFERENCE_BASE_URL}/${language}/macro/command/${page}.html`;
+}
+
 /**
  * 制御フロー構造キーワード
  *

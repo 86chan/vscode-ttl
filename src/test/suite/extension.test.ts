@@ -226,6 +226,25 @@ describe('ホバープロバイダ', () => {
       'Comment line should not show TTL command hover',
     );
   });
+
+  it('ホバー内容に公式ドキュメントへのリンクが含まれる', async () => {
+    // Arrange: 2行目（0-origin: 1）の "connect"
+    const hovers = await getHovers(document.uri, new vscode.Position(1, 2));
+
+    // Then: 公式マクロリファレンスの URL がリンクとして含まれること
+    const content = hovers
+      .flatMap(h => h.contents)
+      .map(c => (c instanceof vscode.MarkdownString ? c.value : String(c)))
+      .join('\n');
+    assert.ok(
+      content.includes('teratermproject.github.io/manual/5/'),
+      'Hover content must contain a link to the official reference',
+    );
+    assert.ok(
+      content.includes('/macro/command/connect.html'),
+      'Hover content must link to the connect command page',
+    );
+  });
 });
 
 describe('Go to Definition（ラベルジャンプ）', () => {
