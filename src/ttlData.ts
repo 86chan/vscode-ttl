@@ -2849,6 +2849,53 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'logopen <filename> <binary flag> <append flag> [<plain text flag> [<timestamp flag> [<hide dialog flag> [<include screen buffer flag> [<timestamp type>]]]]]',
     description: 'Opens a log file and starts logging received characters.',
     descriptionJa: 'ログファイルを開いて受信文字のログ採取を開始する',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The file to which received characters are written.',
+        descriptionJa: '受信した文字が書き込まれるファイル。',
+      },
+      {
+        name: '<binary flag>',
+        description: 'Zero writes with conversion; non-zero writes everything as-is (binary).',
+        descriptionJa: '0 のとき変換して書き込み、0 以外のときすべてそのまま（バイナリ）書き込む。',
+      },
+      {
+        name: '<append flag>',
+        description: 'Non-zero appends to an existing file; zero overwrites it.',
+        descriptionJa: '0 以外で既存ファイルに追記、0 で上書きする。',
+      },
+      {
+        name: '<plain text flag>',
+        description: 'If non-zero, ASCII non-printable characters are not written to the log.',
+        descriptionJa: '0 以外の場合、ASCII の非表示文字をログに書き込まない。',
+        optional: true,
+      },
+      {
+        name: '<timestamp flag>',
+        description: 'If non-zero, a timestamp is added at the beginning of each log line.',
+        descriptionJa: '0 以外の場合、ログの行頭に時刻を追加する。',
+        optional: true,
+      },
+      {
+        name: '<hide dialog flag>',
+        description: 'If non-zero, the log transfer dialog is not displayed.',
+        descriptionJa: '0 以外の場合、ログ転送のダイアログを表示しない。',
+        optional: true,
+      },
+      {
+        name: '<include screen buffer flag>',
+        description: 'If non-zero, the entire current terminal buffer is written to the file first.',
+        descriptionJa: '0 以外の場合、現在の端末バッファすべてを先にファイルに書き込む。',
+        optional: true,
+      },
+      {
+        name: '<timestamp type>',
+        description: 'The timestamp format: 0=local time, 1=UTC, 2=elapsed time (logging), 3=elapsed time (connection).',
+        descriptionJa: 'タイムスタンプの形式（0=ローカルタイム, 1=UTC, 2=経過時間(Logging), 3=経過時間(Connection)）。',
+        optional: true,
+      },
+    ],
     returnsJa: '`result` … ログファイルを開けると 0、開けないと 1。*(4.62 以降)*',
     returns: '`result` … set to 0 if the log file is opened, 1 if not. *(4.62 or later)*',
     snippet: "logopen '${1:logfile.log}' 0 0",
@@ -2876,6 +2923,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'logwrite <string>',
     description: 'Appends a string to the Tera Term log file.',
     descriptionJa: '文字列 <string> を Tera Term のログファイルに追加して書き込む',
+    parameters: [
+      {
+        name: '<string>',
+        description: 'The string to append to the log file.',
+        descriptionJa: 'ログファイルに追加して書き込む文字列。',
+      },
+    ],
     snippet: "logwrite '${1:string}'",
   },
   {
@@ -2883,6 +2937,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'loginfo <strvar>',
     description: 'Retrieves the current log filename into <strvar>. Sets "result" to -1 if not logging.',
     descriptionJa: 'ログを取得している場合、strvar にログファイル名が格納される。ログ取得していない場合は result に -1 が格納される',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the current log file name.',
+        descriptionJa: '現在のログファイル名を格納する文字列変数。',
+      },
+    ],
     returnsJa: 'ログ取得中は `<strvar>` にログファイル名、`result` にフラグ状態を格納。取得していない場合は `result` に -1。',
     returns: 'While logging, stores the log file name in `<strvar>` and the flag status in `result`. When not logging, `result` is set to -1.',
     snippet: 'loginfo ${1:strvar}',
@@ -2892,12 +2953,31 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: "logrotate 'size' '<size>'\nlogrotate 'rotate' <count>\nlogrotate 'halt'",
     description: 'Configures log rotation.',
     descriptionJa: 'ログローテーションの設定を行う',
+    parameters: [
+      {
+        name: '<size>',
+        description: "With 'size', the log file size threshold (e.g. \"10M\") that triggers rotation.",
+        descriptionJa: "'size' 指定時、ローテーションの契機となるログファイルサイズ（例: \"10M\"）。",
+      },
+      {
+        name: '<count>',
+        description: "With 'rotate', the number of rotated log files to keep.",
+        descriptionJa: "'rotate' 指定時、保持するローテーション済みログファイルの世代数。",
+      },
+    ],
   },
   {
     name: 'logautoclosemode',
     signature: 'logautoclosemode <flag>',
     description: 'When <flag> is 1, automatically closes the log file when the macro finishes.',
     descriptionJa: '<flag> の値が1の場合、マクロ終了時に自動的にログ採取を停止する',
+    parameters: [
+      {
+        name: '<flag>',
+        description: 'When 1, the log file is automatically closed when the macro finishes; when 0, it is not.',
+        descriptionJa: '1 のときマクロ終了時に自動的にログ採取を停止する。0 のときは停止しない。',
+      },
+    ],
     snippet: 'logautoclosemode ${1:1}',
   },
   // ── パスワード管理 ───────────────────────────────────────────────────────────
@@ -2906,6 +2986,23 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'setpassword <filename> <password name> <password>',
     description: 'Stores an encrypted password in a password file.',
     descriptionJa: 'パスワードファイル <filename> にパスワードを暗号化して保存する',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The password file to write to.',
+        descriptionJa: '書き込むパスワードファイル。',
+      },
+      {
+        name: '<password name>',
+        description: 'The name (key) that identifies the password within the file.',
+        descriptionJa: 'ファイル内でパスワードを識別する名前（キー）。',
+      },
+      {
+        name: '<password>',
+        description: 'The password to encrypt and store.',
+        descriptionJa: '暗号化して保存するパスワード。',
+      },
+    ],
     returnsJa: '`result` … パスワードファイルへの書き込みに失敗すると 0、それ以外は 1。',
     returns: '`result` … set to 0 if the password file cannot be written, 1 otherwise.',
   },
@@ -2914,6 +3011,23 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'getpassword <filename> <password name> <password var>',
     description: 'Retrieves and decrypts a password from a password file.',
     descriptionJa: 'パスワードファイルからパスワードを読みだして復号化する',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The password file to read from.',
+        descriptionJa: '読み出すパスワードファイル。',
+      },
+      {
+        name: '<password name>',
+        description: 'The name (key) that identifies the password within the file.',
+        descriptionJa: 'ファイル内でパスワードを識別する名前（キー）。',
+      },
+      {
+        name: '<password var>',
+        description: 'The string variable that receives the decrypted password.',
+        descriptionJa: '復号したパスワードを格納する文字列変数。',
+      },
+    ],
     returnsJa: '復号したパスワードを `<password var>` に格納。`result` … パスワードファイルへの書き込みに失敗すると 0、それ以外は 1。*(バージョン 4.71 以降)*',
     returns: 'Stores the decrypted password in `<password var>`. `result` … set to 0 if the password file cannot be written, 1 otherwise. *(version 4.71 or later)*',
   },
@@ -2922,12 +3036,36 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'delpassword <filename> <password name>',
     description: 'Deletes a password from a password file.',
     descriptionJa: 'パスワードファイルからパスワードを削除する',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The password file to modify.',
+        descriptionJa: '対象のパスワードファイル。',
+      },
+      {
+        name: '<password name>',
+        description: 'The name (key) of the password to delete.',
+        descriptionJa: '削除するパスワードの名前（キー）。',
+      },
+    ],
   },
   {
     name: 'ispassword',
     signature: 'ispassword <filename> <password name>',
     description: 'Checks if a password exists in a password file.',
     descriptionJa: 'パスワードファイルにパスワードが存在するか調べる',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The password file to check.',
+        descriptionJa: '調べるパスワードファイル。',
+      },
+      {
+        name: '<password name>',
+        description: 'The name (key) of the password to look for.',
+        descriptionJa: '存在を調べるパスワードの名前（キー）。',
+      },
+    ],
     returnsJa: '`result` … 指定したパスワードが設定されていれば 1、なければ 0。',
     returns: '`result` … set to 1 if the named password exists, 0 otherwise.',
   },
@@ -2936,6 +3074,28 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'setpassword2 <filename> <password name> <password> <encrypt str>',
     description: 'Stores a password encrypted with a user-provided key.',
     descriptionJa: 'ユーザー指定のキーで暗号化したパスワードをパスワードファイルに保存する',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The password file to write to.',
+        descriptionJa: '書き込むパスワードファイル。',
+      },
+      {
+        name: '<password name>',
+        description: 'The name (key) that identifies the password within the file.',
+        descriptionJa: 'ファイル内でパスワードを識別する名前（キー）。',
+      },
+      {
+        name: '<password>',
+        description: 'The password to encrypt and store.',
+        descriptionJa: '暗号化して保存するパスワード。',
+      },
+      {
+        name: '<encrypt str>',
+        description: 'The user-provided key used to encrypt the password.',
+        descriptionJa: 'パスワードの暗号化に使うユーザー指定のキー。',
+      },
+    ],
     returnsJa: '`result` … パスワードファイルへの書き込みに失敗すると 0、それ以外は 1。',
     returns: '`result` … set to 0 if the password file cannot be written, 1 otherwise.',
   },
@@ -2944,6 +3104,28 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'getpassword2 <filename> <password name> <password var> <encrypt str>',
     description: 'Retrieves and decrypts a password using a user-provided key.',
     descriptionJa: 'ユーザー指定のキーでパスワードを復号化して取得する',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The password file to read from.',
+        descriptionJa: '読み出すパスワードファイル。',
+      },
+      {
+        name: '<password name>',
+        description: 'The name (key) that identifies the password within the file.',
+        descriptionJa: 'ファイル内でパスワードを識別する名前（キー）。',
+      },
+      {
+        name: '<password var>',
+        description: 'The string variable that receives the decrypted password.',
+        descriptionJa: '復号したパスワードを格納する文字列変数。',
+      },
+      {
+        name: '<encrypt str>',
+        description: 'The user-provided key used to decrypt the password.',
+        descriptionJa: 'パスワードの復号に使うユーザー指定のキー。',
+      },
+    ],
     returnsJa: '復号したパスワードを `<password var>` に格納。`result` … パスワードファイルへの書き込みに失敗すると 0、それ以外は 1。',
     returns: 'Stores the decrypted password in `<password var>`. `result` … set to 0 if the password file cannot be written, 1 otherwise.',
   },
@@ -2952,12 +3134,36 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'delpassword2 <filename> <password name>',
     description: 'Deletes a password from a password file created by setpassword2.',
     descriptionJa: 'setpassword2 で作成されたパスワードファイルからパスワードを削除する',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The password file (created by setpassword2) to modify.',
+        descriptionJa: '対象のパスワードファイル（setpassword2 で作成）。',
+      },
+      {
+        name: '<password name>',
+        description: 'The name (key) of the password to delete.',
+        descriptionJa: '削除するパスワードの名前（キー）。',
+      },
+    ],
   },
   {
     name: 'ispassword2',
     signature: 'ispassword2 <filename> <password name>',
     description: 'Checks if a password created by setpassword2 exists.',
     descriptionJa: 'setpassword2 で作成されたパスワードファイルにパスワードが存在するか調べる',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The password file (created by setpassword2) to check.',
+        descriptionJa: '調べるパスワードファイル（setpassword2 で作成）。',
+      },
+      {
+        name: '<password name>',
+        description: 'The name (key) of the password to look for.',
+        descriptionJa: '存在を調べるパスワードの名前（キー）。',
+      },
+    ],
     returnsJa: '`result` … 指定したパスワードが設定されていれば 1、なければ 0。',
     returns: '`result` … set to 1 if the named password exists, 0 otherwise.',
   },
