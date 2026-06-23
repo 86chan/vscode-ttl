@@ -61,6 +61,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'if <expression> <statement>\nif <expression> then\n  ...\nendif',
     description: 'Executes a statement, or a block of statements, if an expression is true (non-zero).',
     descriptionJa: '<expression> が真（0以外）ならば <statement> を実行',
+    parameters: [
+      {
+        name: '<expression>',
+        description: 'The expression evaluated; the statement runs if it is true (non-zero).',
+        descriptionJa: '評価する式。真（0 以外）なら文を実行する。',
+      },
+      {
+        name: '<statement>',
+        description: 'The statement executed when <expression> is true (single-line form).',
+        descriptionJa: '<expression> が真のときに実行する文（単一行の書式）。',
+      },
+    ],
     snippet: 'if ${1:expression} then\n\t$0\nendif',
   },
   {
@@ -68,6 +80,23 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'for <intvar> <first> <last>\n  ...\nnext',
     description: 'Repeats the statements between "for" and "next" until the integer variable reaches <last>.',
     descriptionJa: 'for と next の間のコマンドを、整数変数 <intvar> が <last> に達するまで繰り返し',
+    parameters: [
+      {
+        name: '<intvar>',
+        description: 'The integer loop variable.',
+        descriptionJa: 'ループに使う整数変数。',
+      },
+      {
+        name: '<first>',
+        description: 'The initial value of the loop variable.',
+        descriptionJa: 'ループ変数の初期値。',
+      },
+      {
+        name: '<last>',
+        description: 'The final value at which the loop ends.',
+        descriptionJa: 'ループが終了する最終値。',
+      },
+    ],
     snippet: 'for ${1:i} ${2:1} ${3:10}\n\t$0\nnext',
   },
   {
@@ -75,6 +104,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'while <expression>\n  ...\nendwhile',
     description: "Repeats the statements between 'while' and 'endwhile' while <expression> is non-zero.",
     descriptionJa: "while と endwhile の間のコマンドを、<expression> が 0 以外である限り繰り返し",
+    parameters: [
+      {
+        name: '<expression>',
+        description: 'The condition; the loop repeats while it is non-zero.',
+        descriptionJa: '条件式。0 以外である限りループを繰り返す。',
+      },
+    ],
     snippet: 'while ${1:expression}\n\t$0\nendwhile',
   },
   {
@@ -82,6 +118,14 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'do [ { while | until } <expression> ]\n  ...\nloop [ { while | until } <expression> ]',
     description: "Repeats the statements between 'do' and 'loop' according to condition.",
     descriptionJa: "do と loop の間のコマンドを、条件式に従って繰り返し",
+    parameters: [
+      {
+        name: '<expression>',
+        description: 'The condition controlling the do-loop, combined with while or until.',
+        descriptionJa: 'do-loop を制御する条件式（while または until と共に指定する）。',
+        optional: true,
+      },
+    ],
     snippet: 'do\n\t$0\nloop while ${1:expression}',
   },
   {
@@ -89,6 +133,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'until <expression>\n  ...\nenduntil',
     description: "Repeats the statements between 'until' and 'enduntil' while <expression> is zero.",
     descriptionJa: "until と enduntil の間のコマンドを、<expression> が 0 である限り繰り返し",
+    parameters: [
+      {
+        name: '<expression>',
+        description: 'The condition; the loop repeats while it is zero.',
+        descriptionJa: '条件式。0 である限りループを繰り返す。',
+      },
+    ],
     snippet: 'until ${1:expression}\n\t$0\nenduntil',
   },
   {
@@ -108,6 +159,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'call <label>',
     description: 'Calls a subroutine beginning with the <label> line.',
     descriptionJa: '<label> 行から始まるサブルーチンをコール',
+    parameters: [
+      {
+        name: '<label>',
+        description: 'The label where the subroutine begins.',
+        descriptionJa: 'サブルーチンの開始ラベル。',
+      },
+    ],
     snippet: 'call ${1:label}',
   },
   {
@@ -121,6 +179,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'goto <label>',
     description: 'Moves control to the next line of the <label>.',
     descriptionJa: '<label> 行の次の行へジャンプ',
+    parameters: [
+      {
+        name: '<label>',
+        description: 'The label to jump to.',
+        descriptionJa: 'ジャンプ先のラベル。',
+      },
+    ],
     snippet: 'goto ${1:label}',
   },
   {
@@ -3409,6 +3474,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'setbaud <value>',
     description: 'Changes the baud rate of the serial port.',
     descriptionJa: 'シリアルポートのボーレートを <value> bps に変更する',
+    parameters: [
+      {
+        name: '<value>',
+        description: 'The serial port baud rate, in bps.',
+        descriptionJa: 'シリアルポートのボーレート（bps）。',
+      },
+    ],
     snippet: 'setbaud ${1:9600}',
   },
   {
@@ -3416,6 +3488,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'setspeed <value>',
     description: 'Changes the speed of the serial port.',
     descriptionJa: 'シリアルポートのスピードを <value> bps に変更する',
+    parameters: [
+      {
+        name: '<value>',
+        description: 'The serial port speed, in bps.',
+        descriptionJa: 'シリアルポートのスピード（bps）。',
+      },
+    ],
     snippet: 'setspeed ${1:9600}',
   },
   {
@@ -3423,6 +3502,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'setflowctrl <value>',
     description: 'Changes the flow control setting.',
     descriptionJa: 'フロー制御の設定を変更する',
+    parameters: [
+      {
+        name: '<value>',
+        description: 'The flow control mode: 1=Xon/Xoff, 2=hardware, 3=none.',
+        descriptionJa: 'フロー制御モード（1=Xon/Xoff, 2=ハードウェア, 3=none）。',
+      },
+    ],
     snippet: 'setflowctrl ${1:0}',
   },
   {
@@ -3430,6 +3516,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'setdtr <flag>',
     description: 'Sets or clears the DTR signal. Only effective for serial connections with no flow control.',
     descriptionJa: '接続がシリアル接続でフロー制御が none の場合に DTR 信号を制御する',
+    parameters: [
+      {
+        name: '<flag>',
+        description: 'Non-zero sets the DTR signal; zero clears it.',
+        descriptionJa: '0 以外で DTR 信号をオン、0 でオフにする。',
+      },
+    ],
     snippet: 'setdtr ${1:1}',
   },
   {
@@ -3437,6 +3530,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'setrts <flag>',
     description: 'Sets or clears the RTS signal. Only effective for serial connections with no flow control.',
     descriptionJa: '接続がシリアル接続でフロー制御が none の場合に RTS 信号を制御する',
+    parameters: [
+      {
+        name: '<flag>',
+        description: 'Non-zero sets the RTS signal; zero clears it.',
+        descriptionJa: '0 以外で RTS 信号をオン、0 でオフにする。',
+      },
+    ],
     snippet: 'setrts ${1:1}',
   },
   {
@@ -3444,6 +3544,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'setserialdelaychar <delay>',
     description: 'Changes the inter-character delay for serial transmission in milliseconds.',
     descriptionJa: 'シリアルポートの送信待ち時間（1文字ごと）を <delay> [ms] に変更する',
+    parameters: [
+      {
+        name: '<delay>',
+        description: 'The per-character transmission delay, in milliseconds.',
+        descriptionJa: '1 文字ごとの送信待ち時間（ミリ秒）。',
+      },
+    ],
     snippet: 'setserialdelaychar ${1:10}',
   },
   {
@@ -3451,6 +3558,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'setserialdelayline <delay>',
     description: 'Changes the inter-line delay for serial transmission in milliseconds.',
     descriptionJa: 'シリアルポートの送信待ち時間（1行ごと）を <delay> [ms] に変更する',
+    parameters: [
+      {
+        name: '<delay>',
+        description: 'The per-line transmission delay, in milliseconds.',
+        descriptionJa: '1 行ごとの送信待ち時間（ミリ秒）。',
+      },
+    ],
     snippet: 'setserialdelayline ${1:100}',
   },
   // ── その他通信設定 ───────────────────────────────────────────────────────────
@@ -3459,6 +3573,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'setsync <sync flag>',
     description: 'Enters synchronous communication mode if <sync flag> is non-zero.',
     descriptionJa: '<sync flag> が0以外ならば同期通信モードに入る',
+    parameters: [
+      {
+        name: '<sync flag>',
+        description: 'Non-zero enters synchronous communication mode; zero leaves it.',
+        descriptionJa: '0 以外で同期通信モードに入り、0 で解除する。',
+      },
+    ],
     snippet: 'setsync ${1:1}',
   },
   {
@@ -3466,6 +3587,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'setecho <echo flag>',
     description: 'Turns local echo on (non-zero) or off (zero).',
     descriptionJa: '<echo flag> が0以外ならローカルエコーは on になる',
+    parameters: [
+      {
+        name: '<echo flag>',
+        description: 'Non-zero turns local echo on; zero turns it off.',
+        descriptionJa: '0 以外でローカルエコーをオン、0 でオフにする。',
+      },
+    ],
     snippet: 'setecho ${1:1}',
   },
   {
@@ -3473,6 +3601,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'enablekeyb <flag>',
     description: 'Enables (1) or disables (0) keyboard input.',
     descriptionJa: '<flag> の値が1の場合は許可、0の場合はキーボード入力を禁止する',
+    parameters: [
+      {
+        name: '<flag>',
+        description: '1 enables keyboard input; 0 disables it.',
+        descriptionJa: '1 でキーボード入力を許可、0 で禁止する。',
+      },
+    ],
     snippet: 'enablekeyb ${1:1}',
   },
   {
@@ -3480,6 +3615,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'setmulticastname <multicastname>',
     description: 'Sets the multicast name of this terminal.',
     descriptionJa: '自身の端末に対して <multicastname> を識別子として設定する',
+    parameters: [
+      {
+        name: '<multicastname>',
+        description: 'The multicast name (identifier) to assign to this terminal.',
+        descriptionJa: '自端末に設定するマルチキャスト名（識別子）。',
+      },
+    ],
     snippet: "setmulticastname '${1:name}'",
   },
   // ── その他 ───────────────────────────────────────────────────────────────────
@@ -3488,6 +3630,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: "include '<include file name>'",
     description: 'Loads and executes the specified macro file.',
     descriptionJa: '引数に指定したマクロファイルを読み込み、マクロ実行を行う',
+    parameters: [
+      {
+        name: '<include file name>',
+        description: 'The macro file to load and execute.',
+        descriptionJa: '読み込んで実行するマクロファイル。',
+      },
+    ],
     snippet: "include '${1:filename.ttl}'",
   },
   {
@@ -3495,6 +3644,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'ifdefined <var>',
     description: 'Sets "result" to the type of <var>: 0=undefined, 1=integer, 2=string, 3=int array, 4=string array.',
     descriptionJa: '<var> の型を表す値をシステム変数 result に格納する',
+    parameters: [
+      {
+        name: '<var>',
+        description: 'The variable whose type is examined.',
+        descriptionJa: '型を調べる変数。',
+      },
+    ],
     returnsJa: '`result` … 0=未定義, 1=整数, 3=文字列, 4=ラベル, 5=整数配列, 6=文字列配列。',
     returns: '`result` … 0=undefined, 1=integer, 3=string, 4=label, 5=integer array, 6=string array.',
     snippet: 'ifdefined ${1:var}',
@@ -3504,6 +3660,31 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'exec <command line> [<show> [<wait> [<current directory>]]]',
     description: 'Runs an application specified by the command line.',
     descriptionJa: 'コマンドライン文字列 <command line> に従い、アプリケーションを起動する',
+    parameters: [
+      {
+        name: '<command line>',
+        description: 'The command line of the application to run.',
+        descriptionJa: '起動するアプリケーションのコマンドライン。',
+      },
+      {
+        name: '<show>',
+        description: 'The window show state of the launched application (e.g. "show", "hide", "minimize", "maximize").',
+        descriptionJa: '起動するアプリケーションのウィンドウ表示状態（"show", "hide", "minimize", "maximize" など）。',
+        optional: true,
+      },
+      {
+        name: '<wait>',
+        description: 'If 1, waits until the application exits before continuing.',
+        descriptionJa: '1 のときアプリケーションの終了を待ってから次へ進む。',
+        optional: true,
+      },
+      {
+        name: '<current directory>',
+        description: 'The working directory for the launched application.',
+        descriptionJa: '起動するアプリケーションの作業ディレクトリ。',
+        optional: true,
+      },
+    ],
     returnsJa: '`result` … **4.103 以降:** `<wait>` が 1 なら -1=実行失敗/それ以外=終了コード。`<wait>` が 1 以外なら -1=失敗/0=成功。**4.63–4.102:** `<wait>` が 1 のときのみ終了コードを格納（失敗判定なし）。',
     returns: '`result` … **4.103 or later:** if `<wait>` is 1: -1=failed / otherwise exit code. If `<wait>` is not 1: -1=failed / 0=success. **4.63–4.102:** if `<wait>` is 1, only the exit code is stored (no failure indicator).',
     snippet: "exec '${1:command}'",
@@ -3513,6 +3694,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'execcmnd <statement>',
     description: 'Executes a TTL statement expressed by the string <statement>.',
     descriptionJa: '文字列 <statement> が表現する TTL コマンドを実行する',
+    parameters: [
+      {
+        name: '<statement>',
+        description: 'A string containing the TTL statement to execute.',
+        descriptionJa: '実行する TTL コマンドを表す文字列。',
+      },
+    ],
     snippet: "execcmnd '${1:sendln \"hello\"}'",
   },
   {
@@ -3520,6 +3708,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'callmenu <menu ID>',
     description: 'Executes the menu item specified by <menu ID>.',
     descriptionJa: '<menu ID> で指定されたメニューを実行する',
+    parameters: [
+      {
+        name: '<menu ID>',
+        description: 'The identifier of the menu item to execute.',
+        descriptionJa: '実行するメニュー項目の識別子。',
+      },
+    ],
     snippet: 'callmenu ${1:50280}',
   },
   {
@@ -3527,6 +3722,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'loadkeymap <filename>',
     description: 'Causes Tera Term to load a keyboard setup file.',
     descriptionJa: 'キーボード設定ファイル <filename> を Tera Term に読み込ませる',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The keyboard setup file to load.',
+        descriptionJa: '読み込むキーボード設定ファイル。',
+      },
+    ],
     snippet: "loadkeymap '${1:keyboard.cnf}'",
   },
   {
@@ -3534,6 +3736,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'restoresetup <filename>',
     description: 'Causes Tera Term to load a setup file.',
     descriptionJa: 'Tera Term 設定ファイル <filename> を Tera Term に読み込ませる',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The Tera Term setup file to load.',
+        descriptionJa: '読み込む Tera Term 設定ファイル。',
+      },
+    ],
     snippet: "restoresetup '${1:teraterm.ini}'",
   },
   {
@@ -3541,6 +3750,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'setdebug <flag>',
     description: 'Sets the debug flag of Tera Term.',
     descriptionJa: 'Tera Term のデバッグモードを設定する',
+    parameters: [
+      {
+        name: '<flag>',
+        description: 'The debug mode flag to set.',
+        descriptionJa: '設定するデバッグモードのフラグ。',
+      },
+    ],
     snippet: 'setdebug ${1:1}',
   },
   {
@@ -3548,6 +3764,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'setexitcode <exit code>',
     description: 'Sets the exit code of MACRO.',
     descriptionJa: 'MACRO の終了コードを設定する',
+    parameters: [
+      {
+        name: '<exit code>',
+        description: 'The exit code to set for MACRO.',
+        descriptionJa: 'MACRO に設定する終了コード。',
+      },
+    ],
     snippet: 'setexitcode ${1:0}',
   },
   {
@@ -3555,6 +3778,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'setfileattr <filename> <attributes>',
     description: 'Sets the file attributes.',
     descriptionJa: 'ファイルの属性を設定する',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The file whose attributes are set.',
+        descriptionJa: '属性を設定するファイル。',
+      },
+      {
+        name: '<attributes>',
+        description: 'The attribute bitmask to set.',
+        descriptionJa: '設定する属性のビットマスク。',
+      },
+    ],
     returnsJa: '`result` … 変更に成功すると 1、失敗すると 0。',
     returns: '`result` … set to 1 on success, 0 on failure.',
   },
@@ -3563,6 +3798,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'getfileattr <filename>',
     description: 'Gets the file attributes. Stores the result in "result".',
     descriptionJa: 'ファイルの属性を取得する',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The file whose attributes are retrieved.',
+        descriptionJa: '属性を取得するファイル。',
+      },
+    ],
     returnsJa: '`result` … 取得失敗で -1、成功で属性値（$1 読取専用・$2 隠し・$10 ディレクトリ・$20 アーカイブ などの組み合わせ）。',
     returns: '`result` … -1 on failure, otherwise the attribute bitmask ($1 read-only, $2 hidden, $10 directory, $20 archive, etc.).',
     snippet: "getfileattr '${1:filename}'",
@@ -3572,6 +3814,19 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'clipb2var <strvar> [<offset>]',
     description: 'Copies text data from clipboard to <strvar>.',
     descriptionJa: 'クリップボードのテキストデータを <strvar> へ代入する',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the clipboard text.',
+        descriptionJa: 'クリップボードのテキストを格納する文字列変数。',
+      },
+      {
+        name: '<offset>',
+        description: 'The 0-origin offset within the clipboard text from which copying starts.',
+        descriptionJa: 'コピーを開始するクリップボードテキスト内のオフセット（0 オリジン）。',
+        optional: true,
+      },
+    ],
     returnsJa: 'クリップボードのテキストを `<strvar>` に代入。`result` … 0=クリップボードを開けない/テキストでない/offset 不正, 1=代入成功, 2=代入したが切り捨てあり, 3=メモリ確保失敗。',
     returns: 'Stores the clipboard text in `<strvar>`. `result` … 0=cannot open clipboard / not text / bad offset, 1=stored, 2=stored but truncated, 3=memory allocation failed.',
     snippet: 'clipb2var ${1:strvar}',
@@ -3581,6 +3836,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'var2clipb <string>',
     description: 'Copies <string> to the clipboard.',
     descriptionJa: '<string> をクリップボードにコピーする',
+    parameters: [
+      {
+        name: '<string>',
+        description: 'The string to copy to the clipboard.',
+        descriptionJa: 'クリップボードにコピーする文字列。',
+      },
+    ],
     returnsJa: '`result` … クリップボードへのコピーに成功すると 1、開けないと 0。',
     returns: '`result` … set to 1 when copied to the clipboard, 0 if it cannot be opened.',
     snippet: 'var2clipb ${1:string}',
