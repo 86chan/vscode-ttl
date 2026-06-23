@@ -2,6 +2,18 @@
  * TTL (Tera Term Language) コマンド・キーワード定義
  */
 
+/** TTLコマンドの引数定義 */
+export interface TtlParameter {
+  /** 引数名（シグネチャ中の表記に合わせる。例: '<data1>'） */
+  readonly name: string;
+  /** 引数の説明（英語） */
+  readonly description: string;
+  /** 引数の説明（日本語） */
+  readonly descriptionJa?: string;
+  /** 省略可能な引数なら true */
+  readonly optional?: boolean;
+}
+
 /** TTLコマンドの定義 */
 export interface TtlCommand {
   /** コマンド名（小文字） */
@@ -12,6 +24,8 @@ export interface TtlCommand {
   readonly description: string;
   /** 日本語説明 */
   readonly descriptionJa?: string;
+  /** 引数の説明（任意。引数を取らないコマンドは省略） */
+  readonly parameters?: ReadonlyArray<TtlParameter>;
   /** 戻り値・関連システム変数の説明（英語） */
   readonly returns?: string;
   /** 戻り値・関連システム変数の説明（日本語） */
@@ -47,6 +61,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'if <expression> <statement>\nif <expression> then\n  ...\nendif',
     description: 'Executes a statement, or a block of statements, if an expression is true (non-zero).',
     descriptionJa: '<expression> が真（0以外）ならば <statement> を実行',
+    parameters: [
+      {
+        name: '<expression>',
+        description: 'The expression evaluated; the statement runs if it is true (non-zero).',
+        descriptionJa: '評価する式。真（0 以外）なら文を実行する。',
+      },
+      {
+        name: '<statement>',
+        description: 'The statement executed when <expression> is true (single-line form).',
+        descriptionJa: '<expression> が真のときに実行する文（単一行の書式）。',
+      },
+    ],
     snippet: 'if ${1:expression} then\n\t$0\nendif',
   },
   {
@@ -54,6 +80,23 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'for <intvar> <first> <last>\n  ...\nnext',
     description: 'Repeats the statements between "for" and "next" until the integer variable reaches <last>.',
     descriptionJa: 'for と next の間のコマンドを、整数変数 <intvar> が <last> に達するまで繰り返し',
+    parameters: [
+      {
+        name: '<intvar>',
+        description: 'The integer loop variable.',
+        descriptionJa: 'ループに使う整数変数。',
+      },
+      {
+        name: '<first>',
+        description: 'The initial value of the loop variable.',
+        descriptionJa: 'ループ変数の初期値。',
+      },
+      {
+        name: '<last>',
+        description: 'The final value at which the loop ends.',
+        descriptionJa: 'ループが終了する最終値。',
+      },
+    ],
     snippet: 'for ${1:i} ${2:1} ${3:10}\n\t$0\nnext',
   },
   {
@@ -61,6 +104,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'while <expression>\n  ...\nendwhile',
     description: "Repeats the statements between 'while' and 'endwhile' while <expression> is non-zero.",
     descriptionJa: "while と endwhile の間のコマンドを、<expression> が 0 以外である限り繰り返し",
+    parameters: [
+      {
+        name: '<expression>',
+        description: 'The condition; the loop repeats while it is non-zero.',
+        descriptionJa: '条件式。0 以外である限りループを繰り返す。',
+      },
+    ],
     snippet: 'while ${1:expression}\n\t$0\nendwhile',
   },
   {
@@ -68,6 +118,14 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'do [ { while | until } <expression> ]\n  ...\nloop [ { while | until } <expression> ]',
     description: "Repeats the statements between 'do' and 'loop' according to condition.",
     descriptionJa: "do と loop の間のコマンドを、条件式に従って繰り返し",
+    parameters: [
+      {
+        name: '<expression>',
+        description: 'The condition controlling the do-loop, combined with while or until.',
+        descriptionJa: 'do-loop を制御する条件式（while または until と共に指定する）。',
+        optional: true,
+      },
+    ],
     snippet: 'do\n\t$0\nloop while ${1:expression}',
   },
   {
@@ -75,6 +133,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'until <expression>\n  ...\nenduntil',
     description: "Repeats the statements between 'until' and 'enduntil' while <expression> is zero.",
     descriptionJa: "until と enduntil の間のコマンドを、<expression> が 0 である限り繰り返し",
+    parameters: [
+      {
+        name: '<expression>',
+        description: 'The condition; the loop repeats while it is zero.',
+        descriptionJa: '条件式。0 である限りループを繰り返す。',
+      },
+    ],
     snippet: 'until ${1:expression}\n\t$0\nenduntil',
   },
   {
@@ -94,6 +159,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'call <label>',
     description: 'Calls a subroutine beginning with the <label> line.',
     descriptionJa: '<label> 行から始まるサブルーチンをコール',
+    parameters: [
+      {
+        name: '<label>',
+        description: 'The label where the subroutine begins.',
+        descriptionJa: 'サブルーチンの開始ラベル。',
+      },
+    ],
     snippet: 'call ${1:label}',
   },
   {
@@ -107,6 +179,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'goto <label>',
     description: 'Moves control to the next line of the <label>.',
     descriptionJa: '<label> 行の次の行へジャンプ',
+    parameters: [
+      {
+        name: '<label>',
+        description: 'The label to jump to.',
+        descriptionJa: 'ジャンプ先のラベル。',
+      },
+    ],
     snippet: 'goto ${1:label}',
   },
   {
@@ -127,6 +206,19 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'send <data1> [<data2> ...]',
     description: 'Causes Tera Term to send characters to the host.',
     descriptionJa: 'ホストへ文字列または数値を送信',
+    parameters: [
+      {
+        name: '<data1>',
+        description: 'If a string, the string is sent to the host. If an integer, its lowest-order byte (0–255) is regarded as an ASCII code of the character, and the character is sent.',
+        descriptionJa: '文字列型の場合、文字列をホストへ送信する。整数型の場合は、その値の下位バイト(0-255)を ASCII コードとみなし、その文字を送信する。',
+      },
+      {
+        name: '<data2>',
+        description: 'Additional data items to send, in order.',
+        descriptionJa: '続けて送信するデータ。順に複数指定できる。',
+        optional: true,
+      },
+    ],
     snippet: "send '${1:text}'",
   },
   {
@@ -134,6 +226,20 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'sendln [<data1> [<data2> ...]]',
     description: 'Causes Tera Term to send characters followed by a new-line character to the host.',
     descriptionJa: '文字列と改行をホストへ送信',
+    parameters: [
+      {
+        name: '<data1>',
+        description: 'If a string, the string is sent to the host. If an integer, its lowest-order byte (0–255) is regarded as an ASCII code of the character, and the character is sent. A new-line is sent after the data.',
+        descriptionJa: '文字列型の場合、文字列をホストへ送信する。整数型の場合は、その値の下位バイト(0-255)を ASCII コードとみなし、その文字を送信する。送信後に改行が送られる。',
+        optional: true,
+      },
+      {
+        name: '<data2>',
+        description: 'Additional data items to send, in order.',
+        descriptionJa: '続けて送信するデータ。順に複数指定できる。',
+        optional: true,
+      },
+    ],
     snippet: "sendln '${1:text}'",
   },
   {
@@ -141,6 +247,19 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'sendbinary <data1> [<data2> ...]',
     description: 'Sends data to the host without encoding conversion.',
     descriptionJa: 'バイナリデータをホストへ送信（エンコード変換なし）',
+    parameters: [
+      {
+        name: '<data1>',
+        description: 'Data to send without encoding conversion. A string is sent as-is; an integer is sent as its lowest-order byte (0–255).',
+        descriptionJa: 'エンコード変換せずに送信するデータ。文字列はそのまま、整数は下位バイト(0-255)を送信する。',
+      },
+      {
+        name: '<data2>',
+        description: 'Additional data items to send, in order.',
+        descriptionJa: '続けて送信するデータ。順に複数指定できる。',
+        optional: true,
+      },
+    ],
   },
   {
     name: 'sendbreak',
@@ -153,12 +272,37 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'sendbroadcast <data1> [<data2> ...]',
     description: 'Causes Tera Term to broadcast characters to all terminals.',
     descriptionJa: 'すべての端末へブロードキャスト送信',
+    parameters: [
+      {
+        name: '<data1>',
+        description: 'If a string, the string is broadcast; if an integer, its lowest-order byte (0–255) is regarded as an ASCII code of the character.',
+        descriptionJa: '文字列型の場合は文字列を、整数型の場合は下位バイト(0-255)を ASCII コードとみなした文字をブロードキャスト送信する。',
+      },
+      {
+        name: '<data2>',
+        description: 'Additional data items to send, in order.',
+        descriptionJa: '続けて送信するデータ。順に複数指定できる。',
+        optional: true,
+      },
+    ],
   },
   {
     name: 'sendfile',
     signature: 'sendfile <filename> <binary flag>',
     description: 'Causes Tera Term to send the file <filename> to the host.',
     descriptionJa: '<filename> で指定されたファイルをホストへ送信',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The file to be sent to the host. A relative path is treated as relative to the file-transfer directory.',
+        descriptionJa: '送信するファイル。相対パスの時はファイル転送用ディレクトリ相対として扱う。',
+      },
+      {
+        name: '<binary flag>',
+        description: 'Non-zero sends the file unmodified; zero converts new-line characters (and kanji) and strips control characters except TAB, LF, and CR.',
+        descriptionJa: '0 以外のときファイルの内容をそのまま送信する。0 のとき漢字・改行文字を変換して送信し、TAB・LF・CR 以外の制御文字は送信しない。',
+      },
+    ],
     snippet: "sendfile '${1:filename}' ${2:0}",
   },
   {
@@ -166,36 +310,123 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'sendkcode <key code> <repeat count>',
     description: 'Causes Tera Term to perform a function defined for a key or key combination.',
     descriptionJa: 'キーコード <key code> に割り当てられた機能を Tera Term で実行',
+    parameters: [
+      {
+        name: '<key code>',
+        description: 'A key code defined by KEYCODE.EXE.',
+        descriptionJa: 'KEYCODE.EXE によって定義されるキーコード。',
+      },
+      {
+        name: '<repeat count>',
+        description: 'The number of times the function is performed.',
+        descriptionJa: 'その機能を繰り返して実行する回数。',
+      },
+    ],
   },
   {
     name: 'sendlnbroadcast',
     signature: 'sendlnbroadcast <data1> [<data2> ...]',
     description: 'Broadcasts characters followed by a new-line character to all terminals.',
     descriptionJa: '文字列と改行をすべての端末へブロードキャスト送信',
+    parameters: [
+      {
+        name: '<data1>',
+        description: 'If a string, the string is broadcast; if an integer, its lowest-order byte (0–255) is regarded as an ASCII code of the character. A new-line is sent after the data.',
+        descriptionJa: '文字列型の場合は文字列を、整数型の場合は下位バイト(0-255)を ASCII コードとみなした文字をブロードキャスト送信する。送信後に改行が送られる。',
+      },
+      {
+        name: '<data2>',
+        description: 'Additional data items to send, in order.',
+        descriptionJa: '続けて送信するデータ。順に複数指定できる。',
+        optional: true,
+      },
+    ],
   },
   {
     name: 'sendlnmulticast',
     signature: 'sendlnmulticast <multicastname> <data1> [<data2> ...]',
     description: 'Multicasts characters followed by a new-line character to selected terminals.',
     descriptionJa: '文字列と改行を指定端末へマルチキャスト送信',
+    parameters: [
+      {
+        name: '<multicastname>',
+        description: 'The multicast name (configured by setmulticastname) identifying the target terminals.',
+        descriptionJa: 'setmulticastname コマンドで設定したマルチキャスト名。送信先の端末を指定する。',
+      },
+      {
+        name: '<data1>',
+        description: 'If a string, the string is sent; if an integer, its lowest-order byte (0–255) is regarded as an ASCII code of the character. A new-line is sent after the data.',
+        descriptionJa: '文字列型の場合は文字列を、整数型の場合は下位バイト(0-255)を ASCII コードとみなした文字を送信する。送信後に改行が送られる。',
+      },
+      {
+        name: '<data2>',
+        description: 'Additional data items to send, in order.',
+        descriptionJa: '続けて送信するデータ。順に複数指定できる。',
+        optional: true,
+      },
+    ],
   },
   {
     name: 'sendmulticast',
     signature: 'sendmulticast <multicastname> <data1> [<data2> ...]',
     description: 'Sends characters to the multicast terminal specified by <multicastname>.',
     descriptionJa: '<multicastname> で指定した端末へマルチキャスト送信',
+    parameters: [
+      {
+        name: '<multicastname>',
+        description: 'The multicast name (configured by setmulticastname) identifying the target terminals.',
+        descriptionJa: 'setmulticastname コマンドで設定したマルチキャスト名。送信先の端末を指定する。',
+      },
+      {
+        name: '<data1>',
+        description: 'If a string, the string is sent; if an integer, its lowest-order byte (0–255) is regarded as an ASCII code of the character.',
+        descriptionJa: '文字列型の場合は文字列を、整数型の場合は下位バイト(0-255)を ASCII コードとみなした文字を送信する。',
+      },
+      {
+        name: '<data2>',
+        description: 'Additional data items to send, in order.',
+        descriptionJa: '続けて送信するデータ。順に複数指定できる。',
+        optional: true,
+      },
+    ],
   },
   {
     name: 'sendtext',
     signature: 'sendtext <data1> [<data2> ...]',
     description: 'Sends characters to the host as text (without CR+LF conversion).',
     descriptionJa: 'テキストとしてホストへ文字を送信（CR+LF 変換なし）',
+    parameters: [
+      {
+        name: '<data1>',
+        description: 'Text to send to the host as-is, without CR+LF conversion. If an integer, its lowest-order byte (0–255) is regarded as an ASCII code of the character.',
+        descriptionJa: 'CR+LF 変換せずそのままホストへ送信するテキスト。整数型の場合は下位バイト(0-255)を ASCII コードとみなした文字を送信する。',
+      },
+      {
+        name: '<data2>',
+        description: 'Additional data items to send, in order.',
+        descriptionJa: '続けて送信するデータ。順に複数指定できる。',
+        optional: true,
+      },
+    ],
   },
   {
     name: 'dispstr',
     signature: 'dispstr <data1> [<data2> ...]',
     description: 'Causes Tera Term to display characters on the client terminal screen.',
     descriptionJa: '文字列または数値を端末画面に表示',
+    parameters: [
+      {
+        name: '<data1>',
+        description: 'If a string, the string is displayed on the terminal; if an integer, its lowest-order byte (0–255) is regarded as an ASCII code of the character.',
+        descriptionJa: '文字列型の場合は文字列を、整数型の場合は下位バイト(0-255)を ASCII コードとみなした文字を端末画面に表示する。',
+      },
+      {
+        name: '<data2>',
+        description: 'Additional data items to display, in order.',
+        descriptionJa: '続けて表示するデータ。順に複数指定できる。',
+        optional: true,
+      },
+    ],
     snippet: "dispstr '${1:text}'",
   },
   // ── 受信・待機 ───────────────────────────────────────────────────────────────
@@ -204,6 +435,19 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'wait <string1> [<string2> ...]',
     description: 'Pauses until one of the character strings is received from the host, or until timeout.',
     descriptionJa: '文字列のうち一つがホストから送られてくるか、タイムアウトするまで待機',
+    parameters: [
+      {
+        name: '<string1>',
+        description: 'A character string to wait for from the host. Up to 10 may be specified; an empty string waits for any single character.',
+        descriptionJa: '受信を待つ文字列。最大 10 個まで指定でき、空文字列を指定した場合は任意の一文字を待つ。',
+      },
+      {
+        name: '<string2>',
+        description: 'Additional strings to wait for, in order.',
+        descriptionJa: '追加で待つ文字列。順に複数指定できる。',
+        optional: true,
+      },
+    ],
     returnsJa: '`result` … タイムアウトで 0、`<stringN>` を受信で n（1〜10）。タイムアウトは `timeout`/`mtimeout` で制御。',
     returns: '`result` … 0 on timeout, or n (1–10) when `<stringN>` is received. The timeout is controlled by `timeout`/`mtimeout`.',
     snippet: "wait '${1:string}'",
@@ -213,6 +457,19 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'waitln <string1> [<string2> ...]',
     description: 'Pauses until a line which contains one of the strings is received, or until timeout.',
     descriptionJa: '文字列のうち一つを含む行をホストから受信するか、タイムアウトするまで待機',
+    parameters: [
+      {
+        name: '<string1>',
+        description: 'A string to wait for within a received line. Up to 10 may be specified; an empty string waits for any line.',
+        descriptionJa: '受信行に含まれているか待つ文字列。最大 10 個まで指定でき、空文字列を指定した場合は任意の行を待つ。',
+      },
+      {
+        name: '<string2>',
+        description: 'Additional strings to wait for, in order.',
+        descriptionJa: '追加で待つ文字列。順に複数指定できる。',
+        optional: true,
+      },
+    ],
     returnsJa: '受信した行を `inputstr` に格納。`result` … タイムアウトで 0、`<stringN>` を含む行を受信で n（1〜10）。',
     returns: 'Stores the received line in `inputstr`. `result` … 0 on timeout, or n (1–10) when a line containing `<stringN>` is received.',
     snippet: "waitln '${1:string}'",
@@ -222,6 +479,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'waitn <received byte count>',
     description: 'Pauses until the given number of bytes are received from the host, or until timeout.',
     descriptionJa: '指定バイト数以上のデータ受信まで待機',
+    parameters: [
+      {
+        name: '<received byte count>',
+        description: 'The number of bytes to wait for from the host.',
+        descriptionJa: '受信完了とみなすバイト数。',
+      },
+    ],
     returnsJa: '指定バイト数を受信すると `inputstr` に格納し `result` に 1（指定が 511 を超える場合は先頭 511 バイトのみ格納）、1文字も受信せずにタイムアウトで 0。',
     returns: 'On receiving the given number of bytes, stores them in `inputstr` and sets `result` to 1 (if the count exceeds 511, only the first 511 bytes are stored); 0 on timeout with no data received.',
   },
@@ -230,6 +494,23 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'waitrecv <sub-string> <len> <pos>',
     description: 'Pauses until a string satisfying a condition is received, or until timeout.',
     descriptionJa: '条件を満たす文字列がホストから送られてくるか、タイムアウトするまで待機',
+    parameters: [
+      {
+        name: '<sub-string>',
+        description: 'The sub-string that must be contained in the received string.',
+        descriptionJa: '受信文字列が含むべき副文字列。',
+      },
+      {
+        name: '<len>',
+        description: 'The length of the received string to be evaluated.',
+        descriptionJa: '受信する文字列の長さ。',
+      },
+      {
+        name: '<pos>',
+        description: 'The position (1-origin) at which the sub-string must begin within the received string.',
+        descriptionJa: '副文字列が始まる位置（1 オリジン）。',
+      },
+    ],
     returnsJa: '条件を満たす文字列を受信すると `inputstr` に格納。`result` … 1=受信成功, 0=タイムアウト, -1=受信したが長さが `<len>` 未満。',
     returns: 'On a matching string, stores it in `inputstr`. `result` … 1=received, 0=timeout, -1=received but shorter than `<len>` due to timeout.',
   },
@@ -238,6 +519,19 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'waitregex <regex1> [<regex2> ...]',
     description: 'Pauses until a line matching one of the regular expressions is received, or until timeout.',
     descriptionJa: '正規表現にマッチする行をホストから受信するか、タイムアウトするまで待機',
+    parameters: [
+      {
+        name: '<regex1>',
+        description: 'A regular expression to match against a received line. Up to 10 may be specified.',
+        descriptionJa: '受信行とマッチさせる正規表現。最大 10 個まで指定できる。',
+      },
+      {
+        name: '<regex2>',
+        description: 'Additional regular expressions to match, in order.',
+        descriptionJa: '追加でマッチさせる正規表現。順に複数指定できる。',
+        optional: true,
+      },
+    ],
     returnsJa: '`result` … タイムアウトで 0、マッチで n（1〜10）。`inputstr` に受信行、`matchstr` に最初のマッチ、`groupmatchstr1`〜`groupmatchstr9` にグループマッチ結果。',
     returns: '`result` … 0 on timeout, or n (1–10) on match. `inputstr` holds the received line, `matchstr` the first match, and `groupmatchstr1`–`groupmatchstr9` the captured groups.',
     snippet: "waitregex '${1:regex}'",
@@ -247,6 +541,19 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'wait4all <string1> [<string2> ...]',
     description: 'Pauses until one of the strings is received from all macro-linked terminals.',
     descriptionJa: 'マクロに接続されている全端末において、文字列のうち一つが送られてくるまで待機',
+    parameters: [
+      {
+        name: '<string1>',
+        description: 'A character string to wait for from all macro-linked terminals. Up to 10 may be specified.',
+        descriptionJa: '全端末から受信を待つ文字列。最大 10 個まで指定できる。',
+      },
+      {
+        name: '<string2>',
+        description: 'Additional strings to wait for, in order.',
+        descriptionJa: '追加で待つ文字列。順に複数指定できる。',
+        optional: true,
+      },
+    ],
     returnsJa: '`result` … タイムアウトで 0、`<stringN>` を受信で n（1〜10）。タイムアウトは `timeout`/`mtimeout` で制御。',
     returns: '`result` … 0 on timeout, or n (1–10) when `<stringN>` is received. The timeout is controlled by `timeout`/`mtimeout`.',
   },
@@ -255,6 +562,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'waitevent <events>',
     description: 'Pauses until one of the events specified by <events> occurs.',
     descriptionJa: '<events> で指定されるイベントが発生するまで待機',
+    parameters: [
+      {
+        name: '<events>',
+        description: 'A combination of event identifiers to wait for: timeout=1, unlink=2, disconnection=4, connection=8. Combine them with `or`.',
+        descriptionJa: '待機するイベント識別子の組み合わせ（timeout=1, unlink=2, disconnection=4, connection=8）。`or` で連結して指定できる。',
+      },
+    ],
     returnsJa: '`result` … 発生したイベント識別子（1=timeout, 2=unlink, 4=disconnection, 8=connection）。',
     returns: '`result` … the identifier of the event that occurred (1=timeout, 2=unlink, 4=disconnection, 8=connection).',
   },
@@ -271,6 +585,23 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'recvfile <filename> <binary flag> <auto-stop wait time>',
     description: 'Writes the data received from the host to the specified file.',
     descriptionJa: 'ホストから受信したデータを <filename> で指定されたファイルに出力',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The file to which data received from the host is written. A relative path is saved to the file-transfer folder.',
+        descriptionJa: '受信したデータを出力するファイル。相対パスの時はファイル転送用ディレクトリに保存する。',
+      },
+      {
+        name: '<binary flag>',
+        description: 'Regardless of its numeric value, received data is always written to the file unchanged (without conversion).',
+        descriptionJa: '値が何であれ、受信したデータをそのまま（変換せず）ファイルに出力する。',
+      },
+      {
+        name: '<auto-stop wait time>',
+        description: 'Reception stops if no data is received for this many seconds; a value of 0 or less waits indefinitely.',
+        descriptionJa: 'この秒数の間、受信データが無い状態が続くとデータ受信を終了する。0 以下の場合は無期限に待つ。',
+      },
+    ],
     returnsJa: '`result` … 転送が成功すると 1、失敗すると 0。',
     returns: '`result` … set to 1 on a successful transfer, 0 otherwise.',
   },
@@ -286,6 +617,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'connect <command line parameters>',
     description: "Runs Tera Term with the given parameters and links it to MACRO, or connects to the host if already linked.",
     descriptionJa: 'Tera Term を起動してホストに接続し MACRO とリンク',
+    parameters: [
+      {
+        name: '<command line parameters>',
+        description: 'The command line parameters used when starting Tera Term, or the host to connect to if already linked. See the Tera Term / TTSSH command line documentation for the format.',
+        descriptionJa: 'Tera Term を起動する時のコマンドラインパラメータ。既にリンクされている場合は、ここで指定されるホストに接続する。',
+      },
+    ],
     returnsJa: '`result` … 0=Tera Term とリンクなし, 1=リンク済みだが未接続, 2=リンク・接続済み。',
     returns: '`result` … 0=not linked to Tera Term, 1=linked but not connected, 2=linked and connected.',
     snippet: "connect '${1:host}'",
@@ -295,6 +633,14 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'cygconnect [<command line parameters>]',
     description: 'Runs Tera Term connected to Cygwin and links it to MACRO.',
     descriptionJa: 'Cygwin に接続した Tera Term を起動して MACRO とリンク',
+    parameters: [
+      {
+        name: '<command line parameters>',
+        description: 'The Cygwin connection command line parameters used when starting Tera Term.',
+        descriptionJa: 'Tera Term を起動する時に渡す Cygwin 接続用のコマンドラインパラメータ。',
+        optional: true,
+      },
+    ],
     returnsJa: '`result` … 0=Tera Term とリンクなし, 1=リンク済みだがホストまたはCygwinに未接続, 2=リンク・接続済み。',
     returns: '`result` … 0=not linked to Tera Term, 1=linked but not connected to the host or Cygwin, 2=linked and connected.',
   },
@@ -303,6 +649,14 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'disconnect [<confirm>]',
     description: 'Disconnects Tera Term from the host.',
     descriptionJa: 'Tera Term とホストの接続を切断',
+    parameters: [
+      {
+        name: '<confirm>',
+        description: 'When zero, disconnects without confirmation; when non-zero, shows the disconnection confirmation dialog (default non-zero).',
+        descriptionJa: '0 を指定すると確認ダイアログを表示せずに切断し、0 以外を指定すると切断時の確認ダイアログを表示する（既定は 0 以外）。',
+        optional: true,
+      },
+    ],
   },
   {
     name: 'closett',
@@ -330,6 +684,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'pause <time>',
     description: 'Pauses for <time> seconds.',
     descriptionJa: 'TTL 実行を <time> 秒間休止',
+    parameters: [
+      {
+        name: '<time>',
+        description: 'The number of seconds to pause TTL execution.',
+        descriptionJa: 'TTL の実行を休止する秒数。',
+      },
+    ],
     snippet: 'pause ${1:1}',
   },
   {
@@ -337,6 +698,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'mpause <time>',
     description: 'Pauses for <time> milliseconds.',
     descriptionJa: 'TTL 実行を <time> ミリ秒間休止',
+    parameters: [
+      {
+        name: '<time>',
+        description: 'The number of milliseconds to pause TTL execution.',
+        descriptionJa: 'TTL の実行を休止するミリ秒数。',
+      },
+    ],
     snippet: 'mpause ${1:500}',
   },
   // ── ダイアログ ───────────────────────────────────────────────────────────────
@@ -345,6 +713,24 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'messagebox <message> <title> [<special>]',
     description: 'Displays a message box.',
     descriptionJa: 'メッセージボックスを表示',
+    parameters: [
+      {
+        name: '<message>',
+        description: 'The message displayed in the dialog box.',
+        descriptionJa: 'ダイアログボックスに表示されるメッセージ。',
+      },
+      {
+        name: '<title>',
+        description: 'The title displayed on the dialog box.',
+        descriptionJa: 'ダイアログボックスのタイトル。',
+      },
+      {
+        name: '<special>',
+        description: 'If non-zero, certain strings in <message> are treated as special characters (default 0; now obsolete in favor of strspecial).',
+        descriptionJa: '0 でない場合、<message> に含まれる文字列を特殊文字として扱う（省略時 0。現在は strspecial の使用が推奨）。',
+        optional: true,
+      },
+    ],
     snippet: "messagebox '${1:message}' '${2:title}'",
   },
   {
@@ -352,6 +738,30 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'inputbox <message> <title> [<default> [<special>]]',
     description: 'Displays an input dialog box. The user input is stored in "inputstr".',
     descriptionJa: '入力ダイアログを表示して inputstr に格納',
+    parameters: [
+      {
+        name: '<message>',
+        description: 'The message displayed in the dialog box.',
+        descriptionJa: 'ダイアログボックスに表示されるメッセージ。',
+      },
+      {
+        name: '<title>',
+        description: 'The title displayed on the dialog box.',
+        descriptionJa: 'ダイアログボックスのタイトル。',
+      },
+      {
+        name: '<default>',
+        description: 'The default string for the edit control (default empty string).',
+        descriptionJa: 'エディットコントロールのデフォルト文字列（省略時は空文字列）。',
+        optional: true,
+      },
+      {
+        name: '<special>',
+        description: 'If non-zero, certain strings in <message> are treated as special characters (default 0).',
+        descriptionJa: '0 でない場合、<message> に含まれる文字列を特殊文字として扱う（省略時 0）。',
+        optional: true,
+      },
+    ],
     returnsJa: '`inputstr` … 入力された文字列が代入される。',
     returns: '`inputstr` … the string entered by the user.',
     snippet: "inputbox '${1:message}' '${2:title}'",
@@ -361,6 +771,24 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'passwordbox <message> <title> [<special>]',
     description: 'Displays a password input dialog. The input is masked and stored in "inputstr".',
     descriptionJa: 'パスワード入力ダイアログを表示して inputstr に格納',
+    parameters: [
+      {
+        name: '<message>',
+        description: 'The message displayed in the dialog box.',
+        descriptionJa: 'ダイアログボックスに表示されるメッセージ。',
+      },
+      {
+        name: '<title>',
+        description: 'The title displayed on the dialog box.',
+        descriptionJa: 'ダイアログボックスのタイトル。',
+      },
+      {
+        name: '<special>',
+        description: 'If non-zero, certain strings in <message> are treated as special characters (default 0).',
+        descriptionJa: '0 でない場合、<message> に含まれる文字列を特殊文字として扱う（省略時 0）。',
+        optional: true,
+      },
+    ],
     returnsJa: '`inputstr` … 入力された文字列が代入される。',
     returns: '`inputstr` … the string entered by the user.',
     snippet: "passwordbox '${1:message}' '${2:title}'",
@@ -370,6 +798,24 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'yesnobox <message> <title> [<special>]',
     description: 'Displays a Yes/No dialog. Sets "result" to 1 for Yes, 0 for No.',
     descriptionJa: 'Yes/No ダイアログを表示して result に格納（Yes=1, No=0）',
+    parameters: [
+      {
+        name: '<message>',
+        description: 'The message displayed in the dialog box.',
+        descriptionJa: 'ダイアログボックスに表示されるメッセージ。',
+      },
+      {
+        name: '<title>',
+        description: 'The title displayed on the dialog box.',
+        descriptionJa: 'ダイアログボックスのタイトル。',
+      },
+      {
+        name: '<special>',
+        description: 'If non-zero, certain strings in <message> are treated as special characters (default 0).',
+        descriptionJa: '0 でない場合、<message> に含まれる文字列を特殊文字として扱う（省略時 0）。',
+        optional: true,
+      },
+    ],
     returnsJa: '`result` … 「はい」で 1、「いいえ」で 0。',
     returns: '`result` … set to 1 for "Yes", 0 for "No".',
     snippet: "yesnobox '${1:message}' '${2:title}'",
@@ -379,6 +825,35 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'listbox <message> <title> <string array> [<selected>] [<keyword parameter>...]',
     description: 'Displays a list box dialog. The selected index is stored in "result".',
     descriptionJa: 'リストボックスダイアログを表示して result に選択インデックスを格納',
+    parameters: [
+      {
+        name: '<message>',
+        description: 'The message displayed in the dialog box.',
+        descriptionJa: 'ダイアログボックスに表示されるメッセージ。',
+      },
+      {
+        name: '<title>',
+        description: 'The title displayed on the dialog box.',
+        descriptionJa: 'ダイアログボックスのタイトル。',
+      },
+      {
+        name: '<string array>',
+        description: 'The array of items displayed in the list box.',
+        descriptionJa: 'リストボックスに表示される選択項目（配列）。',
+      },
+      {
+        name: '<selected>',
+        description: 'The zero-based index of the item selected initially. If omitted, no item is selected.',
+        descriptionJa: '初期選択項目（0 オリジンインデックス）。省略時はどの項目も選択されない。',
+        optional: true,
+      },
+      {
+        name: '<keyword parameter>',
+        description: 'Optional modifiers, in any order: dblclick=on, minmaxbutton=on, minimize=on, maximize=on, listboxsize=WxH.',
+        descriptionJa: '省略可能・複数指定可・順不同のオプション（dblclick=on, minmaxbutton=on, minimize=on, maximize=on, listboxsize=WxH）。',
+        optional: true,
+      },
+    ],
     returnsJa: '`result` … 選択した項目の番号 0〜N-1、キャンセル時は -1。',
     returns: '`result` … the selected item index 0 to N-1, or -1 if cancelled.',
     snippet: "listbox '${1:message}' '${2:title}' ${3:array}",
@@ -388,6 +863,24 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'statusbox <message> <title> [<special>]',
     description: 'Displays or updates the status dialog box.',
     descriptionJa: 'ステータスダイアログを表示または更新',
+    parameters: [
+      {
+        name: '<message>',
+        description: 'The message displayed in the status dialog box.',
+        descriptionJa: 'ステータスダイアログボックスに表示されるメッセージ。',
+      },
+      {
+        name: '<title>',
+        description: 'The title displayed on the status dialog box.',
+        descriptionJa: 'ステータスダイアログボックスのタイトル。',
+      },
+      {
+        name: '<special>',
+        description: 'If non-zero, certain strings in <message> are treated as special characters (default 0).',
+        descriptionJa: '0 でない場合、<message> に含まれる文字列を特殊文字として扱う（省略時 0）。',
+        optional: true,
+      },
+    ],
     snippet: "statusbox '${1:message}' '${2:title}'",
   },
   {
@@ -407,6 +900,19 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'dirnamebox <title> [<initialdir>]',
     description: 'Displays a folder browser dialog. The selected folder is stored in "inputstr".',
     descriptionJa: 'フォルダ選択ダイアログを表示して inputstr に格納',
+    parameters: [
+      {
+        name: '<title>',
+        description: 'The title of the dialog box.',
+        descriptionJa: 'ダイアログボックスのタイトル。',
+      },
+      {
+        name: '<initialdir>',
+        description: 'The initial directory of the dialog box. If empty or an invalid path, the desktop becomes the initial directory.',
+        descriptionJa: 'ダイアログボックスの初期ディレクトリ。空文字列や無効なパスを指定するとデスクトップが初期ディレクトリになる。',
+        optional: true,
+      },
+    ],
     returnsJa: '`result` … OK を押すと 1（`inputstr` に選択ディレクトリ名）、キャンセル/閉じると 0。',
     returns: '`result` … set to 1 when OK is pressed (`inputstr` holds the directory name), 0 when cancelled or closed.',
     snippet: "dirnamebox '${1:title}'",
@@ -416,6 +922,25 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'filenamebox <title> [<dialogtype> [<initialdir>]]',
     description: 'Displays a file open/save dialog. The selected filename is stored in "inputstr".',
     descriptionJa: 'ファイル選択ダイアログを表示して inputstr に格納',
+    parameters: [
+      {
+        name: '<title>',
+        description: 'The title of the dialog box.',
+        descriptionJa: 'ダイアログボックスのタイトル。',
+      },
+      {
+        name: '<dialogtype>',
+        description: 'The dialog type: 0 opens an "Open File" dialog; non-zero opens a "Save File As" dialog.',
+        descriptionJa: 'ダイアログボックスの種類。0 で［ファイルを開く］、0 以外で［ファイル名を付けて保存］ダイアログを開く。',
+        optional: true,
+      },
+      {
+        name: '<initialdir>',
+        description: 'The initial directory of the dialog box. If empty or invalid, the initial directory is determined by Windows (the OPENFILENAME lpstrInitialDir specification).',
+        descriptionJa: 'ダイアログボックスの初期ディレクトリ。空文字列や無効なパスの場合は Windows の仕様（OPENFILENAME 構造体の lpstrInitialDir の仕様）により決定される。',
+        optional: true,
+      },
+    ],
     returnsJa: '`result` … OK を押すと 0 以外（`inputstr` に入力ファイル名）、キャンセル/閉じると 0。*(4.65 以降)*',
     returns: '`result` … nonzero when OK is pressed (`inputstr` holds the file name), 0 when cancelled or closed. *(4.65 or later)*',
     snippet: "filenamebox '${1:title}'",
@@ -425,6 +950,38 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'setdlgpos [<x> <y> [<position> [<offset x> <offset y>]]]',
     description: 'Changes the display position of dialog boxes shown by MACRO commands.',
     descriptionJa: 'マクロコマンドのダイアログ表示位置を変更',
+    parameters: [
+      {
+        name: '<x>',
+        description: 'The X coordinate of the top-left corner of the dialog box.',
+        descriptionJa: 'ダイアログボックス左上隅の X 座標。',
+        optional: true,
+      },
+      {
+        name: '<y>',
+        description: 'The Y coordinate of the top-left corner of the dialog box.',
+        descriptionJa: 'ダイアログボックス左上隅の Y 座標。',
+        optional: true,
+      },
+      {
+        name: '<position>',
+        description: 'The display position (1–10) on the display or the Tera Term VT window.',
+        descriptionJa: 'ダイアログボックスの表示位置（1〜10。ディスプレイまたは Tera Term の VT ウィンドウ上の位置）。',
+        optional: true,
+      },
+      {
+        name: '<offset x>',
+        description: 'The X offset applied to the position specified by <position>.',
+        descriptionJa: '<position> で指定した表示位置の X 座標補正値。',
+        optional: true,
+      },
+      {
+        name: '<offset y>',
+        description: 'The Y offset applied to the position specified by <position>.',
+        descriptionJa: '<position> で指定した表示位置の Y 座標補正値。',
+        optional: true,
+      },
+    ],
   },
   // ── 文字列操作 ───────────────────────────────────────────────────────────────
   {
@@ -432,6 +989,19 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'sprintf <format> [<arg1> ...]',
     description: 'Formats the arguments according to the C printf format and stores the result in "inputstr".',
     descriptionJa: '引数を C printf 形式でフォーマットして inputstr に代入',
+    parameters: [
+      {
+        name: '<format>',
+        description: 'A C printf-style format string.',
+        descriptionJa: 'C printf 形式の書式文字列。',
+      },
+      {
+        name: '<arg1>',
+        description: 'A value to be formatted according to <format>. Multiple values may be specified.',
+        descriptionJa: '<format> に従ってフォーマットする値。複数指定できる。',
+        optional: true,
+      },
+    ],
     returnsJa: '整形結果を `inputstr` に格納。`result` … 0=成功, 1=書式指定なし, 2=書式不正, 3=引数不正。',
     returns: 'Stores the formatted string in `inputstr`. `result` … 0=success, 1=no format, 2=invalid format, 3=invalid argument.',
     snippet: "sprintf '${1:%s}' ${2:arg}",
@@ -441,6 +1011,24 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'sprintf2 <strvar> <format> [<arg1> ...]',
     description: 'Formats the arguments according to the C printf format and stores the result in <strvar>.',
     descriptionJa: '引数を C printf 形式でフォーマットして <strvar> に代入',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the formatted result.',
+        descriptionJa: '整形結果を格納する文字列変数。',
+      },
+      {
+        name: '<format>',
+        description: 'A C printf-style format string.',
+        descriptionJa: 'C printf 形式の書式文字列。',
+      },
+      {
+        name: '<arg1>',
+        description: 'A value to be formatted according to <format>. Multiple values may be specified.',
+        descriptionJa: '<format> に従ってフォーマットする値。複数指定できる。',
+        optional: true,
+      },
+    ],
     returnsJa: '整形結果を `<strvar>` に格納。`result` … 0=成功, 1=書式指定なし, 2=書式不正, 3=引数不正, 4=格納先変数が不正。',
     returns: 'Stores the formatted string in `<strvar>`. `result` … 0=success, 1=no format, 2=invalid format, 3=invalid argument, 4=invalid target variable.',
     snippet: "sprintf2 ${1:strvar} '${2:%s}' ${3:arg}",
@@ -450,6 +1038,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'strconcat <strvar> <string>',
     description: 'Appends a copy of <string> to the end of the string variable <strvar>.',
     descriptionJa: '文字列変数 <strvar> の文字列値の最後に文字列 <string> を継ぎ足す',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable to which <string> is appended.',
+        descriptionJa: '末尾に <string> を継ぎ足す文字列変数。',
+      },
+      {
+        name: '<string>',
+        description: 'The string appended to the end of <strvar>.',
+        descriptionJa: '<strvar> の末尾に連結する文字列。',
+      },
+    ],
     returnsJa: '`<string>` を末尾に連結した結果を `<strvar>` に格納。',
     returns: 'Appends `<string>` to `<strvar>` in place.',
     snippet: 'strconcat ${1:strvar} ${2:string}',
@@ -459,6 +1059,28 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'strcopy <string> <pos> <len> <strvar>',
     description: 'Copies a substring of <string> (starting at <pos>, length <len>) to <strvar>.',
     descriptionJa: '文字列 <string> の <pos> 文字目から <len> 文字分を文字列変数 <strvar> にコピーする',
+    parameters: [
+      {
+        name: '<string>',
+        description: 'The source string to copy from.',
+        descriptionJa: 'コピー元の文字列。',
+      },
+      {
+        name: '<pos>',
+        description: 'The 1-origin start position of the substring.',
+        descriptionJa: '部分文字列の開始位置（1 オリジン）。',
+      },
+      {
+        name: '<len>',
+        description: 'The number of characters to copy.',
+        descriptionJa: 'コピーする文字数。',
+      },
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the copied substring.',
+        descriptionJa: 'コピーした部分文字列を格納する文字列変数。',
+      },
+    ],
     returnsJa: '抽出した部分文字列を `<strvar>` に格納。',
     returns: 'Stores the extracted substring in `<strvar>`.',
     snippet: 'strcopy ${1:string} ${2:1} ${3:len} ${4:strvar}',
@@ -468,6 +1090,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'strlen <string>',
     description: 'Returns the byte length of <string> in the system variable "result".',
     descriptionJa: '文字列 <string> の長さをシステム変数 result に格納する',
+    parameters: [
+      {
+        name: '<string>',
+        description: 'The string whose length is measured.',
+        descriptionJa: '長さを求める文字列。',
+      },
+    ],
     returnsJa: '`result` … 文字列の長さ。',
     returns: '`result` … the length of the string.',
     snippet: 'strlen ${1:string}',
@@ -477,6 +1106,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'strscan <string> <substring>',
     description: 'Searches for <substring> in <string>. Returns its 1-origin position in "result", or 0 if not found.',
     descriptionJa: '文字列 <string> の中に部分文字列 <substring> が含まれているか調べる。位置(1オリジン)が result に格納される',
+    parameters: [
+      {
+        name: '<string>',
+        description: 'The string to search.',
+        descriptionJa: '検索対象の文字列。',
+      },
+      {
+        name: '<substring>',
+        description: 'The substring to search for.',
+        descriptionJa: '検索する部分文字列。',
+      },
+    ],
     returnsJa: '`result` … `<substring>` が見つかった位置（1 始まり、複数あれば最初）、見つからなければ 0。',
     returns: '`result` … the 1-based position of `<substring>` (the first if there are several), or 0 if not found.',
     snippet: 'strscan ${1:string} ${2:substring}',
@@ -486,6 +1127,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'strmatch <target string> <regex>',
     description: 'Searches <target string> using a regular expression. Matched substrings are stored in groupmatchstr1-9.',
     descriptionJa: '<target string> を正規表現で検索する。マッチした部分が groupmatchstr1〜9 に格納される',
+    parameters: [
+      {
+        name: '<target string>',
+        description: 'The string to search.',
+        descriptionJa: '検索対象の文字列。',
+      },
+      {
+        name: '<regex>',
+        description: 'The regular expression to match.',
+        descriptionJa: 'マッチさせる正規表現。',
+      },
+    ],
     returnsJa: '`result` … マッチしないと 0、マッチするとその位置（1 始まり）。`matchstr` に最初のマッチ、`groupmatchstr1`〜`groupmatchstr9` にグループマッチ結果。',
     returns: '`result` … 0 if no match, otherwise the 1-based position of the match. `matchstr` holds the first match; `groupmatchstr1`–`groupmatchstr9` hold the captured groups.',
     snippet: "strmatch ${1:string} '${2:regex}'",
@@ -495,6 +1148,28 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'strreplace <strvar> <index> <regex> <newstr>',
     description: 'Replaces a regex match in <strvar> starting at <index> with <newstr>.',
     descriptionJa: '文字列変数 <strvar> の <index> 位置から正規表現 <regex> を検索し、<newstr> に置き換える',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable to search and replace within.',
+        descriptionJa: '検索・置換の対象となる文字列変数。',
+      },
+      {
+        name: '<index>',
+        description: 'The 1-origin position at which to start searching.',
+        descriptionJa: '検索を開始する位置（1 オリジン）。',
+      },
+      {
+        name: '<regex>',
+        description: 'The regular expression to search for.',
+        descriptionJa: '検索する正規表現。',
+      },
+      {
+        name: '<newstr>',
+        description: 'The replacement string.',
+        descriptionJa: '置き換える文字列。',
+      },
+    ],
     returnsJa: '置換結果を `<strvar>` に格納。`result` … 置換成功で 1、不一致で 0、書式エラーで -1。`matchstr` にマッチ文字列。`groupmatchstr1`〜`groupmatchstr9` はクリアされる。',
     returns: 'Stores the replaced string in `<strvar>`. `result` … 1 on a successful replace, 0 if no match, -1 on a regex error. `matchstr` holds the matched string; `groupmatchstr1`–`groupmatchstr9` are cleared.',
     snippet: "strreplace ${1:strvar} 1 '${2:regex}' '${3:newstr}'",
@@ -504,6 +1179,23 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'strremove <strvar> <index> <len>',
     description: 'Deletes <len> characters from <strvar> beginning at <index> (1-origin).',
     descriptionJa: '文字列変数 <strvar> の <index> 位置（1オリジン）から <len> 文字分を削除する',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable to modify.',
+        descriptionJa: '対象の文字列変数。',
+      },
+      {
+        name: '<index>',
+        description: 'The 1-origin position at which deletion starts.',
+        descriptionJa: '削除を開始する位置（1 オリジン）。',
+      },
+      {
+        name: '<len>',
+        description: 'The number of characters to delete.',
+        descriptionJa: '削除する文字数。',
+      },
+    ],
     returnsJa: '指定範囲を削除した文字列を `<strvar>` に格納。',
     returns: 'Stores the string with the specified range removed in `<strvar>`.',
     snippet: 'strremove ${1:strvar} ${2:1} ${3:len}',
@@ -513,6 +1205,23 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'strinsert <strvar> <index> <string>',
     description: 'Inserts <string> at position <index> (1-origin) in <strvar>.',
     descriptionJa: '文字列変数 <strvar> の <index> 位置（1オリジン）に文字列 <string> を挿入する',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable into which text is inserted.',
+        descriptionJa: '挿入先の文字列変数。',
+      },
+      {
+        name: '<index>',
+        description: 'The 1-origin position at which to insert.',
+        descriptionJa: '挿入する位置（1 オリジン）。',
+      },
+      {
+        name: '<string>',
+        description: 'The string to insert.',
+        descriptionJa: '挿入する文字列。',
+      },
+    ],
     returnsJa: '文字列を挿入した結果を `<strvar>` に格納。',
     returns: 'Stores the string with the text inserted in `<strvar>`.',
     snippet: 'strinsert ${1:strvar} ${2:1} ${3:string}',
@@ -522,6 +1231,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'strcompare <string1> <string2>',
     description: 'Compares two strings. Sets "result" to 0 (equal), 1 (string1 > string2), or -1 (string1 < string2).',
     descriptionJa: '2つの文字列を比較し、結果をシステム変数 result に代入する（0: 等しい、1: 大、-1: 小）',
+    parameters: [
+      {
+        name: '<string1>',
+        description: 'The first string to compare.',
+        descriptionJa: '比較する 1 つ目の文字列。',
+      },
+      {
+        name: '<string2>',
+        description: 'The second string to compare.',
+        descriptionJa: '比較する 2 つ目の文字列。',
+      },
+    ],
     returnsJa: '`result` … `<string1>` < `<string2>` で -1、等しいと 0、`<string1>` > `<string2>` で 1。',
     returns: '`result` … -1 if `<string1>` < `<string2>`, 0 if equal, 1 if `<string1>` > `<string2>`.',
     snippet: 'strcompare ${1:string1} ${2:string2}',
@@ -531,6 +1252,24 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'strsplit <strval> <separator> [<count>]',
     description: 'Splits <strval> by <separator> and stores parts in groupmatchstr1-9.',
     descriptionJa: '文字列 <strval> を区切り記号 <separator> で分割し、groupmatchstr1〜9 に返す',
+    parameters: [
+      {
+        name: '<strval>',
+        description: 'The string to split.',
+        descriptionJa: '分割する文字列。',
+      },
+      {
+        name: '<separator>',
+        description: 'The separator used to split the string.',
+        descriptionJa: '分割に使う区切り記号。',
+      },
+      {
+        name: '<count>',
+        description: 'The maximum number of pieces to split into.',
+        descriptionJa: '分割する最大個数。',
+        optional: true,
+      },
+    ],
     returnsJa: '区切り文字で分割した部分文字列を `groupmatchstr1`〜`groupmatchstr9` に格納。`result` … 実際に分割された個数（`<count>` 省略時に 9 を超えると 10）。',
     returns: 'Stores the split substrings in `groupmatchstr1` to `groupmatchstr9`. `result` … the number of splits (10 if more than 9 when `<count>` is omitted).',
     snippet: "strsplit ${1:strval} '${2:,}'",
@@ -540,6 +1279,24 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'strjoin <strvar> <separator> [<count>]',
     description: 'Concatenates groupmatchstr1-9 with <separator> and stores the result in <strvar>.',
     descriptionJa: 'groupmatchstr1〜9 を区切り記号 <separator> で連結し、文字列変数 <strvar> に格納する',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the joined result.',
+        descriptionJa: '連結結果を格納する文字列変数。',
+      },
+      {
+        name: '<separator>',
+        description: 'The separator inserted between the parts.',
+        descriptionJa: '各要素の間に挿入する区切り記号。',
+      },
+      {
+        name: '<count>',
+        description: 'The number of elements to join.',
+        descriptionJa: '連結する要素数。',
+        optional: true,
+      },
+    ],
     returnsJa: '`groupmatchstr1`〜`groupmatchstr9` を `<separator>` で連結し `<strvar>` に格納。',
     returns: 'Concatenates `groupmatchstr1` to `groupmatchstr9` with `<separator>` into `<strvar>`.',
     snippet: "strjoin ${1:strvar} '${2:,}'",
@@ -549,6 +1306,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'strtrim <strvar> <trimchars>',
     description: 'Removes all leading and trailing occurrences of <trimchars> from <strvar>.',
     descriptionJa: '文字列変数 <strvar> の先頭と末尾から <trimchars> で指定された文字をすべて削除する',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable to trim.',
+        descriptionJa: 'トリムする文字列変数。',
+      },
+      {
+        name: '<trimchars>',
+        description: 'The set of characters to remove from both ends.',
+        descriptionJa: '先頭と末尾から削除する文字の集合。',
+      },
+    ],
     returnsJa: 'トリム後の文字列を `<strvar>` に格納。',
     returns: 'Stores the trimmed string in `<strvar>`.',
     snippet: "strtrim ${1:strvar} ' '",
@@ -558,6 +1327,19 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'strspecial <strvar> [<strval>]',
     description: 'Converts special character sequences (like \\n, \\t) in the string to actual characters.',
     descriptionJa: '渡された文字列に含まれる特殊文字を変換する',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable holding the string to convert, which also receives the result.',
+        descriptionJa: '変換する文字列を保持し、結果を格納する文字列変数。',
+      },
+      {
+        name: '<strval>',
+        description: 'The source string to convert; if omitted, <strvar> is converted in place.',
+        descriptionJa: '変換元の文字列。省略時は <strvar> をそのまま変換する。',
+        optional: true,
+      },
+    ],
     returnsJa: '特殊文字へ変換した結果を `<strvar>` に格納。',
     returns: 'Stores the converted string in `<strvar>`.',
     snippet: 'strspecial ${1:strvar}',
@@ -567,6 +1349,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'tolower <strvar> <string>',
     description: 'Converts all alphabetic characters in <string> to lower-case and returns the result in <strvar>.',
     descriptionJa: '<string> に含まれるアルファベットを全て小文字にし、<strvar> に代入する',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the lower-cased string.',
+        descriptionJa: '小文字化した文字列を格納する文字列変数。',
+      },
+      {
+        name: '<string>',
+        description: 'The source string to convert.',
+        descriptionJa: '変換元の文字列。',
+      },
+    ],
     returnsJa: '小文字へ変換した結果を `<strvar>` に格納。',
     returns: 'Stores the lower-cased string in `<strvar>`.',
     snippet: 'tolower ${1:strvar} ${2:string}',
@@ -576,6 +1370,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'toupper <strvar> <string>',
     description: 'Converts all alphabetic characters in <string> to upper-case and returns the result in <strvar>.',
     descriptionJa: '<string> に含まれるアルファベットを全て大文字にし、<strvar> に代入する',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the upper-cased string.',
+        descriptionJa: '大文字化した文字列を格納する文字列変数。',
+      },
+      {
+        name: '<string>',
+        description: 'The source string to convert.',
+        descriptionJa: '変換元の文字列。',
+      },
+    ],
     returnsJa: '大文字へ変換した結果を `<strvar>` に格納。',
     returns: 'Stores the upper-cased string in `<strvar>`.',
     snippet: 'toupper ${1:strvar} ${2:string}',
@@ -585,6 +1391,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'int2str <strvar> <integer value>',
     description: 'Converts <integer value> to its decimal string expression and stores it in <strvar>.',
     descriptionJa: '整数値 <integer value> を10進表現の文字列に変換して文字列型変数 <strvar> に代入する',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the decimal string.',
+        descriptionJa: '10 進表現の文字列を格納する文字列変数。',
+      },
+      {
+        name: '<integer value>',
+        description: 'The integer value to convert.',
+        descriptionJa: '変換する整数値。',
+      },
+    ],
     returnsJa: '文字列へ変換した結果を `<strvar>` に格納。',
     returns: 'Stores the string representation in `<strvar>`.',
     snippet: 'int2str ${1:strvar} ${2:value}',
@@ -594,6 +1412,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'str2int <intvar> <string>',
     description: 'Converts the decimal or hexadecimal <string> to its numeric value and stores it in <intvar>.',
     descriptionJa: '文字列 <string> を整数値に変換し、整数変数 <intvar> に代入する',
+    parameters: [
+      {
+        name: '<intvar>',
+        description: 'The integer variable that receives the converted value.',
+        descriptionJa: '変換結果を格納する整数変数。',
+      },
+      {
+        name: '<string>',
+        description: 'The decimal or hexadecimal string to convert.',
+        descriptionJa: '変換する 10 進または 16 進の文字列。',
+      },
+    ],
     returnsJa: '変換結果を `<intvar>` に格納。`result` … 変換成功で 1、失敗で 0。',
     returns: 'Stores the converted value in `<intvar>`. `result` … set to 1 on success, 0 on failure.',
     snippet: 'str2int ${1:intvar} ${2:string}',
@@ -603,6 +1433,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'str2code <intvar> <string>',
     description: 'Copies the ASCII code of the first character of <string> to <intvar>.',
     descriptionJa: '文字列 <string> が1文字の場合、その ASCII コードを整数変数 <intvar> に格納する',
+    parameters: [
+      {
+        name: '<intvar>',
+        description: 'The integer variable that receives the ASCII code(s).',
+        descriptionJa: 'ASCII コードを格納する整数変数。',
+      },
+      {
+        name: '<string>',
+        description: 'The string (up to 4 characters) whose character codes are taken.',
+        descriptionJa: '文字コードを取り出す文字列（最大 4 文字）。',
+      },
+    ],
     returnsJa: 'ASCII コード（最大4文字分）を `<intvar>` に格納。',
     returns: 'Stores the ASCII code(s) (up to 4 characters) in `<intvar>`.',
     snippet: 'str2code ${1:intvar} ${2:string}',
@@ -612,6 +1454,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'code2str <strvar> <ASCII code>',
     description: 'Converts an ASCII code value to its character and stores it in <strvar>.',
     descriptionJa: '整数値 <ASCII code> に対応する文字を文字列変数 <strvar> に格納する',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the character(s).',
+        descriptionJa: '文字を格納する文字列変数。',
+      },
+      {
+        name: '<ASCII code>',
+        description: 'The ASCII code value to convert to a character.',
+        descriptionJa: '文字に変換する ASCII コード値。',
+      },
+    ],
     returnsJa: 'ASCII コードに対応する文字列を `<strvar>` に格納。',
     returns: 'Stores the characters for the given ASCII code(s) in `<strvar>`.',
     snippet: 'code2str ${1:strvar} ${2:code}',
@@ -621,6 +1475,19 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'regexoption <option1> [<option2> ...]',
     description: 'Specifies the syntax, encoding, and options of the regular expression.',
     descriptionJa: 'strmatch, strreplace, waitregex で使用する正規表現の文法と文字エンコーディングを指定する',
+    parameters: [
+      {
+        name: '<option1>',
+        description: 'An option specifying the regular-expression syntax, encoding, or behavior.',
+        descriptionJa: '正規表現の文法・文字エンコーディング・動作を指定するオプション。',
+      },
+      {
+        name: '<option2>',
+        description: 'Additional options.',
+        descriptionJa: '追加のオプション。',
+        optional: true,
+      },
+    ],
   },
   // ── 数値演算 ─────────────────────────────────────────────────────────────────
   {
@@ -628,6 +1495,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'random <intvar> <max number>',
     description: 'Generates a random integer within the range 0..<max number> and assigns it to <intvar>.',
     descriptionJa: '0から<max number>までの整数の一様乱数を生成し、整数変数 <integer variable> へ代入する',
+    parameters: [
+      {
+        name: '<intvar>',
+        description: 'The integer variable that receives the generated random number.',
+        descriptionJa: '生成した乱数を格納する整数変数。',
+      },
+      {
+        name: '<max number>',
+        description: 'The upper bound of the range (0 to <max number>).',
+        descriptionJa: '生成する乱数の上限（0〜<max number>）。',
+      },
+    ],
     returnsJa: '生成した乱数を `<intvar>` に格納。',
     returns: 'Stores the generated random number in `<intvar>`.',
     snippet: 'random ${1:intvar} ${2:100}',
@@ -637,6 +1516,23 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'rotateleft <intvar> <intval> <count>',
     description: 'Rotates <intval> left by <count> bits and stores the result in <intvar>.',
     descriptionJa: '整数値 <intval> を左に <count> 桁ローテートした値を整数型変数 <intvar> にコピーする',
+    parameters: [
+      {
+        name: '<intvar>',
+        description: 'The integer variable that receives the rotated value.',
+        descriptionJa: 'ローテート結果を格納する整数変数。',
+      },
+      {
+        name: '<intval>',
+        description: 'The integer value to rotate.',
+        descriptionJa: 'ローテートする整数値。',
+      },
+      {
+        name: '<count>',
+        description: 'The number of bits to rotate left.',
+        descriptionJa: '左にローテートする桁数（ビット数）。',
+      },
+    ],
     returnsJa: '左へローテートした結果を `<intvar>` に格納。',
     returns: 'Stores the left-rotated value in `<intvar>`.',
     snippet: 'rotateleft ${1:intvar} ${2:intval} ${3:count}',
@@ -646,6 +1542,23 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'rotateright <intvar> <intval> <count>',
     description: 'Rotates <intval> right by <count> bits and stores the result in <intvar>.',
     descriptionJa: '整数値 <intval> を右に <count> 桁ローテートした値を整数型変数 <intvar> にコピーする',
+    parameters: [
+      {
+        name: '<intvar>',
+        description: 'The integer variable that receives the rotated value.',
+        descriptionJa: 'ローテート結果を格納する整数変数。',
+      },
+      {
+        name: '<intval>',
+        description: 'The integer value to rotate.',
+        descriptionJa: 'ローテートする整数値。',
+      },
+      {
+        name: '<count>',
+        description: 'The number of bits to rotate right.',
+        descriptionJa: '右にローテートする桁数（ビット数）。',
+      },
+    ],
     returnsJa: '右へローテートした結果を `<intvar>` に格納。',
     returns: 'Stores the right-rotated value in `<intvar>`.',
     snippet: 'rotateright ${1:intvar} ${2:intval} ${3:count}',
@@ -655,6 +1568,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'checksum8 <intvar> <string>',
     description: 'Calculates the 8-bit checksum of a string.',
     descriptionJa: '引数の文字列から加算サム(8bit)を計算する',
+    parameters: [
+      {
+        name: '<intvar>',
+        description: 'The integer variable that receives the computed checksum.',
+        descriptionJa: '計算結果を格納する整数変数。',
+      },
+      {
+        name: '<string>',
+        description: 'The string whose checksum is calculated.',
+        descriptionJa: 'チェックサムを計算する文字列。',
+      },
+    ],
     returnsJa: '計算結果を `<intvar>` に格納。',
     returns: 'Stores the computed checksum in `<intvar>`.',
     snippet: 'checksum8 ${1:intvar} ${2:string}',
@@ -664,6 +1589,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'checksum8file <intvar> <filename>',
     description: 'Calculates the 8-bit checksum of a file.',
     descriptionJa: 'ファイルから加算サム(8bit)を計算する',
+    parameters: [
+      {
+        name: '<intvar>',
+        description: 'The integer variable that receives the computed checksum.',
+        descriptionJa: '計算結果を格納する整数変数。',
+      },
+      {
+        name: '<filename>',
+        description: 'The file whose checksum is calculated.',
+        descriptionJa: 'チェックサムを計算するファイル。',
+      },
+    ],
     returnsJa: '計算結果を `<intvar>` に格納。ファイルを開けない場合は `result` に -1。',
     returns: 'Stores the computed checksum in `<intvar>`. `result` is set to -1 if the file cannot be opened.',
     snippet: "checksum8file ${1:intvar} '${2:filename}'",
@@ -673,6 +1610,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'checksum16 <intvar> <string>',
     description: 'Calculates the 16-bit checksum of a string.',
     descriptionJa: '引数の文字列から加算サム(16bit)を計算する',
+    parameters: [
+      {
+        name: '<intvar>',
+        description: 'The integer variable that receives the computed checksum.',
+        descriptionJa: '計算結果を格納する整数変数。',
+      },
+      {
+        name: '<string>',
+        description: 'The string whose checksum is calculated.',
+        descriptionJa: 'チェックサムを計算する文字列。',
+      },
+    ],
     returnsJa: '計算結果を `<intvar>` に格納。',
     returns: 'Stores the computed checksum in `<intvar>`.',
     snippet: 'checksum16 ${1:intvar} ${2:string}',
@@ -682,6 +1631,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'checksum16file <intvar> <filename>',
     description: 'Calculates the 16-bit checksum of a file.',
     descriptionJa: 'ファイルから加算サム(16bit)を計算する',
+    parameters: [
+      {
+        name: '<intvar>',
+        description: 'The integer variable that receives the computed checksum.',
+        descriptionJa: '計算結果を格納する整数変数。',
+      },
+      {
+        name: '<filename>',
+        description: 'The file whose checksum is calculated.',
+        descriptionJa: 'チェックサムを計算するファイル。',
+      },
+    ],
     returnsJa: '計算結果を `<intvar>` に格納。ファイルを開けない場合は `result` に -1。',
     returns: 'Stores the computed checksum in `<intvar>`. `result` is set to -1 if the file cannot be opened.',
     snippet: "checksum16file ${1:intvar} '${2:filename}'",
@@ -691,6 +1652,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'checksum32 <intvar> <string>',
     description: 'Calculates the 32-bit checksum of a string.',
     descriptionJa: '引数の文字列から加算サム(32bit)を計算する',
+    parameters: [
+      {
+        name: '<intvar>',
+        description: 'The integer variable that receives the computed checksum.',
+        descriptionJa: '計算結果を格納する整数変数。',
+      },
+      {
+        name: '<string>',
+        description: 'The string whose checksum is calculated.',
+        descriptionJa: 'チェックサムを計算する文字列。',
+      },
+    ],
     returnsJa: '計算結果を `<intvar>` に格納。',
     returns: 'Stores the computed checksum in `<intvar>`.',
     snippet: 'checksum32 ${1:intvar} ${2:string}',
@@ -700,6 +1673,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'checksum32file <intvar> <filename>',
     description: 'Calculates the 32-bit checksum of a file.',
     descriptionJa: 'ファイルから加算サム(32bit)を計算する',
+    parameters: [
+      {
+        name: '<intvar>',
+        description: 'The integer variable that receives the computed checksum.',
+        descriptionJa: '計算結果を格納する整数変数。',
+      },
+      {
+        name: '<filename>',
+        description: 'The file whose checksum is calculated.',
+        descriptionJa: 'チェックサムを計算するファイル。',
+      },
+    ],
     returnsJa: '計算結果を `<intvar>` に格納。ファイルを開けない場合は `result` に -1。',
     returns: 'Stores the computed checksum in `<intvar>`. `result` is set to -1 if the file cannot be opened.',
     snippet: "checksum32file ${1:intvar} '${2:filename}'",
@@ -709,6 +1694,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'crc16 <intvar> <string>',
     description: 'Calculates the 16-bit CRC of a string.',
     descriptionJa: '引数の文字列からCRC(16bit)を計算する',
+    parameters: [
+      {
+        name: '<intvar>',
+        description: 'The integer variable that receives the computed CRC.',
+        descriptionJa: '計算結果を格納する整数変数。',
+      },
+      {
+        name: '<string>',
+        description: 'The string whose CRC is calculated.',
+        descriptionJa: 'CRC を計算する文字列。',
+      },
+    ],
     returnsJa: '計算結果を `<intvar>` に格納。',
     returns: 'Stores the computed CRC in `<intvar>`.',
     snippet: 'crc16 ${1:intvar} ${2:string}',
@@ -718,6 +1715,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'crc16file <intvar> <filename>',
     description: 'Calculates the 16-bit CRC of a file.',
     descriptionJa: 'ファイルからCRC(16bit)を計算する',
+    parameters: [
+      {
+        name: '<intvar>',
+        description: 'The integer variable that receives the computed CRC.',
+        descriptionJa: '計算結果を格納する整数変数。',
+      },
+      {
+        name: '<filename>',
+        description: 'The file whose CRC is calculated.',
+        descriptionJa: 'CRC を計算するファイル。',
+      },
+    ],
     returnsJa: '計算結果を `<intvar>` に格納。ファイルを開けない場合は `result` に -1。',
     returns: 'Stores the computed CRC in `<intvar>`. `result` is set to -1 if the file cannot be opened.',
     snippet: "crc16file ${1:intvar} '${2:filename}'",
@@ -727,6 +1736,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'crc32 <intvar> <string>',
     description: 'Calculates the 32-bit CRC of a string.',
     descriptionJa: '引数の文字列からCRC(32bit)を計算する',
+    parameters: [
+      {
+        name: '<intvar>',
+        description: 'The integer variable that receives the computed CRC.',
+        descriptionJa: '計算結果を格納する整数変数。',
+      },
+      {
+        name: '<string>',
+        description: 'The string whose CRC is calculated.',
+        descriptionJa: 'CRC を計算する文字列。',
+      },
+    ],
     returnsJa: '計算結果を `<intvar>` に格納。',
     returns: 'Stores the computed CRC in `<intvar>`.',
     snippet: 'crc32 ${1:intvar} ${2:string}',
@@ -736,6 +1757,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'crc32file <intvar> <filename>',
     description: 'Calculates the 32-bit CRC of a file.',
     descriptionJa: 'ファイルからCRC(32bit)を計算する',
+    parameters: [
+      {
+        name: '<intvar>',
+        description: 'The integer variable that receives the computed CRC.',
+        descriptionJa: '計算結果を格納する整数変数。',
+      },
+      {
+        name: '<filename>',
+        description: 'The file whose CRC is calculated.',
+        descriptionJa: 'CRC を計算するファイル。',
+      },
+    ],
     returnsJa: '計算結果を `<intvar>` に格納。ファイルを開けない場合は `result` に -1。',
     returns: 'Stores the computed CRC in `<intvar>`. `result` is set to -1 if the file cannot be opened.',
     snippet: "crc32file ${1:intvar} '${2:filename}'",
@@ -746,6 +1779,29 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'fileopen <file handle> <filename> <append flag> [<readonly flag>]',
     description: 'Opens a file in binary mode.',
     descriptionJa: 'ファイルをバイナリモードでオープンする',
+    parameters: [
+      {
+        name: '<file handle>',
+        description: 'The variable that receives the file handle when the file is opened successfully.',
+        descriptionJa: 'ファイルが正しくオープンされた場合にファイルハンドルが格納される変数。',
+      },
+      {
+        name: '<filename>',
+        description: 'The file to open. If it does not exist, it is created and then opened.',
+        descriptionJa: '開くファイル名。ファイルが存在しない場合は新たに作成されてからオープンされる。',
+      },
+      {
+        name: '<append flag>',
+        description: 'Zero sets the file pointer to the beginning of the file; non-zero sets it to the end.',
+        descriptionJa: '0 を指定するとファイルポインタをファイルの始めに、0 以外を指定するとファイルの最後にセットする。',
+      },
+      {
+        name: '<readonly flag>',
+        description: 'Zero opens the file in read/write mode; non-zero opens it in read-only mode.',
+        descriptionJa: '0 を指定すると読み書きモード、0 以外を指定すると読み取り専用モードでファイルを開く。',
+        optional: true,
+      },
+    ],
     returnsJa: 'ファイルハンドルを `<file handle>` に格納。オープンに失敗すると `<file handle>` に -1。',
     returns: 'Stores the file handle in `<file handle>`; if the file cannot be opened, `<file handle>` is set to -1.',
     snippet: "fileopen ${1:fp} '${2:filename}' ${3:0}",
@@ -755,6 +1811,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'fileclose <file handle>',
     description: 'Closes the file specified by <file handle>.',
     descriptionJa: 'ファイルハンドル <file handle> で指定されるファイルをクローズする',
+    parameters: [
+      {
+        name: '<file handle>',
+        description: 'The handle of the file to close.',
+        descriptionJa: 'クローズするファイルのハンドル。',
+      },
+    ],
     snippet: 'fileclose ${1:fp}',
   },
   {
@@ -762,6 +1825,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'filecreate <file handle> <filename>',
     description: 'Creates and opens a new file.',
     descriptionJa: 'ファイル <filename> を新しく作成しオープンする',
+    parameters: [
+      {
+        name: '<file handle>',
+        description: 'The variable that receives the file handle of the created file.',
+        descriptionJa: '作成したファイルのハンドルを格納する変数。',
+      },
+      {
+        name: '<filename>',
+        description: 'The file to create and open.',
+        descriptionJa: '新しく作成してオープンするファイル。',
+      },
+    ],
     returnsJa: 'ファイルハンドルを `<file handle>` に格納（失敗時は -1）。`result` … 成功すると 0、失敗すると 0 以外。',
     returns: 'Stores the file handle in `<file handle>` (-1 on failure). `result` … set to 0 on success, non-zero on failure.',
     snippet: "filecreate ${1:fp} '${2:filename}'",
@@ -771,6 +1846,23 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'fileread <file handle> <read byte> <strvar>',
     description: 'Reads <read byte> bytes from the file into <strvar>.',
     descriptionJa: '<file handle> で指定されたファイルから指定したバイト数のデータを読み出す',
+    parameters: [
+      {
+        name: '<file handle>',
+        description: 'The handle of the file to read from.',
+        descriptionJa: '読み出すファイルのハンドル。',
+      },
+      {
+        name: '<read byte>',
+        description: 'The number of bytes to read.',
+        descriptionJa: '読み出すバイト数。',
+      },
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the read data.',
+        descriptionJa: '読み込んだデータを格納する文字列変数。',
+      },
+    ],
     returnsJa: '読み込んだデータを `<strvar>` に格納。`result` … 読み込み中にファイル終端へ達すると 1、それ以外は 0。',
     returns: 'Stores the read data in `<strvar>`. `result` … set to 1 if the end of file is reached before reading completes, 0 otherwise.',
     snippet: 'fileread ${1:fp} ${2:512} ${3:strvar}',
@@ -780,6 +1872,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'filereadln <file handle> <strvar>',
     description: 'Reads one line from the file into <strvar>.',
     descriptionJa: 'ファイルから一行読む。読み込まれた行は文字列変数 <strvar> に格納される',
+    parameters: [
+      {
+        name: '<file handle>',
+        description: 'The handle of the file to read from.',
+        descriptionJa: '読み出すファイルのハンドル。',
+      },
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the read line.',
+        descriptionJa: '読み込んだ行を格納する文字列変数。',
+      },
+    ],
     returnsJa: '読み込んだ行を `<strvar>` に格納。ファイル終端に達すると `result` に 1、それ以外は 0（改行のみの行では `<strvar>` は空、`result` は 0）。',
     returns: 'Stores the line in `<strvar>`. `result` is set to 1 at end of file, 0 otherwise (a newline-only line yields an empty `<strvar>` and `result` 0).',
     snippet: 'filereadln ${1:fp} ${2:strvar}',
@@ -789,6 +1893,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'filewrite <file handle> <data>',
     description: 'Writes <data> to the file.',
     descriptionJa: 'ファイルハンドル <file handle> で指定されるファイルへ <data> を書き込む',
+    parameters: [
+      {
+        name: '<file handle>',
+        description: 'The handle of the file to write to.',
+        descriptionJa: '書き込むファイルのハンドル。',
+      },
+      {
+        name: '<data>',
+        description: 'The data to write to the file.',
+        descriptionJa: 'ファイルへ書き込むデータ。',
+      },
+    ],
     snippet: 'filewrite ${1:fp} ${2:data}',
   },
   {
@@ -796,6 +1912,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'filewriteln <file handle> <data>',
     description: 'Writes <data> and CR+LF to the file.',
     descriptionJa: 'ファイルへ <data> と改行文字 (CR+LF) を書き込む',
+    parameters: [
+      {
+        name: '<file handle>',
+        description: 'The handle of the file to write to.',
+        descriptionJa: '書き込むファイルのハンドル。',
+      },
+      {
+        name: '<data>',
+        description: 'The data to write to the file (followed by CR+LF).',
+        descriptionJa: 'ファイルへ書き込むデータ（末尾に CR+LF が付く）。',
+      },
+    ],
     snippet: 'filewriteln ${1:fp} ${2:data}',
   },
   {
@@ -803,6 +1931,23 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'fileseek <file handle> <offset> <origin>',
     description: 'Moves the file pointer. <origin>: 0=beginning, 1=current, 2=end.',
     descriptionJa: 'ファイルポインタを移動する。<origin>: 0=先頭, 1=現在位置, 2=末尾',
+    parameters: [
+      {
+        name: '<file handle>',
+        description: 'The handle of the file whose pointer is moved.',
+        descriptionJa: 'ファイルポインタを移動するファイルのハンドル。',
+      },
+      {
+        name: '<offset>',
+        description: 'The number of bytes to move the file pointer.',
+        descriptionJa: 'ファイルポインタを移動するバイト数。',
+      },
+      {
+        name: '<origin>',
+        description: 'The reference point: 0=beginning, 1=current position, 2=end.',
+        descriptionJa: '移動の基準位置（0=先頭, 1=現在位置, 2=末尾）。',
+      },
+    ],
     snippet: 'fileseek ${1:fp} ${2:0} ${3:0}',
   },
   {
@@ -810,6 +1955,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'fileseekback <file handle>',
     description: 'Moves the file pointer to the position marked by "filemarkptr".',
     descriptionJa: '"filemarkptr" コマンドで保存したファイルポインタ位置に戻る',
+    parameters: [
+      {
+        name: '<file handle>',
+        description: 'The handle of the file whose pointer is restored.',
+        descriptionJa: 'ファイルポインタを戻すファイルのハンドル。',
+      },
+    ],
     snippet: 'fileseekback ${1:fp}',
   },
   {
@@ -817,6 +1969,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'filemarkptr <file handle>',
     description: 'Marks the current file pointer position.',
     descriptionJa: 'オープンされているファイルの現在のファイルポインタを保存する',
+    parameters: [
+      {
+        name: '<file handle>',
+        description: 'The handle of the open file whose current pointer is saved.',
+        descriptionJa: '現在のファイルポインタを保存するファイルのハンドル。',
+      },
+    ],
     snippet: 'filemarkptr ${1:fp}',
   },
   {
@@ -824,6 +1983,30 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'filestat <filename> <size> [<mtime>] [<drive>]',
     description: 'Obtains information about a file or directory.',
     descriptionJa: 'ファイルもしくはフォルダの統計情報を取得する',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The file or directory to query.',
+        descriptionJa: '統計情報を取得するファイルまたはフォルダ。',
+      },
+      {
+        name: '<size>',
+        description: 'The integer variable that receives the file size.',
+        descriptionJa: 'ファイルサイズを格納する整数変数。',
+      },
+      {
+        name: '<mtime>',
+        description: 'The string variable that receives the last modification time.',
+        descriptionJa: '最終更新日時を格納する文字列変数。',
+        optional: true,
+      },
+      {
+        name: '<drive>',
+        description: 'The string variable that receives the drive letter.',
+        descriptionJa: 'ドライブ文字を格納する文字列変数。',
+        optional: true,
+      },
+    ],
     returnsJa: 'ファイル情報を各変数に格納。取得に失敗すると `result` に -1。',
     returns: 'Stores file information in the given variables. `result` is set to -1 on failure.',
     snippet: "filestat '${1:filename}' ${2:size}",
@@ -833,6 +2016,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'filestrseek <file handle> <string>',
     description: 'Searches for <string> in the file from the current position forward.',
     descriptionJa: 'ファイルから文字列 <string> を前方検索する',
+    parameters: [
+      {
+        name: '<file handle>',
+        description: 'The handle of the file to search.',
+        descriptionJa: '検索するファイルのハンドル。',
+      },
+      {
+        name: '<string>',
+        description: 'The string to search for.',
+        descriptionJa: '検索する文字列。',
+      },
+    ],
     returnsJa: '`result` … 文字列が見つかると 1（ファイルポインタは直後へ移動）、見つからないと 0（移動なし）。',
     returns: '`result` … set to 1 if the string is found (the file pointer moves just after it), 0 if not (pointer unchanged).',
     snippet: "filestrseek ${1:fp} '${2:string}'",
@@ -842,6 +2037,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'filestrseek2 <file handle> <string>',
     description: 'Searches for <string> in the file from the current position backward.',
     descriptionJa: 'ファイルから文字列 <string> を後方検索する',
+    parameters: [
+      {
+        name: '<file handle>',
+        description: 'The handle of the file to search.',
+        descriptionJa: '検索するファイルのハンドル。',
+      },
+      {
+        name: '<string>',
+        description: 'The string to search for.',
+        descriptionJa: '検索する文字列。',
+      },
+    ],
     returnsJa: '`result` … 文字列が見つかると 1（ファイルポインタは直前へ移動）、見つからないと 0（移動なし）。実行前にファイルポインタがすでに 0 の場合も 0。',
     returns: '`result` … set to 1 if the string is found (the file pointer moves just before it), 0 if not (pointer unchanged). Also 0 if the file pointer is already at position 0 before execution.',
     snippet: "filestrseek2 ${1:fp} '${2:string}'",
@@ -851,6 +2058,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'filetruncate <filename> <size>',
     description: 'Changes the size of a file to <size> bytes.',
     descriptionJa: 'ファイル <filename> をサイズ <size> バイトの大きさに変更する',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The file to resize.',
+        descriptionJa: 'サイズを変更するファイル。',
+      },
+      {
+        name: '<size>',
+        description: 'The new file size, in bytes.',
+        descriptionJa: '変更後のファイルサイズ（バイト）。',
+      },
+    ],
     returnsJa: '`result` … サイズ変更に成功すると 0、失敗すると -1。',
     returns: '`result` … set to 0 if the size change succeeds, -1 on error.',
   },
@@ -859,6 +2078,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'filecopy <file1> <file2>',
     description: 'Copies <file1> to <file2>. Sets "result" to 0 on success.',
     descriptionJa: 'ファイル <file1> をコピーし、ファイル <file2> を作成する',
+    parameters: [
+      {
+        name: '<file1>',
+        description: 'The source file to copy.',
+        descriptionJa: 'コピー元のファイル。',
+      },
+      {
+        name: '<file2>',
+        description: 'The destination file to create.',
+        descriptionJa: '作成するコピー先のファイル。',
+      },
+    ],
     returnsJa: '`result` … 成功で 0、失敗で 0 以外（-1〜-4 はファイル名不正・同名・コピー失敗などの状態コード）。',
     returns: '`result` … 0 on success, non-zero on failure (-1 to -4 indicate status such as an invalid file name, identical names, or copy failure).',
     snippet: "filecopy '${1:file1}' '${2:file2}'",
@@ -868,6 +2099,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'filerename <file1> <file2>',
     description: 'Renames <file1> to <file2>. Sets "result" to 0 on success.',
     descriptionJa: 'ファイル <file1> を <file2> という名前に変更する',
+    parameters: [
+      {
+        name: '<file1>',
+        description: 'The file to rename.',
+        descriptionJa: '名前を変更するファイル。',
+      },
+      {
+        name: '<file2>',
+        description: 'The new file name.',
+        descriptionJa: '変更後のファイル名。',
+      },
+    ],
     returnsJa: '`result` … 成功すると 0、失敗すると 0 以外。',
     returns: '`result` … set to 0 on success, non-zero on failure.',
     snippet: "filerename '${1:file1}' '${2:file2}'",
@@ -877,6 +2120,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'filedelete <filename>',
     description: 'Deletes the specified file. Sets "result" to 0 on success.',
     descriptionJa: 'ファイル <filename> を削除する',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The file to delete.',
+        descriptionJa: '削除するファイル。',
+      },
+    ],
     returnsJa: '`result` … 成功すると 0、失敗すると 0 以外。',
     returns: '`result` … set to 0 on success, non-zero on failure.',
     snippet: "filedelete '${1:filename}'",
@@ -886,6 +2136,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'filesearch <filename>',
     description: 'Searches for a file or folder. Sets "result" to 1 if found, 0 if not.',
     descriptionJa: 'ファイルまたはフォルダが存在するか調べる。存在する場合は result に 1 が返る',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The file or folder to check for existence.',
+        descriptionJa: '存在を確認するファイルまたはフォルダ。',
+      },
+    ],
     returnsJa: '`result` … ファイルが存在すれば 1、存在しなければ 0。',
     returns: '`result` … set to 1 if the file exists, 0 if not.',
     snippet: "filesearch '${1:filename}'",
@@ -895,6 +2152,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'fileconcat <file1> <file2>',
     description: 'Appends a copy of <file2> to the end of <file1>.',
     descriptionJa: 'ファイル <file2> の内容をファイル <file1> の最後に追加する',
+    parameters: [
+      {
+        name: '<file1>',
+        description: 'The file to which the contents of <file2> are appended.',
+        descriptionJa: '<file2> の内容を末尾に追加する先のファイル。',
+      },
+      {
+        name: '<file2>',
+        description: 'The file whose contents are appended to <file1>.',
+        descriptionJa: '<file1> の末尾に追加する内容を持つファイル。',
+      },
+    ],
     returnsJa: '`result` … 成功すると 0、失敗すると 0 以外。',
     returns: '`result` … set to 0 on success, non-zero on failure.',
     snippet: "fileconcat '${1:file1}' '${2:file2}'",
@@ -904,6 +2173,19 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'filelock <file handle> [<timeout>]',
     description: 'Locks the file for exclusive access.',
     descriptionJa: 'ファイル全体をロックし、他のプロセスからのアクセスを禁止する',
+    parameters: [
+      {
+        name: '<file handle>',
+        description: 'The handle of the file to lock.',
+        descriptionJa: 'ロックするファイルのハンドル。',
+      },
+      {
+        name: '<timeout>',
+        description: 'The maximum time, in milliseconds, to wait for the lock.',
+        descriptionJa: 'ロック取得を待つ最大時間（ミリ秒）。',
+        optional: true,
+      },
+    ],
     returnsJa: '`result` … ロックに成功すると 0、失敗すると 1。',
     returns: '`result` … set to 0 when the lock succeeds, 1 when it fails.',
     snippet: 'filelock ${1:fp}',
@@ -913,6 +2195,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'fileunlock <file handle>',
     description: 'Unlocks the file.',
     descriptionJa: 'ファイル全体のロックを解除する',
+    parameters: [
+      {
+        name: '<file handle>',
+        description: 'The handle of the file to unlock.',
+        descriptionJa: 'ロックを解除するファイルのハンドル。',
+      },
+    ],
     returnsJa: '`result` … 解除に成功すると 0、失敗すると 1。',
     returns: '`result` … set to 0 when the unlock succeeds, 1 when it fails.',
     snippet: 'fileunlock ${1:fp}',
@@ -923,6 +2212,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'foldercreate <foldername>',
     description: 'Creates a new folder. Sets "result" to 0 on success.',
     descriptionJa: 'フォルダ <foldername> を新しく作成する',
+    parameters: [
+      {
+        name: '<foldername>',
+        description: 'The folder to create.',
+        descriptionJa: '新しく作成するフォルダ。',
+      },
+    ],
     returnsJa: '`result` … 成功すると 0、失敗すると 0 以外。',
     returns: '`result` … set to 0 on success, non-zero on failure.',
     snippet: "foldercreate '${1:foldername}'",
@@ -932,6 +2228,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'folderdelete <foldername>',
     description: 'Deletes a folder. Sets "result" to 0 on success.',
     descriptionJa: 'フォルダ <foldername> を削除する',
+    parameters: [
+      {
+        name: '<foldername>',
+        description: 'The folder to delete.',
+        descriptionJa: '削除するフォルダ。',
+      },
+    ],
     returnsJa: '`result` … 成功すると 0、失敗すると 0 以外。',
     returns: '`result` … set to 0 on success, non-zero on failure.',
     snippet: "folderdelete '${1:foldername}'",
@@ -941,6 +2244,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'foldersearch <foldername>',
     description: 'Searches for a folder. Sets "result" to 1 if found, 0 if not.',
     descriptionJa: 'フォルダが存在するか調べる。存在する場合は result に 1 が返る',
+    parameters: [
+      {
+        name: '<foldername>',
+        description: 'The folder to check for existence.',
+        descriptionJa: '存在を確認するフォルダ。',
+      },
+    ],
     returnsJa: '`result` … フォルダが存在すれば 1、存在しなければ 0。',
     returns: '`result` … set to 1 if the folder exists, 0 if not.',
     snippet: "foldersearch '${1:foldername}'",
@@ -951,6 +2261,23 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'findfirst <dir handle> <file name> <strvar>',
     description: 'Searches for the first file matching the specified pattern.',
     descriptionJa: 'findfirst コマンドはファイル名パターンに合致する最初のファイルを探す',
+    parameters: [
+      {
+        name: '<dir handle>',
+        description: 'The variable that receives the search handle.',
+        descriptionJa: '検索ハンドルを格納する変数。',
+      },
+      {
+        name: '<file name>',
+        description: 'The file-name pattern to search for (wildcards allowed).',
+        descriptionJa: '検索するファイル名パターン（ワイルドカード可）。',
+      },
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the found file name.',
+        descriptionJa: '見つかったファイル名を格納する文字列変数。',
+      },
+    ],
     returnsJa: 'ファイルが見つかると `<dir handle>` にハンドル、`<strvar>` にファイル名、`result` に 1 を格納。見つからないと それぞれ -1・空文字列・0。',
     returns: 'On a match, sets `<dir handle>` to the handle, `<strvar>` to the file name, and `result` to 1. Otherwise they are set to -1, "" and 0.',
     snippet: "findfirst ${1:handle} '${2:*.ttl}' ${3:strvar}",
@@ -960,6 +2287,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'findnext <dir handle> <strvar>',
     description: 'Searches for the next file matching the pattern set by "findfirst".',
     descriptionJa: '"findfirst" で設定したパターンに合致する次のファイルを探す',
+    parameters: [
+      {
+        name: '<dir handle>',
+        description: 'The search handle returned by findfirst.',
+        descriptionJa: 'findfirst が返した検索ハンドル。',
+      },
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the next file name.',
+        descriptionJa: '次のファイル名を格納する文字列変数。',
+      },
+    ],
     returnsJa: '次のファイルが見つかると `<strvar>` にファイル名、`result` に 1 を格納。見つからないと 空文字列・0。',
     returns: 'On the next match, sets `<strvar>` to the file name and `result` to 1. Otherwise "" and 0.',
     snippet: 'findnext ${1:handle} ${2:strvar}',
@@ -969,6 +2308,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'findclose <dir handle>',
     description: 'Closes the file search opened by "findfirst".',
     descriptionJa: '"findfirst" で開いたファイル検索を閉じる',
+    parameters: [
+      {
+        name: '<dir handle>',
+        description: 'The search handle to close.',
+        descriptionJa: '閉じる検索ハンドル。',
+      },
+    ],
     snippet: 'findclose ${1:handle}',
   },
   // ── パス操作 ─────────────────────────────────────────────────────────────────
@@ -977,6 +2323,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'basename <strvar> <path>',
     description: 'Returns the trailing name component of a path.',
     descriptionJa: 'パス名 <path> からファイル名部分を <strvar> に格納する',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the file-name part.',
+        descriptionJa: 'ファイル名部分を格納する文字列変数。',
+      },
+      {
+        name: '<path>',
+        description: 'The path from which the file name is extracted.',
+        descriptionJa: 'ファイル名を取り出すパス。',
+      },
+    ],
     returnsJa: 'パスのファイル名部分を `<strvar>` に格納。',
     returns: 'Stores the file-name part of the path in `<strvar>`.',
     snippet: 'basename ${1:strvar} ${2:path}',
@@ -986,6 +2344,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'dirname <strvar> <path>',
     description: 'Returns the directory component of a path.',
     descriptionJa: 'パス名 <path> のディレクトリ名部分を <strvar> に格納する',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the directory part.',
+        descriptionJa: 'ディレクトリ名部分を格納する文字列変数。',
+      },
+      {
+        name: '<path>',
+        description: 'The path from which the directory name is extracted.',
+        descriptionJa: 'ディレクトリ名を取り出すパス。',
+      },
+    ],
     returnsJa: 'パスのディレクトリ名部分を `<strvar>` に格納。',
     returns: 'Stores the directory part of the path in `<strvar>`.',
     snippet: 'dirname ${1:strvar} ${2:path}',
@@ -995,6 +2365,23 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'makepath <strvar> <dir> <name>',
     description: 'Creates a full path name from a directory name and file name.',
     descriptionJa: 'ディレクトリ名 <dir> とファイル名 <name> からフルパス名を作成する',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the assembled path.',
+        descriptionJa: '連結したパスを格納する文字列変数。',
+      },
+      {
+        name: '<dir>',
+        description: 'The directory part of the path.',
+        descriptionJa: 'パスのディレクトリ名部分。',
+      },
+      {
+        name: '<name>',
+        description: 'The file-name part of the path.',
+        descriptionJa: 'パスのファイル名部分。',
+      },
+    ],
     returnsJa: '連結したパスを `<strvar>` に格納。',
     returns: 'Stores the assembled path in `<strvar>`.',
     snippet: 'makepath ${1:strvar} ${2:dir} ${3:name}',
@@ -1005,6 +2392,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'intdim <array> <size>',
     description: 'Defines an integer array with <size> elements.',
     descriptionJa: '<size> 個の要素を持つ整数配列型の変数 <array> を宣言する',
+    parameters: [
+      {
+        name: '<array>',
+        description: 'The name of the integer array variable to declare.',
+        descriptionJa: '宣言する整数配列型変数の名前。',
+      },
+      {
+        name: '<size>',
+        description: 'The number of elements in the array.',
+        descriptionJa: '配列の要素数。',
+      },
+    ],
     snippet: 'intdim ${1:array} ${2:10}',
   },
   {
@@ -1012,6 +2411,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'strdim <array> <size>',
     description: 'Defines a string array with <size> elements.',
     descriptionJa: '<size> 個の要素を持つ文字列配列型の変数 <array> を宣言する',
+    parameters: [
+      {
+        name: '<array>',
+        description: 'The name of the string array variable to declare.',
+        descriptionJa: '宣言する文字列配列型変数の名前。',
+      },
+      {
+        name: '<size>',
+        description: 'The number of elements in the array.',
+        descriptionJa: '配列の要素数。',
+      },
+    ],
     snippet: 'strdim ${1:array} ${2:10}',
   },
   // ── 日時 ─────────────────────────────────────────────────────────────────────
@@ -1020,6 +2431,25 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'getdate <strvar> [<format> [<timezone>]]',
     description: 'Returns the current date in <strvar>. Default format is "YYYY-MM-DD".',
     descriptionJa: '現在の日付を文字列変数 <strvar> に格納する。デフォルト形式は "YYYY-MM-DD"',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the current date.',
+        descriptionJa: '現在の日付を格納する文字列変数。',
+      },
+      {
+        name: '<format>',
+        description: 'The date format string (default "YYYY-MM-DD").',
+        descriptionJa: '日付の書式文字列（既定は "YYYY-MM-DD"）。',
+        optional: true,
+      },
+      {
+        name: '<timezone>',
+        description: 'The timezone applied when formatting the date.',
+        descriptionJa: '日付の整形に適用するタイムゾーン。',
+        optional: true,
+      },
+    ],
     returnsJa: '日付を `<strvar>` に格納。`<format>` 指定時は `result` … 0=成功, 1=長さ超過などで失敗, 2=書式不正（`<format>` 省略時は `result` 不変）。',
     returns: 'Stores the date in `<strvar>`. When `<format>` is given, `result` … 0=success, 1=failed (e.g. length over the limit), 2=invalid format (unchanged when `<format>` is omitted).',
     snippet: 'getdate ${1:strvar}',
@@ -1029,6 +2459,25 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'gettime <strvar> [<format> [<timezone>]]',
     description: 'Returns the current time in <strvar>. Default format is "HH:MM:SS".',
     descriptionJa: '現在の時刻を文字列変数 <strvar> に格納する。デフォルト形式は "HH:MM:SS"',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the current time.',
+        descriptionJa: '現在の時刻を格納する文字列変数。',
+      },
+      {
+        name: '<format>',
+        description: 'The time format string (default "HH:MM:SS").',
+        descriptionJa: '時刻の書式文字列（既定は "HH:MM:SS"）。',
+        optional: true,
+      },
+      {
+        name: '<timezone>',
+        description: 'The timezone applied when formatting the time.',
+        descriptionJa: '時刻の整形に適用するタイムゾーン。',
+        optional: true,
+      },
+    ],
     returnsJa: '時刻を `<strvar>` に格納。`<format>` 指定時は `result` … 0=成功, 1=長さ超過などで失敗, 2=書式不正（`<format>` 省略時は `result` 不変）。',
     returns: 'Stores the time in `<strvar>`. When `<format>` is given, `result` … 0=success, 1=failed (e.g. length over the limit), 2=invalid format (unchanged when `<format>` is omitted).',
     snippet: 'gettime ${1:strvar}',
@@ -1038,18 +2487,39 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'setdate <date>',
     description: 'Sets the system date. The format of <date> should be "YYYY-MM-DD".',
     descriptionJa: 'システムの日付を変更する。<date> の形式は "YYYY-MM-DD"',
+    parameters: [
+      {
+        name: '<date>',
+        description: 'The system date to set, in "YYYY-MM-DD" format.',
+        descriptionJa: 'システムに設定する日付（"YYYY-MM-DD" 形式）。',
+      },
+    ],
   },
   {
     name: 'settime',
     signature: 'settime <time>',
     description: 'Sets the system time. The format of <time> should be "HH:MM:SS".',
     descriptionJa: 'システムの時刻を変更する。<time> の形式は "HH:MM:SS"',
+    parameters: [
+      {
+        name: '<time>',
+        description: 'The system time to set, in "HH:MM:SS" format.',
+        descriptionJa: 'システムに設定する時刻（"HH:MM:SS" 形式）。',
+      },
+    ],
   },
   {
     name: 'uptime',
     signature: 'uptime <intvar>',
     description: 'Retrieves the number of milliseconds that have elapsed since Windows was started.',
     descriptionJa: 'Windows OS の稼働時間（ミリ秒）を <intvar> に格納する',
+    parameters: [
+      {
+        name: '<intvar>',
+        description: 'The integer variable that receives the OS uptime in milliseconds.',
+        descriptionJa: 'OS の稼働時間（ミリ秒）を格納する整数変数。',
+      },
+    ],
     returnsJa: 'OS の稼働時間（ミリ秒）を `<intvar>` に格納。',
     returns: 'Stores the OS uptime in milliseconds in `<intvar>`.',
     snippet: 'uptime ${1:intvar}',
@@ -1060,6 +2530,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'getenv <envname> <strvar>',
     description: 'Retrieves the value of an environment variable and stores it in <strvar>.',
     descriptionJa: '環境変数 <envname> の値を文字列変数 <strvar> に格納する',
+    parameters: [
+      {
+        name: '<envname>',
+        description: 'The name of the environment variable to read.',
+        descriptionJa: '読み取る環境変数の名前。',
+      },
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the environment variable value.',
+        descriptionJa: '環境変数の値を格納する文字列変数。',
+      },
+    ],
     returnsJa: '環境変数の値を `<strvar>` に格納。',
     returns: 'Stores the environment variable value in `<strvar>`.',
     snippet: "getenv '${1:PATH}' ${2:strvar}",
@@ -1069,6 +2551,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'setenv <envname> <strval>',
     description: 'Sets an environment variable. Effective only within the macro.',
     descriptionJa: '環境変数 <envname> に <strval> をセットする（マクロ内でのみ有効）',
+    parameters: [
+      {
+        name: '<envname>',
+        description: 'The name of the environment variable to set.',
+        descriptionJa: '設定する環境変数の名前。',
+      },
+      {
+        name: '<strval>',
+        description: 'The value to assign to the environment variable.',
+        descriptionJa: '環境変数に設定する値。',
+      },
+    ],
     snippet: "setenv '${1:VAR}' '${2:value}'",
   },
   {
@@ -1076,6 +2570,19 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'expandenv <strvar> [<strval>]',
     description: 'Expands environment variable strings (%VARNAME%) in the string.',
     descriptionJa: '文字列内の環境変数文字列(%variableName%)を展開する',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable holding the string to expand, which also receives the result.',
+        descriptionJa: '展開する文字列を保持し、結果を格納する文字列変数。',
+      },
+      {
+        name: '<strval>',
+        description: 'The source string to expand; if omitted, <strvar> is expanded in place.',
+        descriptionJa: '展開元の文字列。省略時は <strvar> をそのまま展開する。',
+        optional: true,
+      },
+    ],
     returnsJa: '環境変数を展開した文字列を `<strvar>` に格納。',
     returns: 'Stores the expanded string in `<strvar>`.',
     snippet: 'expandenv ${1:strvar}',
@@ -1086,6 +2593,19 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'getver <strvar> [<version>]',
     description: 'Returns the version of Tera Term in <strvar>.',
     descriptionJa: 'Tera Term のバージョンを <strvar> に格納する',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the Tera Term version string.',
+        descriptionJa: 'Tera Term のバージョン文字列を格納する文字列変数。',
+      },
+      {
+        name: '<version>',
+        description: 'A version string to compare against the current version.',
+        descriptionJa: '現在のバージョンと比較するバージョン文字列。',
+        optional: true,
+      },
+    ],
     returnsJa: 'バージョン文字列を `<strvar>` に格納。`<version>` 指定時は `result` … -2=指定不正, -1=現バージョンが古い, 0=同じ, 1=新しい（省略時は `result` 不変）。',
     returns: 'Stores the version string in `<strvar>`. When `<version>` is given, `result` … -2=invalid, -1=older, 0=same, 1=newer (unchanged when omitted).',
     snippet: 'getver ${1:strvar}',
@@ -1095,6 +2615,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'gethostname <strvar>',
     description: 'Retrieves the destination hostname or IP address and stores it in <strvar>.',
     descriptionJa: 'Tera Term が接続しているホスト名（IPアドレス）を文字列変数 <strvar> に格納する',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the connected host name or IP address.',
+        descriptionJa: '接続中のホスト名（IP アドレス）を格納する文字列変数。',
+      },
+    ],
     returnsJa: 'ホスト名（IPアドレス）を `<strvar>` に格納。',
     returns: 'Stores the host name or IP address in `<strvar>`.',
     snippet: 'gethostname ${1:strvar}',
@@ -1104,6 +2631,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'getipv4addr <string array> <intvar>',
     description: 'Retrieves the local IPv4 address list.',
     descriptionJa: 'ローカルの IPv4 アドレス一覧を取得する',
+    parameters: [
+      {
+        name: '<string array>',
+        description: 'The string array that receives the local IPv4 addresses.',
+        descriptionJa: 'ローカルの IPv4 アドレスを格納する文字列配列。',
+      },
+      {
+        name: '<intvar>',
+        description: 'The integer variable that receives the number of addresses.',
+        descriptionJa: '取得したアドレスの個数を格納する整数変数。',
+      },
+    ],
     returnsJa: '取得した IP アドレスを `<string array>` に、アドレス個数を `<intvar>` に格納。`result` … 取得成功で 1、配列の要素数が足りない場合 0、取得失敗で -1。',
     returns: 'Stores the retrieved IP addresses in `<string array>` and the count in `<intvar>`. `result` … 1 on success, 0 if the array has too few entries, -1 on failure.',
   },
@@ -1112,6 +2651,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'getipv6addr <string array> <intvar>',
     description: 'Retrieves the local IPv6 address list.',
     descriptionJa: 'ローカルの IPv6 アドレス一覧を取得する',
+    parameters: [
+      {
+        name: '<string array>',
+        description: 'The string array that receives the local IPv6 addresses.',
+        descriptionJa: 'ローカルの IPv6 アドレスを格納する文字列配列。',
+      },
+      {
+        name: '<intvar>',
+        description: 'The integer variable that receives the number of addresses.',
+        descriptionJa: '取得したアドレスの個数を格納する整数変数。',
+      },
+    ],
     returnsJa: '取得した IP アドレスを `<string array>` に、アドレス個数を `<intvar>` に格納。`result` … 取得成功で 1、配列の要素数が足りない場合 0、取得失敗で -1（Windows 2000 以前では常に失敗）。',
     returns: 'Stores the retrieved IP addresses in `<string array>` and the count in `<intvar>`. `result` … 1 on success, 0 if the array has too few entries, -1 on failure (always fails on Windows 2000 or earlier).',
   },
@@ -1120,6 +2671,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'getmodemstatus <intvar>',
     description: 'Retrieves the modem control-register values from the serial port.',
     descriptionJa: 'シリアルポートからモデム制御レジスタの値を読み出す',
+    parameters: [
+      {
+        name: '<intvar>',
+        description: 'The integer variable that receives the modem control-register values.',
+        descriptionJa: 'モデム制御レジスタの値を格納する整数変数。',
+      },
+    ],
     returnsJa: 'モデム制御レジスタの値を `<intvar>` に格納。`result` … 読み出し成功で 0、失敗で 1。',
     returns: 'Stores the modem control-register values in `<intvar>`. `result` … 0 on success, 1 on failure.',
     snippet: 'getmodemstatus ${1:intvar}',
@@ -1129,6 +2687,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'getspecialfolder <strvar> <foldertype>',
     description: 'Stores a Windows special folder path in <strvar>.',
     descriptionJa: 'Windows の特殊フォルダを取得して <strvar> に格納する',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the special folder path.',
+        descriptionJa: '特殊フォルダのパスを格納する文字列変数。',
+      },
+      {
+        name: '<foldertype>',
+        description: 'The type of the Windows special folder to retrieve.',
+        descriptionJa: '取得する Windows 特殊フォルダの種類。',
+      },
+    ],
     returnsJa: 'フォルダパスを `<strvar>` に格納。`result` … 取得成功で 1、失敗で 0。',
     returns: 'Stores the folder path in `<strvar>`. `result` … 1 on success, 0 on failure.',
     snippet: 'getspecialfolder ${1:strvar} ${2:foldertype}',
@@ -1138,6 +2708,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'getttdir <strvar>',
     description: 'Stores the directory of ttpmacro.exe in <strvar>.',
     descriptionJa: 'ttpmacro.exe があるディレクトリを文字列変数 <strvar> に格納する',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the directory of ttpmacro.exe.',
+        descriptionJa: 'ttpmacro.exe があるディレクトリを格納する文字列変数。',
+      },
+    ],
     returnsJa: 'ディレクトリパスを `<strvar>` に格納。`result` … 取得成功で 1、失敗で 0。',
     returns: 'Stores the directory path in `<strvar>`. `result` … 1 on success, 0 on failure.',
     snippet: 'getttdir ${1:strvar}',
@@ -1147,6 +2724,53 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'getttpos <showflag> <window x> <window y> <window width> <window height> <client x> <client y> <client width> <client height>',
     description: 'Retrieves the position and size of the Tera Term window.',
     descriptionJa: 'Tera Term ウィンドウの位置とサイズを取得する',
+    parameters: [
+      {
+        name: '<showflag>',
+        description: 'The integer variable that receives the window display state.',
+        descriptionJa: 'ウィンドウの表示状態を格納する整数変数。',
+      },
+      {
+        name: '<window x>',
+        description: 'The integer variable that receives the window left (X) position.',
+        descriptionJa: 'ウィンドウの左端（X）座標を格納する整数変数。',
+      },
+      {
+        name: '<window y>',
+        description: 'The integer variable that receives the window top (Y) position.',
+        descriptionJa: 'ウィンドウの上端（Y）座標を格納する整数変数。',
+      },
+      {
+        name: '<window width>',
+        description: 'The integer variable that receives the window width.',
+        descriptionJa: 'ウィンドウの幅を格納する整数変数。',
+      },
+      {
+        name: '<window height>',
+        description: 'The integer variable that receives the window height.',
+        descriptionJa: 'ウィンドウの高さを格納する整数変数。',
+      },
+      {
+        name: '<client x>',
+        description: 'The integer variable that receives the client-area left (X) position.',
+        descriptionJa: 'クライアント領域の左端（X）座標を格納する整数変数。',
+      },
+      {
+        name: '<client y>',
+        description: 'The integer variable that receives the client-area top (Y) position.',
+        descriptionJa: 'クライアント領域の上端（Y）座標を格納する整数変数。',
+      },
+      {
+        name: '<client width>',
+        description: 'The integer variable that receives the client-area width.',
+        descriptionJa: 'クライアント領域の幅を格納する整数変数。',
+      },
+      {
+        name: '<client height>',
+        description: 'The integer variable that receives the client-area height.',
+        descriptionJa: 'クライアント領域の高さを格納する整数変数。',
+      },
+    ],
     returnsJa: 'ウィンドウの表示状態・位置・サイズを各変数に格納。`result` … 取得成功で 0、失敗で -1。',
     returns: 'Stores the window display state, position, and size in the respective variables. `result` … 0 on success, -1 on failure.',
     snippet: 'getttpos ${1:showflag} ${2:wx} ${3:wy} ${4:ww} ${5:wh} ${6:cx} ${7:cy} ${8:cw} ${9:ch}',
@@ -1156,6 +2780,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'gettitle <strvar>',
     description: 'Retrieves the title text of Tera Term and stores it in <strvar>.',
     descriptionJa: 'Tera Term のウィンドウタイトルを文字列変数 <strvar> に格納する',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the window title.',
+        descriptionJa: 'ウィンドウタイトルを格納する文字列変数。',
+      },
+    ],
     returnsJa: 'ウィンドウタイトルを `<strvar>` に格納。',
     returns: 'Stores the window title in `<strvar>`.',
     snippet: 'gettitle ${1:strvar}',
@@ -1165,6 +2796,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'settitle <title>',
     description: 'Changes the title text of the Tera Term window.',
     descriptionJa: 'Tera Term のウィンドウタイトルを <title> に変更する',
+    parameters: [
+      {
+        name: '<title>',
+        description: 'The new title text for the Tera Term window.',
+        descriptionJa: 'Tera Term ウィンドウに設定するタイトル文字列。',
+      },
+    ],
     snippet: "settitle '${1:title}'",
   },
   // ── ディレクトリ ─────────────────────────────────────────────────────────────
@@ -1173,6 +2811,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'getdir <strvar>',
     description: 'Returns the current working directory for MACRO (not Tera Term).',
     descriptionJa: 'MACRO のカレントディレクトリを文字列変数 <strvar> に格納する',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the current MACRO directory.',
+        descriptionJa: 'MACRO のカレントディレクトリを格納する文字列変数。',
+      },
+    ],
     returnsJa: 'MACRO のカレントディレクトリを `<strvar>` に格納。',
     returns: 'Stores the current directory of MACRO in `<strvar>`.',
     snippet: 'getdir ${1:strvar}',
@@ -1182,6 +2827,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'setdir <dir>',
     description: 'Changes the current working directory for MACRO.',
     descriptionJa: 'MACRO のカレントディレクトリを <dir> に変更する',
+    parameters: [
+      {
+        name: '<dir>',
+        description: 'The directory to set as the current MACRO working directory.',
+        descriptionJa: 'MACRO のカレントディレクトリに設定するディレクトリ。',
+      },
+    ],
     snippet: "setdir '${1:dir}'",
   },
   {
@@ -1189,6 +2841,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'changedir <path>',
     description: "Changes the file transfer directory for Tera Term to <path>.",
     descriptionJa: 'Tera Term のファイル転送用ディレクトリを <path> に変更する',
+    parameters: [
+      {
+        name: '<path>',
+        description: 'The directory to set as the Tera Term file-transfer directory.',
+        descriptionJa: 'Tera Term のファイル転送用ディレクトリに設定するパス。',
+      },
+    ],
     snippet: "changedir '${1:path}'",
   },
   // ── ウィンドウ表示 ───────────────────────────────────────────────────────────
@@ -1197,6 +2856,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'show <show flag>',
     description: 'Minimizes MACRO if <show flag> is 0, restores it if positive.',
     descriptionJa: '<show flag> が0の場合 MACRO を最小化する。0より大きい場合は元の大きさに戻して最前面に表示する',
+    parameters: [
+      {
+        name: '<show flag>',
+        description: '0 minimizes the MACRO window; a positive value restores it and brings it to the front.',
+        descriptionJa: '0 で MACRO ウィンドウを最小化、0 より大きい値で元の大きさに戻して最前面に表示する。',
+      },
+    ],
     snippet: 'show ${1:1}',
   },
   {
@@ -1204,6 +2870,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'showtt <show flag>',
     description: 'Controls the Tera Term VT window visibility: -1=hide, 0=minimize, positive=show.',
     descriptionJa: '<show flag> が-1なら VT ウィンドウを隠す。0なら最小化する。0より大きいなら表示する',
+    parameters: [
+      {
+        name: '<show flag>',
+        description: 'Controls the VT window: -1 hides it, 0 minimizes it, a positive value shows it.',
+        descriptionJa: 'VT ウィンドウの表示を制御する。-1 で隠し、0 で最小化、0 より大きい値で表示する。',
+      },
+    ],
     snippet: 'showtt ${1:1}',
   },
   {
@@ -1211,6 +2884,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'clearscreen <int>',
     description: 'Erases the screen: 0=VT screen, 1=VT screen+scroll buffer, 2=TEK screen.',
     descriptionJa: '<int> が0の場合 VT ウィンドウの画面を消去。1の場合はスクロールバッファーも消去',
+    parameters: [
+      {
+        name: '<int>',
+        description: 'Selects what to erase: 0=VT screen, 1=VT screen and scroll buffer, 2=TEK screen.',
+        descriptionJa: '消去対象を選択する（0=VT 画面, 1=VT 画面とスクロールバッファー, 2=TEK 画面）。',
+      },
+    ],
     snippet: 'clearscreen ${1:0}',
   },
   {
@@ -1218,6 +2898,14 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'beep [<sound type>]',
     description: 'Makes a beep sound. Sound types: 0=simple, 1=asterisk, 2=exclamation, 3=critical, 4=question, 5=default.',
     descriptionJa: 'WAVE 形式のサウンドを再生する',
+    parameters: [
+      {
+        name: '<sound type>',
+        description: 'The sound to play: 0=simple beep, 1=asterisk, 2=exclamation, 3=critical, 4=question, 5=default.',
+        descriptionJa: '再生する音の種類（0=単純ビープ, 1=asterisk, 2=exclamation, 3=critical, 4=question, 5=既定）。',
+        optional: true,
+      },
+    ],
     snippet: 'beep ${1:0}',
   },
   // ── ログ ─────────────────────────────────────────────────────────────────────
@@ -1226,6 +2914,53 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'logopen <filename> <binary flag> <append flag> [<plain text flag> [<timestamp flag> [<hide dialog flag> [<include screen buffer flag> [<timestamp type>]]]]]',
     description: 'Opens a log file and starts logging received characters.',
     descriptionJa: 'ログファイルを開いて受信文字のログ採取を開始する',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The file to which received characters are written.',
+        descriptionJa: '受信した文字が書き込まれるファイル。',
+      },
+      {
+        name: '<binary flag>',
+        description: 'Zero writes with conversion; non-zero writes everything as-is (binary).',
+        descriptionJa: '0 のとき変換して書き込み、0 以外のときすべてそのまま（バイナリ）書き込む。',
+      },
+      {
+        name: '<append flag>',
+        description: 'Non-zero appends to an existing file; zero overwrites it.',
+        descriptionJa: '0 以外で既存ファイルに追記、0 で上書きする。',
+      },
+      {
+        name: '<plain text flag>',
+        description: 'If non-zero, ASCII non-printable characters are not written to the log.',
+        descriptionJa: '0 以外の場合、ASCII の非表示文字をログに書き込まない。',
+        optional: true,
+      },
+      {
+        name: '<timestamp flag>',
+        description: 'If non-zero, a timestamp is added at the beginning of each log line.',
+        descriptionJa: '0 以外の場合、ログの行頭に時刻を追加する。',
+        optional: true,
+      },
+      {
+        name: '<hide dialog flag>',
+        description: 'If non-zero, the log transfer dialog is not displayed.',
+        descriptionJa: '0 以外の場合、ログ転送のダイアログを表示しない。',
+        optional: true,
+      },
+      {
+        name: '<include screen buffer flag>',
+        description: 'If non-zero, the entire current terminal buffer is written to the file first.',
+        descriptionJa: '0 以外の場合、現在の端末バッファすべてを先にファイルに書き込む。',
+        optional: true,
+      },
+      {
+        name: '<timestamp type>',
+        description: 'The timestamp format: 0=local time, 1=UTC, 2=elapsed time (logging), 3=elapsed time (connection).',
+        descriptionJa: 'タイムスタンプの形式（0=ローカルタイム, 1=UTC, 2=経過時間(Logging), 3=経過時間(Connection)）。',
+        optional: true,
+      },
+    ],
     returnsJa: '`result` … ログファイルを開けると 0、開けないと 1。*(4.62 以降)*',
     returns: '`result` … set to 0 if the log file is opened, 1 if not. *(4.62 or later)*',
     snippet: "logopen '${1:logfile.log}' 0 0",
@@ -1253,6 +2988,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'logwrite <string>',
     description: 'Appends a string to the Tera Term log file.',
     descriptionJa: '文字列 <string> を Tera Term のログファイルに追加して書き込む',
+    parameters: [
+      {
+        name: '<string>',
+        description: 'The string to append to the log file.',
+        descriptionJa: 'ログファイルに追加して書き込む文字列。',
+      },
+    ],
     snippet: "logwrite '${1:string}'",
   },
   {
@@ -1260,6 +3002,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'loginfo <strvar>',
     description: 'Retrieves the current log filename into <strvar>. Sets "result" to -1 if not logging.',
     descriptionJa: 'ログを取得している場合、strvar にログファイル名が格納される。ログ取得していない場合は result に -1 が格納される',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the current log file name.',
+        descriptionJa: '現在のログファイル名を格納する文字列変数。',
+      },
+    ],
     returnsJa: 'ログ取得中は `<strvar>` にログファイル名、`result` にフラグ状態を格納。取得していない場合は `result` に -1。',
     returns: 'While logging, stores the log file name in `<strvar>` and the flag status in `result`. When not logging, `result` is set to -1.',
     snippet: 'loginfo ${1:strvar}',
@@ -1269,12 +3018,31 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: "logrotate 'size' '<size>'\nlogrotate 'rotate' <count>\nlogrotate 'halt'",
     description: 'Configures log rotation.',
     descriptionJa: 'ログローテーションの設定を行う',
+    parameters: [
+      {
+        name: '<size>',
+        description: "With 'size', the log file size threshold (e.g. \"10M\") that triggers rotation.",
+        descriptionJa: "'size' 指定時、ローテーションの契機となるログファイルサイズ（例: \"10M\"）。",
+      },
+      {
+        name: '<count>',
+        description: "With 'rotate', the number of rotated log files to keep.",
+        descriptionJa: "'rotate' 指定時、保持するローテーション済みログファイルの世代数。",
+      },
+    ],
   },
   {
     name: 'logautoclosemode',
     signature: 'logautoclosemode <flag>',
     description: 'When <flag> is 1, automatically closes the log file when the macro finishes.',
     descriptionJa: '<flag> の値が1の場合、マクロ終了時に自動的にログ採取を停止する',
+    parameters: [
+      {
+        name: '<flag>',
+        description: 'When 1, the log file is automatically closed when the macro finishes; when 0, it is not.',
+        descriptionJa: '1 のときマクロ終了時に自動的にログ採取を停止する。0 のときは停止しない。',
+      },
+    ],
     snippet: 'logautoclosemode ${1:1}',
   },
   // ── パスワード管理 ───────────────────────────────────────────────────────────
@@ -1283,6 +3051,23 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'setpassword <filename> <password name> <password>',
     description: 'Stores an encrypted password in a password file.',
     descriptionJa: 'パスワードファイル <filename> にパスワードを暗号化して保存する',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The password file to write to.',
+        descriptionJa: '書き込むパスワードファイル。',
+      },
+      {
+        name: '<password name>',
+        description: 'The name (key) that identifies the password within the file.',
+        descriptionJa: 'ファイル内でパスワードを識別する名前（キー）。',
+      },
+      {
+        name: '<password>',
+        description: 'The password to encrypt and store.',
+        descriptionJa: '暗号化して保存するパスワード。',
+      },
+    ],
     returnsJa: '`result` … パスワードファイルへの書き込みに失敗すると 0、それ以外は 1。',
     returns: '`result` … set to 0 if the password file cannot be written, 1 otherwise.',
   },
@@ -1291,6 +3076,23 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'getpassword <filename> <password name> <password var>',
     description: 'Retrieves and decrypts a password from a password file.',
     descriptionJa: 'パスワードファイルからパスワードを読みだして復号化する',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The password file to read from.',
+        descriptionJa: '読み出すパスワードファイル。',
+      },
+      {
+        name: '<password name>',
+        description: 'The name (key) that identifies the password within the file.',
+        descriptionJa: 'ファイル内でパスワードを識別する名前（キー）。',
+      },
+      {
+        name: '<password var>',
+        description: 'The string variable that receives the decrypted password.',
+        descriptionJa: '復号したパスワードを格納する文字列変数。',
+      },
+    ],
     returnsJa: '復号したパスワードを `<password var>` に格納。`result` … パスワードファイルへの書き込みに失敗すると 0、それ以外は 1。*(バージョン 4.71 以降)*',
     returns: 'Stores the decrypted password in `<password var>`. `result` … set to 0 if the password file cannot be written, 1 otherwise. *(version 4.71 or later)*',
   },
@@ -1299,12 +3101,36 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'delpassword <filename> <password name>',
     description: 'Deletes a password from a password file.',
     descriptionJa: 'パスワードファイルからパスワードを削除する',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The password file to modify.',
+        descriptionJa: '対象のパスワードファイル。',
+      },
+      {
+        name: '<password name>',
+        description: 'The name (key) of the password to delete.',
+        descriptionJa: '削除するパスワードの名前（キー）。',
+      },
+    ],
   },
   {
     name: 'ispassword',
     signature: 'ispassword <filename> <password name>',
     description: 'Checks if a password exists in a password file.',
     descriptionJa: 'パスワードファイルにパスワードが存在するか調べる',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The password file to check.',
+        descriptionJa: '調べるパスワードファイル。',
+      },
+      {
+        name: '<password name>',
+        description: 'The name (key) of the password to look for.',
+        descriptionJa: '存在を調べるパスワードの名前（キー）。',
+      },
+    ],
     returnsJa: '`result` … 指定したパスワードが設定されていれば 1、なければ 0。',
     returns: '`result` … set to 1 if the named password exists, 0 otherwise.',
   },
@@ -1313,6 +3139,28 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'setpassword2 <filename> <password name> <password> <encrypt str>',
     description: 'Stores a password encrypted with a user-provided key.',
     descriptionJa: 'ユーザー指定のキーで暗号化したパスワードをパスワードファイルに保存する',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The password file to write to.',
+        descriptionJa: '書き込むパスワードファイル。',
+      },
+      {
+        name: '<password name>',
+        description: 'The name (key) that identifies the password within the file.',
+        descriptionJa: 'ファイル内でパスワードを識別する名前（キー）。',
+      },
+      {
+        name: '<password>',
+        description: 'The password to encrypt and store.',
+        descriptionJa: '暗号化して保存するパスワード。',
+      },
+      {
+        name: '<encrypt str>',
+        description: 'The user-provided key used to encrypt the password.',
+        descriptionJa: 'パスワードの暗号化に使うユーザー指定のキー。',
+      },
+    ],
     returnsJa: '`result` … パスワードファイルへの書き込みに失敗すると 0、それ以外は 1。',
     returns: '`result` … set to 0 if the password file cannot be written, 1 otherwise.',
   },
@@ -1321,6 +3169,28 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'getpassword2 <filename> <password name> <password var> <encrypt str>',
     description: 'Retrieves and decrypts a password using a user-provided key.',
     descriptionJa: 'ユーザー指定のキーでパスワードを復号化して取得する',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The password file to read from.',
+        descriptionJa: '読み出すパスワードファイル。',
+      },
+      {
+        name: '<password name>',
+        description: 'The name (key) that identifies the password within the file.',
+        descriptionJa: 'ファイル内でパスワードを識別する名前（キー）。',
+      },
+      {
+        name: '<password var>',
+        description: 'The string variable that receives the decrypted password.',
+        descriptionJa: '復号したパスワードを格納する文字列変数。',
+      },
+      {
+        name: '<encrypt str>',
+        description: 'The user-provided key used to decrypt the password.',
+        descriptionJa: 'パスワードの復号に使うユーザー指定のキー。',
+      },
+    ],
     returnsJa: '復号したパスワードを `<password var>` に格納。`result` … パスワードファイルへの書き込みに失敗すると 0、それ以外は 1。',
     returns: 'Stores the decrypted password in `<password var>`. `result` … set to 0 if the password file cannot be written, 1 otherwise.',
   },
@@ -1329,12 +3199,36 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'delpassword2 <filename> <password name>',
     description: 'Deletes a password from a password file created by setpassword2.',
     descriptionJa: 'setpassword2 で作成されたパスワードファイルからパスワードを削除する',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The password file (created by setpassword2) to modify.',
+        descriptionJa: '対象のパスワードファイル（setpassword2 で作成）。',
+      },
+      {
+        name: '<password name>',
+        description: 'The name (key) of the password to delete.',
+        descriptionJa: '削除するパスワードの名前（キー）。',
+      },
+    ],
   },
   {
     name: 'ispassword2',
     signature: 'ispassword2 <filename> <password name>',
     description: 'Checks if a password created by setpassword2 exists.',
     descriptionJa: 'setpassword2 で作成されたパスワードファイルにパスワードが存在するか調べる',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The password file (created by setpassword2) to check.',
+        descriptionJa: '調べるパスワードファイル（setpassword2 で作成）。',
+      },
+      {
+        name: '<password name>',
+        description: 'The name (key) of the password to look for.',
+        descriptionJa: '存在を調べるパスワードの名前（キー）。',
+      },
+    ],
     returnsJa: '`result` … 指定したパスワードが設定されていれば 1、なければ 0。',
     returns: '`result` … set to 1 if the named password exists, 0 otherwise.',
   },
@@ -1352,6 +3246,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'bplussend <filename>',
     description: 'Sends a file to the host with the B-Plus protocol.',
     descriptionJa: 'ファイル <filename> を B-Plus プロトコルで送信する',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The file to send.',
+        descriptionJa: '送信するファイル。',
+      },
+    ],
     returnsJa: '`result` … 転送が成功すると 1、失敗すると 0。',
     returns: '`result` … set to 1 on a successful transfer, 0 otherwise.',
     snippet: "bplussend '${1:filename}'",
@@ -1369,6 +3270,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'quickvansend <filename>',
     description: 'Sends a file to the host with the Quick-VAN protocol.',
     descriptionJa: 'ファイル <filename> を Quick-VAN プロトコルで送信する',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The file to send.',
+        descriptionJa: '送信するファイル。',
+      },
+    ],
     returnsJa: '`result` … 転送が成功すると 1、失敗すると 0。',
     returns: '`result` … set to 1 on a successful transfer, 0 otherwise.',
     snippet: "quickvansend '${1:filename}'",
@@ -1386,6 +3294,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'kmtsend <filename>',
     description: 'Sends a file to the host with the Kermit protocol.',
     descriptionJa: 'ファイル <filename> を Kermit プロトコルで送信する',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The file to send.',
+        descriptionJa: '送信するファイル。',
+      },
+    ],
     returnsJa: '`result` … 転送が成功すると 1、失敗すると 0。',
     returns: '`result` … set to 1 on a successful transfer, 0 otherwise.',
     snippet: "kmtsend '${1:filename}'",
@@ -1395,6 +3310,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'kmtget <filename>',
     description: 'Gets a file from the host using the Kermit Get command.',
     descriptionJa: 'ファイル <filename> を Kermit Get コマンドを使用してホストから受信する',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The file to get from the host.',
+        descriptionJa: 'ホストから受信するファイル。',
+      },
+    ],
     returnsJa: '`result` … 転送が成功すると 1、失敗すると 0。',
     returns: '`result` … set to 1 on a successful transfer, 0 otherwise.',
     snippet: "kmtget '${1:filename}'",
@@ -1412,6 +3334,23 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'xmodemrecv <filename> <binary flag> <option>',
     description: 'Receives a file from the host with the XMODEM protocol.',
     descriptionJa: 'XMODEM プロトコルでファイル <filename> を受信する',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The file to receive.',
+        descriptionJa: '受信するファイル。',
+      },
+      {
+        name: '<binary flag>',
+        description: 'Non-zero receives in binary mode; zero performs text (new-line) conversion.',
+        descriptionJa: '0 以外でバイナリ受信、0 でテキスト（改行）変換受信する。',
+      },
+      {
+        name: '<option>',
+        description: 'The XMODEM mode: 1=checksum, 2=CRC, 3=1K.',
+        descriptionJa: 'XMODEM のモード（1=checksum, 2=CRC, 3=1K）。',
+      },
+    ],
     returnsJa: '`result` … 転送が成功すると 1、失敗すると 0。',
     returns: '`result` … set to 1 on a successful transfer, 0 otherwise.',
   },
@@ -1420,6 +3359,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'xmodemsend <filename> <option>',
     description: 'Sends a file to the host with the XMODEM protocol.',
     descriptionJa: 'XMODEM プロトコルでファイル <filename> を送信する',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The file to send.',
+        descriptionJa: '送信するファイル。',
+      },
+      {
+        name: '<option>',
+        description: 'The XMODEM mode: 1=checksum, 2=CRC, 3=1K.',
+        descriptionJa: 'XMODEM のモード（1=checksum, 2=CRC, 3=1K）。',
+      },
+    ],
     returnsJa: '`result` … 転送が成功すると 1、失敗すると 0。',
     returns: '`result` … set to 1 on a successful transfer, 0 otherwise.',
     snippet: "xmodemsend '${1:filename}' ${2:0}",
@@ -1437,6 +3388,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'ymodemsend <filename>',
     description: 'Sends a file to the host with the YMODEM protocol.',
     descriptionJa: 'ファイル <filename> を YMODEM プロトコルで送信する',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The file to send.',
+        descriptionJa: '送信するファイル。',
+      },
+    ],
     returnsJa: '`result` … 転送が成功すると 1、失敗すると 0。',
     returns: '`result` … set to 1 on a successful transfer, 0 otherwise.',
     snippet: "ymodemsend '${1:filename}'",
@@ -1454,6 +3412,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'zmodemsend <filename> <binary flag>',
     description: 'Sends a file to the host with the ZMODEM protocol.',
     descriptionJa: 'ファイル <filename> を ZMODEM プロトコルで送信する',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The file to send.',
+        descriptionJa: '送信するファイル。',
+      },
+      {
+        name: '<binary flag>',
+        description: 'Non-zero sends in binary mode; zero performs text (new-line) conversion.',
+        descriptionJa: '0 以外でバイナリ送信、0 でテキスト（改行）変換送信する。',
+      },
+    ],
     returnsJa: '`result` … 転送が成功すると 1、失敗すると 0。',
     returns: '`result` … set to 1 on a successful transfer, 0 otherwise.',
     snippet: "zmodemsend '${1:filename}' ${2:0}",
@@ -1463,6 +3433,19 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'scprecv <remote filename> [<local filename>]',
     description: 'Receives a file from the host with the SCP protocol.',
     descriptionJa: 'ファイル <remote filename> を SCP プロトコルで受信する',
+    parameters: [
+      {
+        name: '<remote filename>',
+        description: 'The file on the host to receive.',
+        descriptionJa: '受信するホスト上のファイル。',
+      },
+      {
+        name: '<local filename>',
+        description: 'The local path to save the received file. If omitted, the remote file name is used.',
+        descriptionJa: '受信ファイルを保存するローカルパス。省略時はリモートのファイル名を使う。',
+        optional: true,
+      },
+    ],
     snippet: "scprecv '${1:remote filename}'",
   },
   {
@@ -1470,6 +3453,19 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'scpsend <filename> [<destination filename>]',
     description: 'Sends a file to the host with the SCP protocol.',
     descriptionJa: 'ファイル <filename> を SCP プロトコルで送信する',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The local file to send.',
+        descriptionJa: '送信するローカルファイル。',
+      },
+      {
+        name: '<destination filename>',
+        description: 'The destination path on the host. If omitted, the source file name is used.',
+        descriptionJa: 'ホスト上の保存先パス。省略時は送信元のファイル名を使う。',
+        optional: true,
+      },
+    ],
     snippet: "scpsend '${1:filename}'",
   },
   // ── シリアル通信設定 ─────────────────────────────────────────────────────────
@@ -1478,6 +3474,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'setbaud <value>',
     description: 'Changes the baud rate of the serial port.',
     descriptionJa: 'シリアルポートのボーレートを <value> bps に変更する',
+    parameters: [
+      {
+        name: '<value>',
+        description: 'The serial port baud rate, in bps.',
+        descriptionJa: 'シリアルポートのボーレート（bps）。',
+      },
+    ],
     snippet: 'setbaud ${1:9600}',
   },
   {
@@ -1485,6 +3488,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'setspeed <value>',
     description: 'Changes the speed of the serial port.',
     descriptionJa: 'シリアルポートのスピードを <value> bps に変更する',
+    parameters: [
+      {
+        name: '<value>',
+        description: 'The serial port speed, in bps.',
+        descriptionJa: 'シリアルポートのスピード（bps）。',
+      },
+    ],
     snippet: 'setspeed ${1:9600}',
   },
   {
@@ -1492,6 +3502,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'setflowctrl <value>',
     description: 'Changes the flow control setting.',
     descriptionJa: 'フロー制御の設定を変更する',
+    parameters: [
+      {
+        name: '<value>',
+        description: 'The flow control mode: 1=Xon/Xoff, 2=hardware, 3=none.',
+        descriptionJa: 'フロー制御モード（1=Xon/Xoff, 2=ハードウェア, 3=none）。',
+      },
+    ],
     snippet: 'setflowctrl ${1:0}',
   },
   {
@@ -1499,6 +3516,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'setdtr <flag>',
     description: 'Sets or clears the DTR signal. Only effective for serial connections with no flow control.',
     descriptionJa: '接続がシリアル接続でフロー制御が none の場合に DTR 信号を制御する',
+    parameters: [
+      {
+        name: '<flag>',
+        description: 'Non-zero sets the DTR signal; zero clears it.',
+        descriptionJa: '0 以外で DTR 信号をオン、0 でオフにする。',
+      },
+    ],
     snippet: 'setdtr ${1:1}',
   },
   {
@@ -1506,6 +3530,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'setrts <flag>',
     description: 'Sets or clears the RTS signal. Only effective for serial connections with no flow control.',
     descriptionJa: '接続がシリアル接続でフロー制御が none の場合に RTS 信号を制御する',
+    parameters: [
+      {
+        name: '<flag>',
+        description: 'Non-zero sets the RTS signal; zero clears it.',
+        descriptionJa: '0 以外で RTS 信号をオン、0 でオフにする。',
+      },
+    ],
     snippet: 'setrts ${1:1}',
   },
   {
@@ -1513,6 +3544,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'setserialdelaychar <delay>',
     description: 'Changes the inter-character delay for serial transmission in milliseconds.',
     descriptionJa: 'シリアルポートの送信待ち時間（1文字ごと）を <delay> [ms] に変更する',
+    parameters: [
+      {
+        name: '<delay>',
+        description: 'The per-character transmission delay, in milliseconds.',
+        descriptionJa: '1 文字ごとの送信待ち時間（ミリ秒）。',
+      },
+    ],
     snippet: 'setserialdelaychar ${1:10}',
   },
   {
@@ -1520,6 +3558,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'setserialdelayline <delay>',
     description: 'Changes the inter-line delay for serial transmission in milliseconds.',
     descriptionJa: 'シリアルポートの送信待ち時間（1行ごと）を <delay> [ms] に変更する',
+    parameters: [
+      {
+        name: '<delay>',
+        description: 'The per-line transmission delay, in milliseconds.',
+        descriptionJa: '1 行ごとの送信待ち時間（ミリ秒）。',
+      },
+    ],
     snippet: 'setserialdelayline ${1:100}',
   },
   // ── その他通信設定 ───────────────────────────────────────────────────────────
@@ -1528,6 +3573,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'setsync <sync flag>',
     description: 'Enters synchronous communication mode if <sync flag> is non-zero.',
     descriptionJa: '<sync flag> が0以外ならば同期通信モードに入る',
+    parameters: [
+      {
+        name: '<sync flag>',
+        description: 'Non-zero enters synchronous communication mode; zero leaves it.',
+        descriptionJa: '0 以外で同期通信モードに入り、0 で解除する。',
+      },
+    ],
     snippet: 'setsync ${1:1}',
   },
   {
@@ -1535,6 +3587,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'setecho <echo flag>',
     description: 'Turns local echo on (non-zero) or off (zero).',
     descriptionJa: '<echo flag> が0以外ならローカルエコーは on になる',
+    parameters: [
+      {
+        name: '<echo flag>',
+        description: 'Non-zero turns local echo on; zero turns it off.',
+        descriptionJa: '0 以外でローカルエコーをオン、0 でオフにする。',
+      },
+    ],
     snippet: 'setecho ${1:1}',
   },
   {
@@ -1542,6 +3601,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'enablekeyb <flag>',
     description: 'Enables (1) or disables (0) keyboard input.',
     descriptionJa: '<flag> の値が1の場合は許可、0の場合はキーボード入力を禁止する',
+    parameters: [
+      {
+        name: '<flag>',
+        description: '1 enables keyboard input; 0 disables it.',
+        descriptionJa: '1 でキーボード入力を許可、0 で禁止する。',
+      },
+    ],
     snippet: 'enablekeyb ${1:1}',
   },
   {
@@ -1549,6 +3615,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'setmulticastname <multicastname>',
     description: 'Sets the multicast name of this terminal.',
     descriptionJa: '自身の端末に対して <multicastname> を識別子として設定する',
+    parameters: [
+      {
+        name: '<multicastname>',
+        description: 'The multicast name (identifier) to assign to this terminal.',
+        descriptionJa: '自端末に設定するマルチキャスト名（識別子）。',
+      },
+    ],
     snippet: "setmulticastname '${1:name}'",
   },
   // ── その他 ───────────────────────────────────────────────────────────────────
@@ -1557,6 +3630,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: "include '<include file name>'",
     description: 'Loads and executes the specified macro file.',
     descriptionJa: '引数に指定したマクロファイルを読み込み、マクロ実行を行う',
+    parameters: [
+      {
+        name: '<include file name>',
+        description: 'The macro file to load and execute.',
+        descriptionJa: '読み込んで実行するマクロファイル。',
+      },
+    ],
     snippet: "include '${1:filename.ttl}'",
   },
   {
@@ -1564,6 +3644,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'ifdefined <var>',
     description: 'Sets "result" to the type of <var>: 0=undefined, 1=integer, 2=string, 3=int array, 4=string array.',
     descriptionJa: '<var> の型を表す値をシステム変数 result に格納する',
+    parameters: [
+      {
+        name: '<var>',
+        description: 'The variable whose type is examined.',
+        descriptionJa: '型を調べる変数。',
+      },
+    ],
     returnsJa: '`result` … 0=未定義, 1=整数, 3=文字列, 4=ラベル, 5=整数配列, 6=文字列配列。',
     returns: '`result` … 0=undefined, 1=integer, 3=string, 4=label, 5=integer array, 6=string array.',
     snippet: 'ifdefined ${1:var}',
@@ -1573,6 +3660,31 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'exec <command line> [<show> [<wait> [<current directory>]]]',
     description: 'Runs an application specified by the command line.',
     descriptionJa: 'コマンドライン文字列 <command line> に従い、アプリケーションを起動する',
+    parameters: [
+      {
+        name: '<command line>',
+        description: 'The command line of the application to run.',
+        descriptionJa: '起動するアプリケーションのコマンドライン。',
+      },
+      {
+        name: '<show>',
+        description: 'The window show state of the launched application (e.g. "show", "hide", "minimize", "maximize").',
+        descriptionJa: '起動するアプリケーションのウィンドウ表示状態（"show", "hide", "minimize", "maximize" など）。',
+        optional: true,
+      },
+      {
+        name: '<wait>',
+        description: 'If 1, waits until the application exits before continuing.',
+        descriptionJa: '1 のときアプリケーションの終了を待ってから次へ進む。',
+        optional: true,
+      },
+      {
+        name: '<current directory>',
+        description: 'The working directory for the launched application.',
+        descriptionJa: '起動するアプリケーションの作業ディレクトリ。',
+        optional: true,
+      },
+    ],
     returnsJa: '`result` … **4.103 以降:** `<wait>` が 1 なら -1=実行失敗/それ以外=終了コード。`<wait>` が 1 以外なら -1=失敗/0=成功。**4.63–4.102:** `<wait>` が 1 のときのみ終了コードを格納（失敗判定なし）。',
     returns: '`result` … **4.103 or later:** if `<wait>` is 1: -1=failed / otherwise exit code. If `<wait>` is not 1: -1=failed / 0=success. **4.63–4.102:** if `<wait>` is 1, only the exit code is stored (no failure indicator).',
     snippet: "exec '${1:command}'",
@@ -1582,6 +3694,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'execcmnd <statement>',
     description: 'Executes a TTL statement expressed by the string <statement>.',
     descriptionJa: '文字列 <statement> が表現する TTL コマンドを実行する',
+    parameters: [
+      {
+        name: '<statement>',
+        description: 'A string containing the TTL statement to execute.',
+        descriptionJa: '実行する TTL コマンドを表す文字列。',
+      },
+    ],
     snippet: "execcmnd '${1:sendln \"hello\"}'",
   },
   {
@@ -1589,6 +3708,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'callmenu <menu ID>',
     description: 'Executes the menu item specified by <menu ID>.',
     descriptionJa: '<menu ID> で指定されたメニューを実行する',
+    parameters: [
+      {
+        name: '<menu ID>',
+        description: 'The identifier of the menu item to execute.',
+        descriptionJa: '実行するメニュー項目の識別子。',
+      },
+    ],
     snippet: 'callmenu ${1:50280}',
   },
   {
@@ -1596,6 +3722,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'loadkeymap <filename>',
     description: 'Causes Tera Term to load a keyboard setup file.',
     descriptionJa: 'キーボード設定ファイル <filename> を Tera Term に読み込ませる',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The keyboard setup file to load.',
+        descriptionJa: '読み込むキーボード設定ファイル。',
+      },
+    ],
     snippet: "loadkeymap '${1:keyboard.cnf}'",
   },
   {
@@ -1603,6 +3736,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'restoresetup <filename>',
     description: 'Causes Tera Term to load a setup file.',
     descriptionJa: 'Tera Term 設定ファイル <filename> を Tera Term に読み込ませる',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The Tera Term setup file to load.',
+        descriptionJa: '読み込む Tera Term 設定ファイル。',
+      },
+    ],
     snippet: "restoresetup '${1:teraterm.ini}'",
   },
   {
@@ -1610,6 +3750,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'setdebug <flag>',
     description: 'Sets the debug flag of Tera Term.',
     descriptionJa: 'Tera Term のデバッグモードを設定する',
+    parameters: [
+      {
+        name: '<flag>',
+        description: 'The debug mode flag to set.',
+        descriptionJa: '設定するデバッグモードのフラグ。',
+      },
+    ],
     snippet: 'setdebug ${1:1}',
   },
   {
@@ -1617,6 +3764,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'setexitcode <exit code>',
     description: 'Sets the exit code of MACRO.',
     descriptionJa: 'MACRO の終了コードを設定する',
+    parameters: [
+      {
+        name: '<exit code>',
+        description: 'The exit code to set for MACRO.',
+        descriptionJa: 'MACRO に設定する終了コード。',
+      },
+    ],
     snippet: 'setexitcode ${1:0}',
   },
   {
@@ -1624,6 +3778,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'setfileattr <filename> <attributes>',
     description: 'Sets the file attributes.',
     descriptionJa: 'ファイルの属性を設定する',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The file whose attributes are set.',
+        descriptionJa: '属性を設定するファイル。',
+      },
+      {
+        name: '<attributes>',
+        description: 'The attribute bitmask to set.',
+        descriptionJa: '設定する属性のビットマスク。',
+      },
+    ],
     returnsJa: '`result` … 変更に成功すると 1、失敗すると 0。',
     returns: '`result` … set to 1 on success, 0 on failure.',
   },
@@ -1632,6 +3798,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'getfileattr <filename>',
     description: 'Gets the file attributes. Stores the result in "result".',
     descriptionJa: 'ファイルの属性を取得する',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The file whose attributes are retrieved.',
+        descriptionJa: '属性を取得するファイル。',
+      },
+    ],
     returnsJa: '`result` … 取得失敗で -1、成功で属性値（$1 読取専用・$2 隠し・$10 ディレクトリ・$20 アーカイブ などの組み合わせ）。',
     returns: '`result` … -1 on failure, otherwise the attribute bitmask ($1 read-only, $2 hidden, $10 directory, $20 archive, etc.).',
     snippet: "getfileattr '${1:filename}'",
@@ -1641,6 +3814,19 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'clipb2var <strvar> [<offset>]',
     description: 'Copies text data from clipboard to <strvar>.',
     descriptionJa: 'クリップボードのテキストデータを <strvar> へ代入する',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the clipboard text.',
+        descriptionJa: 'クリップボードのテキストを格納する文字列変数。',
+      },
+      {
+        name: '<offset>',
+        description: 'The 0-origin offset within the clipboard text from which copying starts.',
+        descriptionJa: 'コピーを開始するクリップボードテキスト内のオフセット（0 オリジン）。',
+        optional: true,
+      },
+    ],
     returnsJa: 'クリップボードのテキストを `<strvar>` に代入。`result` … 0=クリップボードを開けない/テキストでない/offset 不正, 1=代入成功, 2=代入したが切り捨てあり, 3=メモリ確保失敗。',
     returns: 'Stores the clipboard text in `<strvar>`. `result` … 0=cannot open clipboard / not text / bad offset, 1=stored, 2=stored but truncated, 3=memory allocation failed.',
     snippet: 'clipb2var ${1:strvar}',
@@ -1650,6 +3836,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'var2clipb <string>',
     description: 'Copies <string> to the clipboard.',
     descriptionJa: '<string> をクリップボードにコピーする',
+    parameters: [
+      {
+        name: '<string>',
+        description: 'The string to copy to the clipboard.',
+        descriptionJa: 'クリップボードにコピーする文字列。',
+      },
+    ],
     returnsJa: '`result` … クリップボードへのコピーに成功すると 1、開けないと 0。',
     returns: '`result` … set to 1 when copied to the clipboard, 0 if it cannot be opened.',
     snippet: 'var2clipb ${1:string}',

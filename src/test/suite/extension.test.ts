@@ -245,6 +245,25 @@ describe('ホバープロバイダ', () => {
       'Hover content must link to the connect command page',
     );
   });
+
+  it('引数を持つコマンドのホバーに引数セクションが含まれる', async () => {
+    // Arrange: 2行目（0-origin: 1）の "connect"（引数を持つコマンド）
+    const hovers = await getHovers(document.uri, new vscode.Position(1, 2));
+
+    // Then: 「引数」または "Arguments" の見出しと、引数名のコード表記が含まれること
+    const content = hovers
+      .flatMap(h => h.contents)
+      .map(c => (c instanceof vscode.MarkdownString ? c.value : String(c)))
+      .join('\n');
+    assert.ok(
+      /\*\*(引数|Arguments)\*\*/.test(content),
+      'Hover content must contain an arguments section heading',
+    );
+    assert.ok(
+      content.includes('`<command line parameters>`'),
+      "Hover content must describe the connect command's argument",
+    );
+  });
 });
 
 describe('Go to Definition（ラベルジャンプ）', () => {

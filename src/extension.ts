@@ -37,6 +37,7 @@ import {
 import {
   buildReferenceUrl,
   type TtlCommand,
+  type TtlParameter,
   TTL_COMMANDS_MAP,
   TTL_DOC_HEADER_SNIPPETS,
   TTL_STRUCTURAL_KEYWORDS,
@@ -89,6 +90,20 @@ function selectReturns(command: TtlCommand, language: 'ja' | 'en'): string | und
 }
 
 /**
+ * 引数の説明を表示言語に応じて選択
+ *
+ * @param param - TTL引数定義
+ * @param language - 表示言語
+ * @returns 選択された引数の説明
+ */
+function selectParameterDescription(param: TtlParameter, language: 'ja' | 'en'): string {
+  if (language === 'ja' && param.descriptionJa !== undefined) {
+    return param.descriptionJa;
+  }
+  return param.description;
+}
+
+/**
  * コマンドのホバーテキストを生成
  *
  * @param command - TTLコマンド定義
@@ -100,6 +115,15 @@ function buildHoverMarkdown(command: TtlCommand, language: 'ja' | 'en'): vscode.
   // isTrusted は明示的に false のまま（command: URI によるコマンド実行を許可しない）
   markdown.appendCodeblock(command.signature, 'ttl');
   markdown.appendMarkdown(selectDescription(command, language).trim());
+  if (command.parameters !== undefined && command.parameters.length > 0) {
+    const heading = language === 'ja' ? '引数' : 'Arguments';
+    const optionalNote = language === 'ja' ? '（省略可）' : '(optional)';
+    const lines = command.parameters.map(param => {
+      const suffix = param.optional === true ? ` ${optionalNote}` : '';
+      return `- \`${param.name}\`${suffix} … ${selectParameterDescription(param, language).trim()}`;
+    });
+    markdown.appendMarkdown(`\n\n---\n\n**${heading}**\n\n${lines.join('\n')}`);
+  }
   const returns = selectReturns(command, language);
   if (returns !== undefined) {
     const heading = language === 'ja' ? '戻り値' : 'Return value';
