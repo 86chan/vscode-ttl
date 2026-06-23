@@ -1430,6 +1430,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'random <intvar> <max number>',
     description: 'Generates a random integer within the range 0..<max number> and assigns it to <intvar>.',
     descriptionJa: '0から<max number>までの整数の一様乱数を生成し、整数変数 <integer variable> へ代入する',
+    parameters: [
+      {
+        name: '<intvar>',
+        description: 'The integer variable that receives the generated random number.',
+        descriptionJa: '生成した乱数を格納する整数変数。',
+      },
+      {
+        name: '<max number>',
+        description: 'The upper bound of the range (0 to <max number>).',
+        descriptionJa: '生成する乱数の上限（0〜<max number>）。',
+      },
+    ],
     returnsJa: '生成した乱数を `<intvar>` に格納。',
     returns: 'Stores the generated random number in `<intvar>`.',
     snippet: 'random ${1:intvar} ${2:100}',
@@ -1439,6 +1451,23 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'rotateleft <intvar> <intval> <count>',
     description: 'Rotates <intval> left by <count> bits and stores the result in <intvar>.',
     descriptionJa: '整数値 <intval> を左に <count> 桁ローテートした値を整数型変数 <intvar> にコピーする',
+    parameters: [
+      {
+        name: '<intvar>',
+        description: 'The integer variable that receives the rotated value.',
+        descriptionJa: 'ローテート結果を格納する整数変数。',
+      },
+      {
+        name: '<intval>',
+        description: 'The integer value to rotate.',
+        descriptionJa: 'ローテートする整数値。',
+      },
+      {
+        name: '<count>',
+        description: 'The number of bits to rotate left.',
+        descriptionJa: '左にローテートする桁数（ビット数）。',
+      },
+    ],
     returnsJa: '左へローテートした結果を `<intvar>` に格納。',
     returns: 'Stores the left-rotated value in `<intvar>`.',
     snippet: 'rotateleft ${1:intvar} ${2:intval} ${3:count}',
@@ -1448,6 +1477,23 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'rotateright <intvar> <intval> <count>',
     description: 'Rotates <intval> right by <count> bits and stores the result in <intvar>.',
     descriptionJa: '整数値 <intval> を右に <count> 桁ローテートした値を整数型変数 <intvar> にコピーする',
+    parameters: [
+      {
+        name: '<intvar>',
+        description: 'The integer variable that receives the rotated value.',
+        descriptionJa: 'ローテート結果を格納する整数変数。',
+      },
+      {
+        name: '<intval>',
+        description: 'The integer value to rotate.',
+        descriptionJa: 'ローテートする整数値。',
+      },
+      {
+        name: '<count>',
+        description: 'The number of bits to rotate right.',
+        descriptionJa: '右にローテートする桁数（ビット数）。',
+      },
+    ],
     returnsJa: '右へローテートした結果を `<intvar>` に格納。',
     returns: 'Stores the right-rotated value in `<intvar>`.',
     snippet: 'rotateright ${1:intvar} ${2:intval} ${3:count}',
@@ -1457,6 +1503,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'checksum8 <intvar> <string>',
     description: 'Calculates the 8-bit checksum of a string.',
     descriptionJa: '引数の文字列から加算サム(8bit)を計算する',
+    parameters: [
+      {
+        name: '<intvar>',
+        description: 'The integer variable that receives the computed checksum.',
+        descriptionJa: '計算結果を格納する整数変数。',
+      },
+      {
+        name: '<string>',
+        description: 'The string whose checksum is calculated.',
+        descriptionJa: 'チェックサムを計算する文字列。',
+      },
+    ],
     returnsJa: '計算結果を `<intvar>` に格納。',
     returns: 'Stores the computed checksum in `<intvar>`.',
     snippet: 'checksum8 ${1:intvar} ${2:string}',
@@ -1466,6 +1524,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'checksum8file <intvar> <filename>',
     description: 'Calculates the 8-bit checksum of a file.',
     descriptionJa: 'ファイルから加算サム(8bit)を計算する',
+    parameters: [
+      {
+        name: '<intvar>',
+        description: 'The integer variable that receives the computed checksum.',
+        descriptionJa: '計算結果を格納する整数変数。',
+      },
+      {
+        name: '<filename>',
+        description: 'The file whose checksum is calculated.',
+        descriptionJa: 'チェックサムを計算するファイル。',
+      },
+    ],
     returnsJa: '計算結果を `<intvar>` に格納。ファイルを開けない場合は `result` に -1。',
     returns: 'Stores the computed checksum in `<intvar>`. `result` is set to -1 if the file cannot be opened.',
     snippet: "checksum8file ${1:intvar} '${2:filename}'",
@@ -1475,6 +1545,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'checksum16 <intvar> <string>',
     description: 'Calculates the 16-bit checksum of a string.',
     descriptionJa: '引数の文字列から加算サム(16bit)を計算する',
+    parameters: [
+      {
+        name: '<intvar>',
+        description: 'The integer variable that receives the computed checksum.',
+        descriptionJa: '計算結果を格納する整数変数。',
+      },
+      {
+        name: '<string>',
+        description: 'The string whose checksum is calculated.',
+        descriptionJa: 'チェックサムを計算する文字列。',
+      },
+    ],
     returnsJa: '計算結果を `<intvar>` に格納。',
     returns: 'Stores the computed checksum in `<intvar>`.',
     snippet: 'checksum16 ${1:intvar} ${2:string}',
@@ -1484,6 +1566,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'checksum16file <intvar> <filename>',
     description: 'Calculates the 16-bit checksum of a file.',
     descriptionJa: 'ファイルから加算サム(16bit)を計算する',
+    parameters: [
+      {
+        name: '<intvar>',
+        description: 'The integer variable that receives the computed checksum.',
+        descriptionJa: '計算結果を格納する整数変数。',
+      },
+      {
+        name: '<filename>',
+        description: 'The file whose checksum is calculated.',
+        descriptionJa: 'チェックサムを計算するファイル。',
+      },
+    ],
     returnsJa: '計算結果を `<intvar>` に格納。ファイルを開けない場合は `result` に -1。',
     returns: 'Stores the computed checksum in `<intvar>`. `result` is set to -1 if the file cannot be opened.',
     snippet: "checksum16file ${1:intvar} '${2:filename}'",
@@ -1493,6 +1587,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'checksum32 <intvar> <string>',
     description: 'Calculates the 32-bit checksum of a string.',
     descriptionJa: '引数の文字列から加算サム(32bit)を計算する',
+    parameters: [
+      {
+        name: '<intvar>',
+        description: 'The integer variable that receives the computed checksum.',
+        descriptionJa: '計算結果を格納する整数変数。',
+      },
+      {
+        name: '<string>',
+        description: 'The string whose checksum is calculated.',
+        descriptionJa: 'チェックサムを計算する文字列。',
+      },
+    ],
     returnsJa: '計算結果を `<intvar>` に格納。',
     returns: 'Stores the computed checksum in `<intvar>`.',
     snippet: 'checksum32 ${1:intvar} ${2:string}',
@@ -1502,6 +1608,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'checksum32file <intvar> <filename>',
     description: 'Calculates the 32-bit checksum of a file.',
     descriptionJa: 'ファイルから加算サム(32bit)を計算する',
+    parameters: [
+      {
+        name: '<intvar>',
+        description: 'The integer variable that receives the computed checksum.',
+        descriptionJa: '計算結果を格納する整数変数。',
+      },
+      {
+        name: '<filename>',
+        description: 'The file whose checksum is calculated.',
+        descriptionJa: 'チェックサムを計算するファイル。',
+      },
+    ],
     returnsJa: '計算結果を `<intvar>` に格納。ファイルを開けない場合は `result` に -1。',
     returns: 'Stores the computed checksum in `<intvar>`. `result` is set to -1 if the file cannot be opened.',
     snippet: "checksum32file ${1:intvar} '${2:filename}'",
@@ -1511,6 +1629,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'crc16 <intvar> <string>',
     description: 'Calculates the 16-bit CRC of a string.',
     descriptionJa: '引数の文字列からCRC(16bit)を計算する',
+    parameters: [
+      {
+        name: '<intvar>',
+        description: 'The integer variable that receives the computed CRC.',
+        descriptionJa: '計算結果を格納する整数変数。',
+      },
+      {
+        name: '<string>',
+        description: 'The string whose CRC is calculated.',
+        descriptionJa: 'CRC を計算する文字列。',
+      },
+    ],
     returnsJa: '計算結果を `<intvar>` に格納。',
     returns: 'Stores the computed CRC in `<intvar>`.',
     snippet: 'crc16 ${1:intvar} ${2:string}',
@@ -1520,6 +1650,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'crc16file <intvar> <filename>',
     description: 'Calculates the 16-bit CRC of a file.',
     descriptionJa: 'ファイルからCRC(16bit)を計算する',
+    parameters: [
+      {
+        name: '<intvar>',
+        description: 'The integer variable that receives the computed CRC.',
+        descriptionJa: '計算結果を格納する整数変数。',
+      },
+      {
+        name: '<filename>',
+        description: 'The file whose CRC is calculated.',
+        descriptionJa: 'CRC を計算するファイル。',
+      },
+    ],
     returnsJa: '計算結果を `<intvar>` に格納。ファイルを開けない場合は `result` に -1。',
     returns: 'Stores the computed CRC in `<intvar>`. `result` is set to -1 if the file cannot be opened.',
     snippet: "crc16file ${1:intvar} '${2:filename}'",
@@ -1529,6 +1671,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'crc32 <intvar> <string>',
     description: 'Calculates the 32-bit CRC of a string.',
     descriptionJa: '引数の文字列からCRC(32bit)を計算する',
+    parameters: [
+      {
+        name: '<intvar>',
+        description: 'The integer variable that receives the computed CRC.',
+        descriptionJa: '計算結果を格納する整数変数。',
+      },
+      {
+        name: '<string>',
+        description: 'The string whose CRC is calculated.',
+        descriptionJa: 'CRC を計算する文字列。',
+      },
+    ],
     returnsJa: '計算結果を `<intvar>` に格納。',
     returns: 'Stores the computed CRC in `<intvar>`.',
     snippet: 'crc32 ${1:intvar} ${2:string}',
@@ -1538,6 +1692,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'crc32file <intvar> <filename>',
     description: 'Calculates the 32-bit CRC of a file.',
     descriptionJa: 'ファイルからCRC(32bit)を計算する',
+    parameters: [
+      {
+        name: '<intvar>',
+        description: 'The integer variable that receives the computed CRC.',
+        descriptionJa: '計算結果を格納する整数変数。',
+      },
+      {
+        name: '<filename>',
+        description: 'The file whose CRC is calculated.',
+        descriptionJa: 'CRC を計算するファイル。',
+      },
+    ],
     returnsJa: '計算結果を `<intvar>` に格納。ファイルを開けない場合は `result` に -1。',
     returns: 'Stores the computed CRC in `<intvar>`. `result` is set to -1 if the file cannot be opened.',
     snippet: "crc32file ${1:intvar} '${2:filename}'",
