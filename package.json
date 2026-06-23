@@ -427,9 +427,32 @@
         ]
       }
     ],
+    "commands": [
+      {
+        "command": "ttl.formatWorkspace",
+        "title": "%ttl.command.formatWorkspace%",
+        "category": "TTL"
+      }
+    ],
     "configuration": {
       "title": "TTL Language",
       "properties": {
+        "ttl.format.normalizeOperatorSpacing": {
+          "type": "boolean",
+          "default": true,
+          "description": "%ttl.config.format.normalizeOperatorSpacing%"
+        },
+        "ttl.format.alignCommentTables": {
+          "type": "boolean",
+          "default": true,
+          "description": "%ttl.config.format.alignCommentTables%"
+        },
+        "ttl.format.maxConsecutiveBlankLines": {
+          "type": "integer",
+          "default": 1,
+          "minimum": 0,
+          "description": "%ttl.config.format.maxConsecutiveBlankLines%"
+        },
         "ttl.language": {
           "type": "string",
           "enum": [

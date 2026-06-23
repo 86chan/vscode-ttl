@@ -673,14 +673,52 @@ export async function buildIncludeRenameEdit(
 }
 
 /**
- * VS Code の整形オプションから TTL 整形用のインデント単位を導出
+ * `ttl.format.*` 設定から整形の挙動トグルを読み出す
+ *
+ * @param resource - 設定スコープを解決するリソース（フォルダー別設定の反映用）
+ * @returns 桁揃え・空白正規化・空行圧縮のオプション
+ */
+function readFormatToggles(
+  resource?: vscode.Uri,
+): Pick<FormatOptions, 'alignCommentTables' | 'normalizeOperatorSpacing' | 'maxConsecutiveBlankLines'> {
+  const config = vscode.workspace.getConfiguration('ttl', resource ?? null);
+  return {
+    alignCommentTables: config.get<boolean>('format.alignCommentTables', true),
+    normalizeOperatorSpacing: config.get<boolean>('format.normalizeOperatorSpacing', true),
+    maxConsecutiveBlankLines: config.get<number>('format.maxConsecutiveBlankLines', 1),
+  };
+}
+
+/**
+ * VS Code の整形オプションと `ttl.format.*` 設定から TTL 整形オプションを導出
  *
  * @param options - エディタの整形オプション
+ * @param resource - 設定スコープを解決するリソース
  * @returns TTL 整形オプション
  */
-function toFormatOptions(options: vscode.FormattingOptions): FormatOptions {
+function toFormatOptions(options: vscode.FormattingOptions, resource?: vscode.Uri): FormatOptions {
   const indentUnit = options.insertSpaces ? ' '.repeat(options.tabSize) : '\t';
-  return { indentUnit };
+  return { indentUnit, ...readFormatToggles(resource) };
+}
+
+/**
+ * 指定リソースに適用されるエディタのインデント単位を解決する
+ *
+ * @remarks ワークスペース一括整形のように `vscode.FormattingOptions` が得られない場面で、
+ * `editor.insertSpaces` / `editor.tabSize`（TTL 言語スコープ）からインデント単位を求める
+ *
+ * @param resource - 設定スコープを解決するリソース
+ * @returns インデント1段分の文字列
+ */
+function resolveIndentUnit(resource: vscode.Uri): string {
+  const editorConfig = vscode.workspace.getConfiguration('editor', {
+    uri: resource,
+    languageId: TTL_LANGUAGE_ID,
+  });
+  const insertSpaces = editorConfig.get<boolean>('insertSpaces', true);
+  const tabSize = editorConfig.get<number>('tabSize', 2);
+  const width = typeof tabSize === 'number' && tabSize > 0 ? tabSize : 2;
+  return insertSpaces ? ' '.repeat(width) : '\t';
 }
 
 /**
@@ -701,7 +739,7 @@ class TtlFormattingProvider implements vscode.DocumentFormattingEditProvider {
     options: vscode.FormattingOptions,
   ): vscode.TextEdit[] {
     const original = document.getText();
-    const formatted = formatTtl(original, toFormatOptions(options));
+    const formatted = formatTtl(original, toFormatOptions(options, document.uri));
     if (formatted === original) return [];
 
     const fullRange = new vscode.Range(
@@ -710,6 +748,79 @@ class TtlFormattingProvider implements vscode.DocumentFormattingEditProvider {
     );
     return [vscode.TextEdit.replace(fullRange, formatted)];
   }
+}
+
+/** ワークスペース一括整形のファイル選択肢 */
+interface TtlFileQuickPickItem extends vscode.QuickPickItem {
+  /** 対象ファイルの URI */
+  readonly uri: vscode.Uri;
+}
+
+/**
+ * ワークスペース内の `.ttl` を選択して一括整形するコマンド本体
+ *
+ * @remarks
+ * `**\/*.ttl` を走査し、QuickPick で対象ファイルを複数選択させたうえで、
+ * `ttl.format.*` 設定とエディタのインデント設定に従って整形・保存する
+ */
+async function formatWorkspaceCommand(): Promise<void> {
+  const files = await vscode.workspace.findFiles('**/*.ttl');
+  if (files.length === 0) {
+    void vscode.window.showInformationMessage('整形対象の .ttl ファイルが見つかりませんでした');
+    return;
+  }
+
+  // 既定で全選択にしておき、必要に応じて絞り込めるようにする
+  const items: TtlFileQuickPickItem[] = files
+    .map(uri => ({
+      label: vscode.workspace.asRelativePath(uri),
+      uri,
+      picked: true,
+    }))
+    .sort((left, right) => left.label.localeCompare(right.label));
+
+  const selected = await vscode.window.showQuickPick(items, {
+    canPickMany: true,
+    title: '整形する TTL ファイルを選択',
+    placeHolder: '整形するファイルを選択（既定で全選択）',
+  });
+  if (selected === undefined || selected.length === 0) return;
+
+  let changedCount = 0;
+  await vscode.window.withProgress(
+    { location: vscode.ProgressLocation.Notification, title: 'TTL を整形中…' },
+    async progress => {
+      for (let index = 0; index < selected.length; index++) {
+        const item = selected[index];
+        progress.report({
+          message: item.label,
+          increment: (100 / selected.length),
+        });
+
+        const document = await vscode.workspace.openTextDocument(item.uri);
+        const original = document.getText();
+        const indentUnit = resolveIndentUnit(item.uri);
+        const formatted = formatTtl(original, { indentUnit, ...readFormatToggles(item.uri) });
+        if (formatted === original) continue;
+
+        const edit = new vscode.WorkspaceEdit();
+        edit.replace(
+          item.uri,
+          new vscode.Range(document.positionAt(0), document.positionAt(original.length)),
+          formatted,
+        );
+        const applied = await vscode.workspace.applyEdit(edit);
+        if (applied) {
+          await document.save();
+          changedCount += 1;
+        }
+      }
+    },
+  );
+
+  void vscode.window.showInformationMessage(
+    `${selected.length} 件中 ${changedCount} 件の TTL ファイルを整形しました`,
+  );
 }
 
 /**
@@ -1066,6 +1177,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.languages.registerDocumentLinkProvider(selector, new TtlDocumentLinkProvider()),
     vscode.languages.registerRenameProvider(selector, new TtlRenameProvider()),
     vscode.languages.registerDocumentFormattingEditProvider(selector, new TtlFormattingProvider()),
+    vscode.commands.registerCommand('ttl.formatWorkspace', () => formatWorkspaceCommand()),
     vscode.debug.registerDebugConfigurationProvider(
       TTL_DEBUG_TYPE,
       new TtlDebugConfigurationProvider(),
