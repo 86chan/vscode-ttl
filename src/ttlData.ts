@@ -2147,6 +2147,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'foldercreate <foldername>',
     description: 'Creates a new folder. Sets "result" to 0 on success.',
     descriptionJa: 'フォルダ <foldername> を新しく作成する',
+    parameters: [
+      {
+        name: '<foldername>',
+        description: 'The folder to create.',
+        descriptionJa: '新しく作成するフォルダ。',
+      },
+    ],
     returnsJa: '`result` … 成功すると 0、失敗すると 0 以外。',
     returns: '`result` … set to 0 on success, non-zero on failure.',
     snippet: "foldercreate '${1:foldername}'",
@@ -2156,6 +2163,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'folderdelete <foldername>',
     description: 'Deletes a folder. Sets "result" to 0 on success.',
     descriptionJa: 'フォルダ <foldername> を削除する',
+    parameters: [
+      {
+        name: '<foldername>',
+        description: 'The folder to delete.',
+        descriptionJa: '削除するフォルダ。',
+      },
+    ],
     returnsJa: '`result` … 成功すると 0、失敗すると 0 以外。',
     returns: '`result` … set to 0 on success, non-zero on failure.',
     snippet: "folderdelete '${1:foldername}'",
@@ -2165,6 +2179,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'foldersearch <foldername>',
     description: 'Searches for a folder. Sets "result" to 1 if found, 0 if not.',
     descriptionJa: 'フォルダが存在するか調べる。存在する場合は result に 1 が返る',
+    parameters: [
+      {
+        name: '<foldername>',
+        description: 'The folder to check for existence.',
+        descriptionJa: '存在を確認するフォルダ。',
+      },
+    ],
     returnsJa: '`result` … フォルダが存在すれば 1、存在しなければ 0。',
     returns: '`result` … set to 1 if the folder exists, 0 if not.',
     snippet: "foldersearch '${1:foldername}'",
@@ -2175,6 +2196,23 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'findfirst <dir handle> <file name> <strvar>',
     description: 'Searches for the first file matching the specified pattern.',
     descriptionJa: 'findfirst コマンドはファイル名パターンに合致する最初のファイルを探す',
+    parameters: [
+      {
+        name: '<dir handle>',
+        description: 'The variable that receives the search handle.',
+        descriptionJa: '検索ハンドルを格納する変数。',
+      },
+      {
+        name: '<file name>',
+        description: 'The file-name pattern to search for (wildcards allowed).',
+        descriptionJa: '検索するファイル名パターン（ワイルドカード可）。',
+      },
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the found file name.',
+        descriptionJa: '見つかったファイル名を格納する文字列変数。',
+      },
+    ],
     returnsJa: 'ファイルが見つかると `<dir handle>` にハンドル、`<strvar>` にファイル名、`result` に 1 を格納。見つからないと それぞれ -1・空文字列・0。',
     returns: 'On a match, sets `<dir handle>` to the handle, `<strvar>` to the file name, and `result` to 1. Otherwise they are set to -1, "" and 0.',
     snippet: "findfirst ${1:handle} '${2:*.ttl}' ${3:strvar}",
@@ -2184,6 +2222,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'findnext <dir handle> <strvar>',
     description: 'Searches for the next file matching the pattern set by "findfirst".',
     descriptionJa: '"findfirst" で設定したパターンに合致する次のファイルを探す',
+    parameters: [
+      {
+        name: '<dir handle>',
+        description: 'The search handle returned by findfirst.',
+        descriptionJa: 'findfirst が返した検索ハンドル。',
+      },
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the next file name.',
+        descriptionJa: '次のファイル名を格納する文字列変数。',
+      },
+    ],
     returnsJa: '次のファイルが見つかると `<strvar>` にファイル名、`result` に 1 を格納。見つからないと 空文字列・0。',
     returns: 'On the next match, sets `<strvar>` to the file name and `result` to 1. Otherwise "" and 0.',
     snippet: 'findnext ${1:handle} ${2:strvar}',
@@ -2193,6 +2243,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'findclose <dir handle>',
     description: 'Closes the file search opened by "findfirst".',
     descriptionJa: '"findfirst" で開いたファイル検索を閉じる',
+    parameters: [
+      {
+        name: '<dir handle>',
+        description: 'The search handle to close.',
+        descriptionJa: '閉じる検索ハンドル。',
+      },
+    ],
     snippet: 'findclose ${1:handle}',
   },
   // ── パス操作 ─────────────────────────────────────────────────────────────────
@@ -2201,6 +2258,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'basename <strvar> <path>',
     description: 'Returns the trailing name component of a path.',
     descriptionJa: 'パス名 <path> からファイル名部分を <strvar> に格納する',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the file-name part.',
+        descriptionJa: 'ファイル名部分を格納する文字列変数。',
+      },
+      {
+        name: '<path>',
+        description: 'The path from which the file name is extracted.',
+        descriptionJa: 'ファイル名を取り出すパス。',
+      },
+    ],
     returnsJa: 'パスのファイル名部分を `<strvar>` に格納。',
     returns: 'Stores the file-name part of the path in `<strvar>`.',
     snippet: 'basename ${1:strvar} ${2:path}',
@@ -2210,6 +2279,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'dirname <strvar> <path>',
     description: 'Returns the directory component of a path.',
     descriptionJa: 'パス名 <path> のディレクトリ名部分を <strvar> に格納する',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the directory part.',
+        descriptionJa: 'ディレクトリ名部分を格納する文字列変数。',
+      },
+      {
+        name: '<path>',
+        description: 'The path from which the directory name is extracted.',
+        descriptionJa: 'ディレクトリ名を取り出すパス。',
+      },
+    ],
     returnsJa: 'パスのディレクトリ名部分を `<strvar>` に格納。',
     returns: 'Stores the directory part of the path in `<strvar>`.',
     snippet: 'dirname ${1:strvar} ${2:path}',
@@ -2219,6 +2300,23 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'makepath <strvar> <dir> <name>',
     description: 'Creates a full path name from a directory name and file name.',
     descriptionJa: 'ディレクトリ名 <dir> とファイル名 <name> からフルパス名を作成する',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the assembled path.',
+        descriptionJa: '連結したパスを格納する文字列変数。',
+      },
+      {
+        name: '<dir>',
+        description: 'The directory part of the path.',
+        descriptionJa: 'パスのディレクトリ名部分。',
+      },
+      {
+        name: '<name>',
+        description: 'The file-name part of the path.',
+        descriptionJa: 'パスのファイル名部分。',
+      },
+    ],
     returnsJa: '連結したパスを `<strvar>` に格納。',
     returns: 'Stores the assembled path in `<strvar>`.',
     snippet: 'makepath ${1:strvar} ${2:dir} ${3:name}',
@@ -2229,6 +2327,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'intdim <array> <size>',
     description: 'Defines an integer array with <size> elements.',
     descriptionJa: '<size> 個の要素を持つ整数配列型の変数 <array> を宣言する',
+    parameters: [
+      {
+        name: '<array>',
+        description: 'The name of the integer array variable to declare.',
+        descriptionJa: '宣言する整数配列型変数の名前。',
+      },
+      {
+        name: '<size>',
+        description: 'The number of elements in the array.',
+        descriptionJa: '配列の要素数。',
+      },
+    ],
     snippet: 'intdim ${1:array} ${2:10}',
   },
   {
@@ -2236,6 +2346,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'strdim <array> <size>',
     description: 'Defines a string array with <size> elements.',
     descriptionJa: '<size> 個の要素を持つ文字列配列型の変数 <array> を宣言する',
+    parameters: [
+      {
+        name: '<array>',
+        description: 'The name of the string array variable to declare.',
+        descriptionJa: '宣言する文字列配列型変数の名前。',
+      },
+      {
+        name: '<size>',
+        description: 'The number of elements in the array.',
+        descriptionJa: '配列の要素数。',
+      },
+    ],
     snippet: 'strdim ${1:array} ${2:10}',
   },
   // ── 日時 ─────────────────────────────────────────────────────────────────────
