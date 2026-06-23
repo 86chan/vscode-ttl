@@ -10,6 +10,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, it, expect } from 'vitest';
 import {
+  buildReferenceUrl,
   TTL_COMMANDS,
   TTL_COMMANDS_MAP,
   TTL_DOC_HEADER_SNIPPETS,
@@ -200,6 +201,63 @@ describe('TTL_SYSTEM_VARIABLES', () => {
     for (let i = 1; i <= 9; i++) {
       expect(TTL_SYSTEM_VARIABLES).toContain(`param${i}`);
     }
+  });
+});
+
+describe('buildReferenceUrl', () => {
+  it('通常コマンドは <名前>.html に対応する', () => {
+    const connect = TTL_COMMANDS_MAP.get('connect');
+    expect(connect).toBeDefined();
+    expect(buildReferenceUrl(connect!, 'en')).toBe(
+      'https://teratermproject.github.io/manual/5/en/macro/command/connect.html',
+    );
+  });
+
+  it('表示言語に応じて ja/en を切り替える', () => {
+    const sendln = TTL_COMMANDS_MAP.get('sendln');
+    expect(sendln).toBeDefined();
+    expect(buildReferenceUrl(sendln!, 'ja')).toBe(
+      'https://teratermproject.github.io/manual/5/ja/macro/command/sendln.html',
+    );
+    expect(buildReferenceUrl(sendln!, 'en')).toBe(
+      'https://teratermproject.github.io/manual/5/en/macro/command/sendln.html',
+    );
+  });
+
+  it('結合ページのコマンドはオーバーライド先を指す', () => {
+    const cases: ReadonlyArray<readonly [string, string]> = [
+      ['if', 'ifthenelseif'],
+      ['for', 'fornext'],
+      ['do', 'doloop'],
+      ['findfirst', 'findoperations'],
+      ['findnext', 'findoperations'],
+      ['findclose', 'findoperations'],
+      ['checksum8file', 'checksum8'],
+      ['checksum16file', 'checksum16'],
+      ['checksum32file', 'checksum32'],
+      ['crc16file', 'crc16'],
+      ['crc32file', 'crc32'],
+    ];
+    for (const [name, page] of cases) {
+      const command = TTL_COMMANDS_MAP.get(name);
+      expect(command, `"${name}" command must exist`).toBeDefined();
+      expect(buildReferenceUrl(command!, 'en')).toBe(
+        `https://teratermproject.github.io/manual/5/en/macro/command/${page}.html`,
+      );
+    }
+  });
+
+  it('オーバーライドのキーが実在するコマンドに対応する', () => {
+    // overrides 表に typo があると静かに <名前>.html へフォールバックしてしまうため、
+    // キーがすべて TTL_COMMANDS_MAP に存在することを保証する
+    const overriddenNames = [
+      'if', 'for', 'do',
+      'findfirst', 'findnext', 'findclose',
+      'checksum8file', 'checksum16file', 'checksum32file',
+      'crc16file', 'crc32file',
+    ];
+    const missing = overriddenNames.filter(name => !TTL_COMMANDS_MAP.has(name));
+    expect(missing).toEqual([]);
   });
 });
 
