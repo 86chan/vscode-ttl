@@ -2528,6 +2528,19 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'getver <strvar> [<version>]',
     description: 'Returns the version of Tera Term in <strvar>.',
     descriptionJa: 'Tera Term のバージョンを <strvar> に格納する',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the Tera Term version string.',
+        descriptionJa: 'Tera Term のバージョン文字列を格納する文字列変数。',
+      },
+      {
+        name: '<version>',
+        description: 'A version string to compare against the current version.',
+        descriptionJa: '現在のバージョンと比較するバージョン文字列。',
+        optional: true,
+      },
+    ],
     returnsJa: 'バージョン文字列を `<strvar>` に格納。`<version>` 指定時は `result` … -2=指定不正, -1=現バージョンが古い, 0=同じ, 1=新しい（省略時は `result` 不変）。',
     returns: 'Stores the version string in `<strvar>`. When `<version>` is given, `result` … -2=invalid, -1=older, 0=same, 1=newer (unchanged when omitted).',
     snippet: 'getver ${1:strvar}',
@@ -2537,6 +2550,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'gethostname <strvar>',
     description: 'Retrieves the destination hostname or IP address and stores it in <strvar>.',
     descriptionJa: 'Tera Term が接続しているホスト名（IPアドレス）を文字列変数 <strvar> に格納する',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the connected host name or IP address.',
+        descriptionJa: '接続中のホスト名（IP アドレス）を格納する文字列変数。',
+      },
+    ],
     returnsJa: 'ホスト名（IPアドレス）を `<strvar>` に格納。',
     returns: 'Stores the host name or IP address in `<strvar>`.',
     snippet: 'gethostname ${1:strvar}',
@@ -2546,6 +2566,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'getipv4addr <string array> <intvar>',
     description: 'Retrieves the local IPv4 address list.',
     descriptionJa: 'ローカルの IPv4 アドレス一覧を取得する',
+    parameters: [
+      {
+        name: '<string array>',
+        description: 'The string array that receives the local IPv4 addresses.',
+        descriptionJa: 'ローカルの IPv4 アドレスを格納する文字列配列。',
+      },
+      {
+        name: '<intvar>',
+        description: 'The integer variable that receives the number of addresses.',
+        descriptionJa: '取得したアドレスの個数を格納する整数変数。',
+      },
+    ],
     returnsJa: '取得した IP アドレスを `<string array>` に、アドレス個数を `<intvar>` に格納。`result` … 取得成功で 1、配列の要素数が足りない場合 0、取得失敗で -1。',
     returns: 'Stores the retrieved IP addresses in `<string array>` and the count in `<intvar>`. `result` … 1 on success, 0 if the array has too few entries, -1 on failure.',
   },
@@ -2554,6 +2586,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'getipv6addr <string array> <intvar>',
     description: 'Retrieves the local IPv6 address list.',
     descriptionJa: 'ローカルの IPv6 アドレス一覧を取得する',
+    parameters: [
+      {
+        name: '<string array>',
+        description: 'The string array that receives the local IPv6 addresses.',
+        descriptionJa: 'ローカルの IPv6 アドレスを格納する文字列配列。',
+      },
+      {
+        name: '<intvar>',
+        description: 'The integer variable that receives the number of addresses.',
+        descriptionJa: '取得したアドレスの個数を格納する整数変数。',
+      },
+    ],
     returnsJa: '取得した IP アドレスを `<string array>` に、アドレス個数を `<intvar>` に格納。`result` … 取得成功で 1、配列の要素数が足りない場合 0、取得失敗で -1（Windows 2000 以前では常に失敗）。',
     returns: 'Stores the retrieved IP addresses in `<string array>` and the count in `<intvar>`. `result` … 1 on success, 0 if the array has too few entries, -1 on failure (always fails on Windows 2000 or earlier).',
   },
@@ -2562,6 +2606,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'getmodemstatus <intvar>',
     description: 'Retrieves the modem control-register values from the serial port.',
     descriptionJa: 'シリアルポートからモデム制御レジスタの値を読み出す',
+    parameters: [
+      {
+        name: '<intvar>',
+        description: 'The integer variable that receives the modem control-register values.',
+        descriptionJa: 'モデム制御レジスタの値を格納する整数変数。',
+      },
+    ],
     returnsJa: 'モデム制御レジスタの値を `<intvar>` に格納。`result` … 読み出し成功で 0、失敗で 1。',
     returns: 'Stores the modem control-register values in `<intvar>`. `result` … 0 on success, 1 on failure.',
     snippet: 'getmodemstatus ${1:intvar}',
@@ -2571,6 +2622,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'getspecialfolder <strvar> <foldertype>',
     description: 'Stores a Windows special folder path in <strvar>.',
     descriptionJa: 'Windows の特殊フォルダを取得して <strvar> に格納する',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the special folder path.',
+        descriptionJa: '特殊フォルダのパスを格納する文字列変数。',
+      },
+      {
+        name: '<foldertype>',
+        description: 'The type of the Windows special folder to retrieve.',
+        descriptionJa: '取得する Windows 特殊フォルダの種類。',
+      },
+    ],
     returnsJa: 'フォルダパスを `<strvar>` に格納。`result` … 取得成功で 1、失敗で 0。',
     returns: 'Stores the folder path in `<strvar>`. `result` … 1 on success, 0 on failure.',
     snippet: 'getspecialfolder ${1:strvar} ${2:foldertype}',
@@ -2580,6 +2643,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'getttdir <strvar>',
     description: 'Stores the directory of ttpmacro.exe in <strvar>.',
     descriptionJa: 'ttpmacro.exe があるディレクトリを文字列変数 <strvar> に格納する',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the directory of ttpmacro.exe.',
+        descriptionJa: 'ttpmacro.exe があるディレクトリを格納する文字列変数。',
+      },
+    ],
     returnsJa: 'ディレクトリパスを `<strvar>` に格納。`result` … 取得成功で 1、失敗で 0。',
     returns: 'Stores the directory path in `<strvar>`. `result` … 1 on success, 0 on failure.',
     snippet: 'getttdir ${1:strvar}',
@@ -2589,6 +2659,53 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'getttpos <showflag> <window x> <window y> <window width> <window height> <client x> <client y> <client width> <client height>',
     description: 'Retrieves the position and size of the Tera Term window.',
     descriptionJa: 'Tera Term ウィンドウの位置とサイズを取得する',
+    parameters: [
+      {
+        name: '<showflag>',
+        description: 'The integer variable that receives the window display state.',
+        descriptionJa: 'ウィンドウの表示状態を格納する整数変数。',
+      },
+      {
+        name: '<window x>',
+        description: 'The integer variable that receives the window left (X) position.',
+        descriptionJa: 'ウィンドウの左端（X）座標を格納する整数変数。',
+      },
+      {
+        name: '<window y>',
+        description: 'The integer variable that receives the window top (Y) position.',
+        descriptionJa: 'ウィンドウの上端（Y）座標を格納する整数変数。',
+      },
+      {
+        name: '<window width>',
+        description: 'The integer variable that receives the window width.',
+        descriptionJa: 'ウィンドウの幅を格納する整数変数。',
+      },
+      {
+        name: '<window height>',
+        description: 'The integer variable that receives the window height.',
+        descriptionJa: 'ウィンドウの高さを格納する整数変数。',
+      },
+      {
+        name: '<client x>',
+        description: 'The integer variable that receives the client-area left (X) position.',
+        descriptionJa: 'クライアント領域の左端（X）座標を格納する整数変数。',
+      },
+      {
+        name: '<client y>',
+        description: 'The integer variable that receives the client-area top (Y) position.',
+        descriptionJa: 'クライアント領域の上端（Y）座標を格納する整数変数。',
+      },
+      {
+        name: '<client width>',
+        description: 'The integer variable that receives the client-area width.',
+        descriptionJa: 'クライアント領域の幅を格納する整数変数。',
+      },
+      {
+        name: '<client height>',
+        description: 'The integer variable that receives the client-area height.',
+        descriptionJa: 'クライアント領域の高さを格納する整数変数。',
+      },
+    ],
     returnsJa: 'ウィンドウの表示状態・位置・サイズを各変数に格納。`result` … 取得成功で 0、失敗で -1。',
     returns: 'Stores the window display state, position, and size in the respective variables. `result` … 0 on success, -1 on failure.',
     snippet: 'getttpos ${1:showflag} ${2:wx} ${3:wy} ${4:ww} ${5:wh} ${6:cx} ${7:cy} ${8:cw} ${9:ch}',
@@ -2598,6 +2715,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'gettitle <strvar>',
     description: 'Retrieves the title text of Tera Term and stores it in <strvar>.',
     descriptionJa: 'Tera Term のウィンドウタイトルを文字列変数 <strvar> に格納する',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the window title.',
+        descriptionJa: 'ウィンドウタイトルを格納する文字列変数。',
+      },
+    ],
     returnsJa: 'ウィンドウタイトルを `<strvar>` に格納。',
     returns: 'Stores the window title in `<strvar>`.',
     snippet: 'gettitle ${1:strvar}',
@@ -2607,6 +2731,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'settitle <title>',
     description: 'Changes the title text of the Tera Term window.',
     descriptionJa: 'Tera Term のウィンドウタイトルを <title> に変更する',
+    parameters: [
+      {
+        name: '<title>',
+        description: 'The new title text for the Tera Term window.',
+        descriptionJa: 'Tera Term ウィンドウに設定するタイトル文字列。',
+      },
+    ],
     snippet: "settitle '${1:title}'",
   },
   // ── ディレクトリ ─────────────────────────────────────────────────────────────
@@ -2615,6 +2746,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'getdir <strvar>',
     description: 'Returns the current working directory for MACRO (not Tera Term).',
     descriptionJa: 'MACRO のカレントディレクトリを文字列変数 <strvar> に格納する',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the current MACRO directory.',
+        descriptionJa: 'MACRO のカレントディレクトリを格納する文字列変数。',
+      },
+    ],
     returnsJa: 'MACRO のカレントディレクトリを `<strvar>` に格納。',
     returns: 'Stores the current directory of MACRO in `<strvar>`.',
     snippet: 'getdir ${1:strvar}',
@@ -2624,6 +2762,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'setdir <dir>',
     description: 'Changes the current working directory for MACRO.',
     descriptionJa: 'MACRO のカレントディレクトリを <dir> に変更する',
+    parameters: [
+      {
+        name: '<dir>',
+        description: 'The directory to set as the current MACRO working directory.',
+        descriptionJa: 'MACRO のカレントディレクトリに設定するディレクトリ。',
+      },
+    ],
     snippet: "setdir '${1:dir}'",
   },
   {
@@ -2631,6 +2776,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'changedir <path>',
     description: "Changes the file transfer directory for Tera Term to <path>.",
     descriptionJa: 'Tera Term のファイル転送用ディレクトリを <path> に変更する',
+    parameters: [
+      {
+        name: '<path>',
+        description: 'The directory to set as the Tera Term file-transfer directory.',
+        descriptionJa: 'Tera Term のファイル転送用ディレクトリに設定するパス。',
+      },
+    ],
     snippet: "changedir '${1:path}'",
   },
   // ── ウィンドウ表示 ───────────────────────────────────────────────────────────
@@ -2639,6 +2791,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'show <show flag>',
     description: 'Minimizes MACRO if <show flag> is 0, restores it if positive.',
     descriptionJa: '<show flag> が0の場合 MACRO を最小化する。0より大きい場合は元の大きさに戻して最前面に表示する',
+    parameters: [
+      {
+        name: '<show flag>',
+        description: '0 minimizes the MACRO window; a positive value restores it and brings it to the front.',
+        descriptionJa: '0 で MACRO ウィンドウを最小化、0 より大きい値で元の大きさに戻して最前面に表示する。',
+      },
+    ],
     snippet: 'show ${1:1}',
   },
   {
@@ -2646,6 +2805,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'showtt <show flag>',
     description: 'Controls the Tera Term VT window visibility: -1=hide, 0=minimize, positive=show.',
     descriptionJa: '<show flag> が-1なら VT ウィンドウを隠す。0なら最小化する。0より大きいなら表示する',
+    parameters: [
+      {
+        name: '<show flag>',
+        description: 'Controls the VT window: -1 hides it, 0 minimizes it, a positive value shows it.',
+        descriptionJa: 'VT ウィンドウの表示を制御する。-1 で隠し、0 で最小化、0 より大きい値で表示する。',
+      },
+    ],
     snippet: 'showtt ${1:1}',
   },
   {
@@ -2653,6 +2819,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'clearscreen <int>',
     description: 'Erases the screen: 0=VT screen, 1=VT screen+scroll buffer, 2=TEK screen.',
     descriptionJa: '<int> が0の場合 VT ウィンドウの画面を消去。1の場合はスクロールバッファーも消去',
+    parameters: [
+      {
+        name: '<int>',
+        description: 'Selects what to erase: 0=VT screen, 1=VT screen and scroll buffer, 2=TEK screen.',
+        descriptionJa: '消去対象を選択する（0=VT 画面, 1=VT 画面とスクロールバッファー, 2=TEK 画面）。',
+      },
+    ],
     snippet: 'clearscreen ${1:0}',
   },
   {
@@ -2660,6 +2833,14 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'beep [<sound type>]',
     description: 'Makes a beep sound. Sound types: 0=simple, 1=asterisk, 2=exclamation, 3=critical, 4=question, 5=default.',
     descriptionJa: 'WAVE 形式のサウンドを再生する',
+    parameters: [
+      {
+        name: '<sound type>',
+        description: 'The sound to play: 0=simple beep, 1=asterisk, 2=exclamation, 3=critical, 4=question, 5=default.',
+        descriptionJa: '再生する音の種類（0=単純ビープ, 1=asterisk, 2=exclamation, 3=critical, 4=question, 5=既定）。',
+        optional: true,
+      },
+    ],
     snippet: 'beep ${1:0}',
   },
   // ── ログ ─────────────────────────────────────────────────────────────────────
