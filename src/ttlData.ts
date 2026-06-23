@@ -370,6 +370,19 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'wait <string1> [<string2> ...]',
     description: 'Pauses until one of the character strings is received from the host, or until timeout.',
     descriptionJa: '文字列のうち一つがホストから送られてくるか、タイムアウトするまで待機',
+    parameters: [
+      {
+        name: '<string1>',
+        description: 'A character string to wait for from the host. Up to 10 may be specified; an empty string waits for any single character.',
+        descriptionJa: '受信を待つ文字列。最大 10 個まで指定でき、空文字列を指定した場合は任意の一文字を待つ。',
+      },
+      {
+        name: '<string2>',
+        description: 'Additional strings to wait for, in order.',
+        descriptionJa: '追加で待つ文字列。順に複数指定できる。',
+        optional: true,
+      },
+    ],
     returnsJa: '`result` … タイムアウトで 0、`<stringN>` を受信で n（1〜10）。タイムアウトは `timeout`/`mtimeout` で制御。',
     returns: '`result` … 0 on timeout, or n (1–10) when `<stringN>` is received. The timeout is controlled by `timeout`/`mtimeout`.',
     snippet: "wait '${1:string}'",
@@ -379,6 +392,19 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'waitln <string1> [<string2> ...]',
     description: 'Pauses until a line which contains one of the strings is received, or until timeout.',
     descriptionJa: '文字列のうち一つを含む行をホストから受信するか、タイムアウトするまで待機',
+    parameters: [
+      {
+        name: '<string1>',
+        description: 'A string to wait for within a received line. Up to 10 may be specified; an empty string waits for any line.',
+        descriptionJa: '受信行に含まれているか待つ文字列。最大 10 個まで指定でき、空文字列を指定した場合は任意の行を待つ。',
+      },
+      {
+        name: '<string2>',
+        description: 'Additional strings to wait for, in order.',
+        descriptionJa: '追加で待つ文字列。順に複数指定できる。',
+        optional: true,
+      },
+    ],
     returnsJa: '受信した行を `inputstr` に格納。`result` … タイムアウトで 0、`<stringN>` を含む行を受信で n（1〜10）。',
     returns: 'Stores the received line in `inputstr`. `result` … 0 on timeout, or n (1–10) when a line containing `<stringN>` is received.',
     snippet: "waitln '${1:string}'",
@@ -388,6 +414,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'waitn <received byte count>',
     description: 'Pauses until the given number of bytes are received from the host, or until timeout.',
     descriptionJa: '指定バイト数以上のデータ受信まで待機',
+    parameters: [
+      {
+        name: '<received byte count>',
+        description: 'The number of bytes to wait for from the host.',
+        descriptionJa: '受信完了とみなすバイト数。',
+      },
+    ],
     returnsJa: '指定バイト数を受信すると `inputstr` に格納し `result` に 1（指定が 511 を超える場合は先頭 511 バイトのみ格納）、1文字も受信せずにタイムアウトで 0。',
     returns: 'On receiving the given number of bytes, stores them in `inputstr` and sets `result` to 1 (if the count exceeds 511, only the first 511 bytes are stored); 0 on timeout with no data received.',
   },
@@ -396,6 +429,23 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'waitrecv <sub-string> <len> <pos>',
     description: 'Pauses until a string satisfying a condition is received, or until timeout.',
     descriptionJa: '条件を満たす文字列がホストから送られてくるか、タイムアウトするまで待機',
+    parameters: [
+      {
+        name: '<sub-string>',
+        description: 'The sub-string that must be contained in the received string.',
+        descriptionJa: '受信文字列が含むべき副文字列。',
+      },
+      {
+        name: '<len>',
+        description: 'The length of the received string to be evaluated.',
+        descriptionJa: '受信する文字列の長さ。',
+      },
+      {
+        name: '<pos>',
+        description: 'The position (1-origin) at which the sub-string must begin within the received string.',
+        descriptionJa: '副文字列が始まる位置（1 オリジン）。',
+      },
+    ],
     returnsJa: '条件を満たす文字列を受信すると `inputstr` に格納。`result` … 1=受信成功, 0=タイムアウト, -1=受信したが長さが `<len>` 未満。',
     returns: 'On a matching string, stores it in `inputstr`. `result` … 1=received, 0=timeout, -1=received but shorter than `<len>` due to timeout.',
   },
@@ -404,6 +454,19 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'waitregex <regex1> [<regex2> ...]',
     description: 'Pauses until a line matching one of the regular expressions is received, or until timeout.',
     descriptionJa: '正規表現にマッチする行をホストから受信するか、タイムアウトするまで待機',
+    parameters: [
+      {
+        name: '<regex1>',
+        description: 'A regular expression to match against a received line. Up to 10 may be specified.',
+        descriptionJa: '受信行とマッチさせる正規表現。最大 10 個まで指定できる。',
+      },
+      {
+        name: '<regex2>',
+        description: 'Additional regular expressions to match, in order.',
+        descriptionJa: '追加でマッチさせる正規表現。順に複数指定できる。',
+        optional: true,
+      },
+    ],
     returnsJa: '`result` … タイムアウトで 0、マッチで n（1〜10）。`inputstr` に受信行、`matchstr` に最初のマッチ、`groupmatchstr1`〜`groupmatchstr9` にグループマッチ結果。',
     returns: '`result` … 0 on timeout, or n (1–10) on match. `inputstr` holds the received line, `matchstr` the first match, and `groupmatchstr1`–`groupmatchstr9` the captured groups.',
     snippet: "waitregex '${1:regex}'",
@@ -413,6 +476,19 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'wait4all <string1> [<string2> ...]',
     description: 'Pauses until one of the strings is received from all macro-linked terminals.',
     descriptionJa: 'マクロに接続されている全端末において、文字列のうち一つが送られてくるまで待機',
+    parameters: [
+      {
+        name: '<string1>',
+        description: 'A character string to wait for from all macro-linked terminals. Up to 10 may be specified.',
+        descriptionJa: '全端末から受信を待つ文字列。最大 10 個まで指定できる。',
+      },
+      {
+        name: '<string2>',
+        description: 'Additional strings to wait for, in order.',
+        descriptionJa: '追加で待つ文字列。順に複数指定できる。',
+        optional: true,
+      },
+    ],
     returnsJa: '`result` … タイムアウトで 0、`<stringN>` を受信で n（1〜10）。タイムアウトは `timeout`/`mtimeout` で制御。',
     returns: '`result` … 0 on timeout, or n (1–10) when `<stringN>` is received. The timeout is controlled by `timeout`/`mtimeout`.',
   },
@@ -421,6 +497,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'waitevent <events>',
     description: 'Pauses until one of the events specified by <events> occurs.',
     descriptionJa: '<events> で指定されるイベントが発生するまで待機',
+    parameters: [
+      {
+        name: '<events>',
+        description: 'A combination of event identifiers to wait for: timeout=1, unlink=2, disconnection=4, connection=8. Combine them with `or`.',
+        descriptionJa: '待機するイベント識別子の組み合わせ（timeout=1, unlink=2, disconnection=4, connection=8）。`or` で連結して指定できる。',
+      },
+    ],
     returnsJa: '`result` … 発生したイベント識別子（1=timeout, 2=unlink, 4=disconnection, 8=connection）。',
     returns: '`result` … the identifier of the event that occurred (1=timeout, 2=unlink, 4=disconnection, 8=connection).',
   },
@@ -437,6 +520,23 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'recvfile <filename> <binary flag> <auto-stop wait time>',
     description: 'Writes the data received from the host to the specified file.',
     descriptionJa: 'ホストから受信したデータを <filename> で指定されたファイルに出力',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The file to which data received from the host is written. A relative path is saved to the file-transfer folder.',
+        descriptionJa: '受信したデータを出力するファイル。相対パスの時はファイル転送用ディレクトリに保存する。',
+      },
+      {
+        name: '<binary flag>',
+        description: 'Regardless of its numeric value, received data is always written to the file unchanged (without conversion).',
+        descriptionJa: '値が何であれ、受信したデータをそのまま（変換せず）ファイルに出力する。',
+      },
+      {
+        name: '<auto-stop wait time>',
+        description: 'Reception stops if no data is received for this many seconds; a value of 0 or less waits indefinitely.',
+        descriptionJa: 'この秒数の間、受信データが無い状態が続くとデータ受信を終了する。0 以下の場合は無期限に待つ。',
+      },
+    ],
     returnsJa: '`result` … 転送が成功すると 1、失敗すると 0。',
     returns: '`result` … set to 1 on a successful transfer, 0 otherwise.',
   },
@@ -468,6 +568,14 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'cygconnect [<command line parameters>]',
     description: 'Runs Tera Term connected to Cygwin and links it to MACRO.',
     descriptionJa: 'Cygwin に接続した Tera Term を起動して MACRO とリンク',
+    parameters: [
+      {
+        name: '<command line parameters>',
+        description: 'The Cygwin connection command line parameters used when starting Tera Term.',
+        descriptionJa: 'Tera Term を起動する時に渡す Cygwin 接続用のコマンドラインパラメータ。',
+        optional: true,
+      },
+    ],
     returnsJa: '`result` … 0=Tera Term とリンクなし, 1=リンク済みだがホストまたはCygwinに未接続, 2=リンク・接続済み。',
     returns: '`result` … 0=not linked to Tera Term, 1=linked but not connected to the host or Cygwin, 2=linked and connected.',
   },
@@ -476,6 +584,14 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'disconnect [<confirm>]',
     description: 'Disconnects Tera Term from the host.',
     descriptionJa: 'Tera Term とホストの接続を切断',
+    parameters: [
+      {
+        name: '<confirm>',
+        description: 'When zero, disconnects without confirmation; when non-zero, shows the disconnection confirmation dialog (default non-zero).',
+        descriptionJa: '0 を指定すると確認ダイアログを表示せずに切断し、0 以外を指定すると切断時の確認ダイアログを表示する（既定は 0 以外）。',
+        optional: true,
+      },
+    ],
   },
   {
     name: 'closett',
@@ -503,6 +619,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'pause <time>',
     description: 'Pauses for <time> seconds.',
     descriptionJa: 'TTL 実行を <time> 秒間休止',
+    parameters: [
+      {
+        name: '<time>',
+        description: 'The number of seconds to pause TTL execution.',
+        descriptionJa: 'TTL の実行を休止する秒数。',
+      },
+    ],
     snippet: 'pause ${1:1}',
   },
   {
@@ -510,6 +633,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'mpause <time>',
     description: 'Pauses for <time> milliseconds.',
     descriptionJa: 'TTL 実行を <time> ミリ秒間休止',
+    parameters: [
+      {
+        name: '<time>',
+        description: 'The number of milliseconds to pause TTL execution.',
+        descriptionJa: 'TTL の実行を休止するミリ秒数。',
+      },
+    ],
     snippet: 'mpause ${1:500}',
   },
   // ── ダイアログ ───────────────────────────────────────────────────────────────
@@ -518,6 +648,24 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'messagebox <message> <title> [<special>]',
     description: 'Displays a message box.',
     descriptionJa: 'メッセージボックスを表示',
+    parameters: [
+      {
+        name: '<message>',
+        description: 'The message displayed in the dialog box.',
+        descriptionJa: 'ダイアログボックスに表示されるメッセージ。',
+      },
+      {
+        name: '<title>',
+        description: 'The title displayed on the dialog box.',
+        descriptionJa: 'ダイアログボックスのタイトル。',
+      },
+      {
+        name: '<special>',
+        description: 'If non-zero, certain strings in <message> are treated as special characters (default 0; now obsolete in favor of strspecial).',
+        descriptionJa: '0 でない場合、<message> に含まれる文字列を特殊文字として扱う（省略時 0。現在は strspecial の使用が推奨）。',
+        optional: true,
+      },
+    ],
     snippet: "messagebox '${1:message}' '${2:title}'",
   },
   {
@@ -525,6 +673,30 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'inputbox <message> <title> [<default> [<special>]]',
     description: 'Displays an input dialog box. The user input is stored in "inputstr".',
     descriptionJa: '入力ダイアログを表示して inputstr に格納',
+    parameters: [
+      {
+        name: '<message>',
+        description: 'The message displayed in the dialog box.',
+        descriptionJa: 'ダイアログボックスに表示されるメッセージ。',
+      },
+      {
+        name: '<title>',
+        description: 'The title displayed on the dialog box.',
+        descriptionJa: 'ダイアログボックスのタイトル。',
+      },
+      {
+        name: '<default>',
+        description: 'The default string for the edit control (default empty string).',
+        descriptionJa: 'エディットコントロールのデフォルト文字列（省略時は空文字列）。',
+        optional: true,
+      },
+      {
+        name: '<special>',
+        description: 'If non-zero, certain strings in <message> are treated as special characters (default 0).',
+        descriptionJa: '0 でない場合、<message> に含まれる文字列を特殊文字として扱う（省略時 0）。',
+        optional: true,
+      },
+    ],
     returnsJa: '`inputstr` … 入力された文字列が代入される。',
     returns: '`inputstr` … the string entered by the user.',
     snippet: "inputbox '${1:message}' '${2:title}'",
@@ -534,6 +706,24 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'passwordbox <message> <title> [<special>]',
     description: 'Displays a password input dialog. The input is masked and stored in "inputstr".',
     descriptionJa: 'パスワード入力ダイアログを表示して inputstr に格納',
+    parameters: [
+      {
+        name: '<message>',
+        description: 'The message displayed in the dialog box.',
+        descriptionJa: 'ダイアログボックスに表示されるメッセージ。',
+      },
+      {
+        name: '<title>',
+        description: 'The title displayed on the dialog box.',
+        descriptionJa: 'ダイアログボックスのタイトル。',
+      },
+      {
+        name: '<special>',
+        description: 'If non-zero, certain strings in <message> are treated as special characters (default 0).',
+        descriptionJa: '0 でない場合、<message> に含まれる文字列を特殊文字として扱う（省略時 0）。',
+        optional: true,
+      },
+    ],
     returnsJa: '`inputstr` … 入力された文字列が代入される。',
     returns: '`inputstr` … the string entered by the user.',
     snippet: "passwordbox '${1:message}' '${2:title}'",
@@ -543,6 +733,24 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'yesnobox <message> <title> [<special>]',
     description: 'Displays a Yes/No dialog. Sets "result" to 1 for Yes, 0 for No.',
     descriptionJa: 'Yes/No ダイアログを表示して result に格納（Yes=1, No=0）',
+    parameters: [
+      {
+        name: '<message>',
+        description: 'The message displayed in the dialog box.',
+        descriptionJa: 'ダイアログボックスに表示されるメッセージ。',
+      },
+      {
+        name: '<title>',
+        description: 'The title displayed on the dialog box.',
+        descriptionJa: 'ダイアログボックスのタイトル。',
+      },
+      {
+        name: '<special>',
+        description: 'If non-zero, certain strings in <message> are treated as special characters (default 0).',
+        descriptionJa: '0 でない場合、<message> に含まれる文字列を特殊文字として扱う（省略時 0）。',
+        optional: true,
+      },
+    ],
     returnsJa: '`result` … 「はい」で 1、「いいえ」で 0。',
     returns: '`result` … set to 1 for "Yes", 0 for "No".',
     snippet: "yesnobox '${1:message}' '${2:title}'",
@@ -552,6 +760,35 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'listbox <message> <title> <string array> [<selected>] [<keyword parameter>...]',
     description: 'Displays a list box dialog. The selected index is stored in "result".',
     descriptionJa: 'リストボックスダイアログを表示して result に選択インデックスを格納',
+    parameters: [
+      {
+        name: '<message>',
+        description: 'The message displayed in the dialog box.',
+        descriptionJa: 'ダイアログボックスに表示されるメッセージ。',
+      },
+      {
+        name: '<title>',
+        description: 'The title displayed on the dialog box.',
+        descriptionJa: 'ダイアログボックスのタイトル。',
+      },
+      {
+        name: '<string array>',
+        description: 'The array of items displayed in the list box.',
+        descriptionJa: 'リストボックスに表示される選択項目（配列）。',
+      },
+      {
+        name: '<selected>',
+        description: 'The zero-based index of the item selected initially. If omitted, no item is selected.',
+        descriptionJa: '初期選択項目（0 オリジンインデックス）。省略時はどの項目も選択されない。',
+        optional: true,
+      },
+      {
+        name: '<keyword parameter>',
+        description: 'Optional modifiers, in any order: dblclick=on, minmaxbutton=on, minimize=on, maximize=on, listboxsize=WxH.',
+        descriptionJa: '省略可能・複数指定可・順不同のオプション（dblclick=on, minmaxbutton=on, minimize=on, maximize=on, listboxsize=WxH）。',
+        optional: true,
+      },
+    ],
     returnsJa: '`result` … 選択した項目の番号 0〜N-1、キャンセル時は -1。',
     returns: '`result` … the selected item index 0 to N-1, or -1 if cancelled.',
     snippet: "listbox '${1:message}' '${2:title}' ${3:array}",
@@ -561,6 +798,24 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'statusbox <message> <title> [<special>]',
     description: 'Displays or updates the status dialog box.',
     descriptionJa: 'ステータスダイアログを表示または更新',
+    parameters: [
+      {
+        name: '<message>',
+        description: 'The message displayed in the status dialog box.',
+        descriptionJa: 'ステータスダイアログボックスに表示されるメッセージ。',
+      },
+      {
+        name: '<title>',
+        description: 'The title displayed on the status dialog box.',
+        descriptionJa: 'ステータスダイアログボックスのタイトル。',
+      },
+      {
+        name: '<special>',
+        description: 'If non-zero, certain strings in <message> are treated as special characters (default 0).',
+        descriptionJa: '0 でない場合、<message> に含まれる文字列を特殊文字として扱う（省略時 0）。',
+        optional: true,
+      },
+    ],
     snippet: "statusbox '${1:message}' '${2:title}'",
   },
   {
