@@ -835,6 +835,19 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'dirnamebox <title> [<initialdir>]',
     description: 'Displays a folder browser dialog. The selected folder is stored in "inputstr".',
     descriptionJa: 'フォルダ選択ダイアログを表示して inputstr に格納',
+    parameters: [
+      {
+        name: '<title>',
+        description: 'The title of the dialog box.',
+        descriptionJa: 'ダイアログボックスのタイトル。',
+      },
+      {
+        name: '<initialdir>',
+        description: 'The initial directory of the dialog box. If empty or an invalid path, the desktop becomes the initial directory.',
+        descriptionJa: 'ダイアログボックスの初期ディレクトリ。空文字列や無効なパスを指定するとデスクトップが初期ディレクトリになる。',
+        optional: true,
+      },
+    ],
     returnsJa: '`result` … OK を押すと 1（`inputstr` に選択ディレクトリ名）、キャンセル/閉じると 0。',
     returns: '`result` … set to 1 when OK is pressed (`inputstr` holds the directory name), 0 when cancelled or closed.',
     snippet: "dirnamebox '${1:title}'",
@@ -844,6 +857,25 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'filenamebox <title> [<dialogtype> [<initialdir>]]',
     description: 'Displays a file open/save dialog. The selected filename is stored in "inputstr".',
     descriptionJa: 'ファイル選択ダイアログを表示して inputstr に格納',
+    parameters: [
+      {
+        name: '<title>',
+        description: 'The title of the dialog box.',
+        descriptionJa: 'ダイアログボックスのタイトル。',
+      },
+      {
+        name: '<dialogtype>',
+        description: 'The dialog type: 0 opens an "Open File" dialog; non-zero opens a "Save File As" dialog.',
+        descriptionJa: 'ダイアログボックスの種類。0 で［ファイルを開く］、0 以外で［ファイル名を付けて保存］ダイアログを開く。',
+        optional: true,
+      },
+      {
+        name: '<initialdir>',
+        description: 'The initial directory of the dialog box. If empty or invalid, the initial directory is determined by Windows (the OPENFILENAME lpstrInitialDir specification).',
+        descriptionJa: 'ダイアログボックスの初期ディレクトリ。空文字列や無効なパスの場合は Windows の仕様（OPENFILENAME 構造体の lpstrInitialDir の仕様）により決定される。',
+        optional: true,
+      },
+    ],
     returnsJa: '`result` … OK を押すと 0 以外（`inputstr` に入力ファイル名）、キャンセル/閉じると 0。*(4.65 以降)*',
     returns: '`result` … nonzero when OK is pressed (`inputstr` holds the file name), 0 when cancelled or closed. *(4.65 or later)*',
     snippet: "filenamebox '${1:title}'",
@@ -853,6 +885,38 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'setdlgpos [<x> <y> [<position> [<offset x> <offset y>]]]',
     description: 'Changes the display position of dialog boxes shown by MACRO commands.',
     descriptionJa: 'マクロコマンドのダイアログ表示位置を変更',
+    parameters: [
+      {
+        name: '<x>',
+        description: 'The X coordinate of the top-left corner of the dialog box.',
+        descriptionJa: 'ダイアログボックス左上隅の X 座標。',
+        optional: true,
+      },
+      {
+        name: '<y>',
+        description: 'The Y coordinate of the top-left corner of the dialog box.',
+        descriptionJa: 'ダイアログボックス左上隅の Y 座標。',
+        optional: true,
+      },
+      {
+        name: '<position>',
+        description: 'The display position (1–10) on the display or the Tera Term VT window.',
+        descriptionJa: 'ダイアログボックスの表示位置（1〜10。ディスプレイまたは Tera Term の VT ウィンドウ上の位置）。',
+        optional: true,
+      },
+      {
+        name: '<offset x>',
+        description: 'The X offset applied to the position specified by <position>.',
+        descriptionJa: '<position> で指定した表示位置の X 座標補正値。',
+        optional: true,
+      },
+      {
+        name: '<offset y>',
+        description: 'The Y offset applied to the position specified by <position>.',
+        descriptionJa: '<position> で指定した表示位置の Y 座標補正値。',
+        optional: true,
+      },
+    ],
   },
   // ── 文字列操作 ───────────────────────────────────────────────────────────────
   {
@@ -860,6 +924,19 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'sprintf <format> [<arg1> ...]',
     description: 'Formats the arguments according to the C printf format and stores the result in "inputstr".',
     descriptionJa: '引数を C printf 形式でフォーマットして inputstr に代入',
+    parameters: [
+      {
+        name: '<format>',
+        description: 'A C printf-style format string.',
+        descriptionJa: 'C printf 形式の書式文字列。',
+      },
+      {
+        name: '<arg1>',
+        description: 'A value to be formatted according to <format>. Multiple values may be specified.',
+        descriptionJa: '<format> に従ってフォーマットする値。複数指定できる。',
+        optional: true,
+      },
+    ],
     returnsJa: '整形結果を `inputstr` に格納。`result` … 0=成功, 1=書式指定なし, 2=書式不正, 3=引数不正。',
     returns: 'Stores the formatted string in `inputstr`. `result` … 0=success, 1=no format, 2=invalid format, 3=invalid argument.',
     snippet: "sprintf '${1:%s}' ${2:arg}",
@@ -869,6 +946,24 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'sprintf2 <strvar> <format> [<arg1> ...]',
     description: 'Formats the arguments according to the C printf format and stores the result in <strvar>.',
     descriptionJa: '引数を C printf 形式でフォーマットして <strvar> に代入',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the formatted result.',
+        descriptionJa: '整形結果を格納する文字列変数。',
+      },
+      {
+        name: '<format>',
+        description: 'A C printf-style format string.',
+        descriptionJa: 'C printf 形式の書式文字列。',
+      },
+      {
+        name: '<arg1>',
+        description: 'A value to be formatted according to <format>. Multiple values may be specified.',
+        descriptionJa: '<format> に従ってフォーマットする値。複数指定できる。',
+        optional: true,
+      },
+    ],
     returnsJa: '整形結果を `<strvar>` に格納。`result` … 0=成功, 1=書式指定なし, 2=書式不正, 3=引数不正, 4=格納先変数が不正。',
     returns: 'Stores the formatted string in `<strvar>`. `result` … 0=success, 1=no format, 2=invalid format, 3=invalid argument, 4=invalid target variable.',
     snippet: "sprintf2 ${1:strvar} '${2:%s}' ${3:arg}",
@@ -878,6 +973,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'strconcat <strvar> <string>',
     description: 'Appends a copy of <string> to the end of the string variable <strvar>.',
     descriptionJa: '文字列変数 <strvar> の文字列値の最後に文字列 <string> を継ぎ足す',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable to which <string> is appended.',
+        descriptionJa: '末尾に <string> を継ぎ足す文字列変数。',
+      },
+      {
+        name: '<string>',
+        description: 'The string appended to the end of <strvar>.',
+        descriptionJa: '<strvar> の末尾に連結する文字列。',
+      },
+    ],
     returnsJa: '`<string>` を末尾に連結した結果を `<strvar>` に格納。',
     returns: 'Appends `<string>` to `<strvar>` in place.',
     snippet: 'strconcat ${1:strvar} ${2:string}',
@@ -887,6 +994,28 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'strcopy <string> <pos> <len> <strvar>',
     description: 'Copies a substring of <string> (starting at <pos>, length <len>) to <strvar>.',
     descriptionJa: '文字列 <string> の <pos> 文字目から <len> 文字分を文字列変数 <strvar> にコピーする',
+    parameters: [
+      {
+        name: '<string>',
+        description: 'The source string to copy from.',
+        descriptionJa: 'コピー元の文字列。',
+      },
+      {
+        name: '<pos>',
+        description: 'The 1-origin start position of the substring.',
+        descriptionJa: '部分文字列の開始位置（1 オリジン）。',
+      },
+      {
+        name: '<len>',
+        description: 'The number of characters to copy.',
+        descriptionJa: 'コピーする文字数。',
+      },
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the copied substring.',
+        descriptionJa: 'コピーした部分文字列を格納する文字列変数。',
+      },
+    ],
     returnsJa: '抽出した部分文字列を `<strvar>` に格納。',
     returns: 'Stores the extracted substring in `<strvar>`.',
     snippet: 'strcopy ${1:string} ${2:1} ${3:len} ${4:strvar}',
@@ -896,6 +1025,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'strlen <string>',
     description: 'Returns the byte length of <string> in the system variable "result".',
     descriptionJa: '文字列 <string> の長さをシステム変数 result に格納する',
+    parameters: [
+      {
+        name: '<string>',
+        description: 'The string whose length is measured.',
+        descriptionJa: '長さを求める文字列。',
+      },
+    ],
     returnsJa: '`result` … 文字列の長さ。',
     returns: '`result` … the length of the string.',
     snippet: 'strlen ${1:string}',
@@ -905,6 +1041,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'strscan <string> <substring>',
     description: 'Searches for <substring> in <string>. Returns its 1-origin position in "result", or 0 if not found.',
     descriptionJa: '文字列 <string> の中に部分文字列 <substring> が含まれているか調べる。位置(1オリジン)が result に格納される',
+    parameters: [
+      {
+        name: '<string>',
+        description: 'The string to search.',
+        descriptionJa: '検索対象の文字列。',
+      },
+      {
+        name: '<substring>',
+        description: 'The substring to search for.',
+        descriptionJa: '検索する部分文字列。',
+      },
+    ],
     returnsJa: '`result` … `<substring>` が見つかった位置（1 始まり、複数あれば最初）、見つからなければ 0。',
     returns: '`result` … the 1-based position of `<substring>` (the first if there are several), or 0 if not found.',
     snippet: 'strscan ${1:string} ${2:substring}',
@@ -914,6 +1062,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'strmatch <target string> <regex>',
     description: 'Searches <target string> using a regular expression. Matched substrings are stored in groupmatchstr1-9.',
     descriptionJa: '<target string> を正規表現で検索する。マッチした部分が groupmatchstr1〜9 に格納される',
+    parameters: [
+      {
+        name: '<target string>',
+        description: 'The string to search.',
+        descriptionJa: '検索対象の文字列。',
+      },
+      {
+        name: '<regex>',
+        description: 'The regular expression to match.',
+        descriptionJa: 'マッチさせる正規表現。',
+      },
+    ],
     returnsJa: '`result` … マッチしないと 0、マッチするとその位置（1 始まり）。`matchstr` に最初のマッチ、`groupmatchstr1`〜`groupmatchstr9` にグループマッチ結果。',
     returns: '`result` … 0 if no match, otherwise the 1-based position of the match. `matchstr` holds the first match; `groupmatchstr1`–`groupmatchstr9` hold the captured groups.',
     snippet: "strmatch ${1:string} '${2:regex}'",
@@ -923,6 +1083,28 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'strreplace <strvar> <index> <regex> <newstr>',
     description: 'Replaces a regex match in <strvar> starting at <index> with <newstr>.',
     descriptionJa: '文字列変数 <strvar> の <index> 位置から正規表現 <regex> を検索し、<newstr> に置き換える',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable to search and replace within.',
+        descriptionJa: '検索・置換の対象となる文字列変数。',
+      },
+      {
+        name: '<index>',
+        description: 'The 1-origin position at which to start searching.',
+        descriptionJa: '検索を開始する位置（1 オリジン）。',
+      },
+      {
+        name: '<regex>',
+        description: 'The regular expression to search for.',
+        descriptionJa: '検索する正規表現。',
+      },
+      {
+        name: '<newstr>',
+        description: 'The replacement string.',
+        descriptionJa: '置き換える文字列。',
+      },
+    ],
     returnsJa: '置換結果を `<strvar>` に格納。`result` … 置換成功で 1、不一致で 0、書式エラーで -1。`matchstr` にマッチ文字列。`groupmatchstr1`〜`groupmatchstr9` はクリアされる。',
     returns: 'Stores the replaced string in `<strvar>`. `result` … 1 on a successful replace, 0 if no match, -1 on a regex error. `matchstr` holds the matched string; `groupmatchstr1`–`groupmatchstr9` are cleared.',
     snippet: "strreplace ${1:strvar} 1 '${2:regex}' '${3:newstr}'",
@@ -932,6 +1114,23 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'strremove <strvar> <index> <len>',
     description: 'Deletes <len> characters from <strvar> beginning at <index> (1-origin).',
     descriptionJa: '文字列変数 <strvar> の <index> 位置（1オリジン）から <len> 文字分を削除する',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable to modify.',
+        descriptionJa: '対象の文字列変数。',
+      },
+      {
+        name: '<index>',
+        description: 'The 1-origin position at which deletion starts.',
+        descriptionJa: '削除を開始する位置（1 オリジン）。',
+      },
+      {
+        name: '<len>',
+        description: 'The number of characters to delete.',
+        descriptionJa: '削除する文字数。',
+      },
+    ],
     returnsJa: '指定範囲を削除した文字列を `<strvar>` に格納。',
     returns: 'Stores the string with the specified range removed in `<strvar>`.',
     snippet: 'strremove ${1:strvar} ${2:1} ${3:len}',
@@ -941,6 +1140,23 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'strinsert <strvar> <index> <string>',
     description: 'Inserts <string> at position <index> (1-origin) in <strvar>.',
     descriptionJa: '文字列変数 <strvar> の <index> 位置（1オリジン）に文字列 <string> を挿入する',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable into which text is inserted.',
+        descriptionJa: '挿入先の文字列変数。',
+      },
+      {
+        name: '<index>',
+        description: 'The 1-origin position at which to insert.',
+        descriptionJa: '挿入する位置（1 オリジン）。',
+      },
+      {
+        name: '<string>',
+        description: 'The string to insert.',
+        descriptionJa: '挿入する文字列。',
+      },
+    ],
     returnsJa: '文字列を挿入した結果を `<strvar>` に格納。',
     returns: 'Stores the string with the text inserted in `<strvar>`.',
     snippet: 'strinsert ${1:strvar} ${2:1} ${3:string}',
@@ -950,6 +1166,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'strcompare <string1> <string2>',
     description: 'Compares two strings. Sets "result" to 0 (equal), 1 (string1 > string2), or -1 (string1 < string2).',
     descriptionJa: '2つの文字列を比較し、結果をシステム変数 result に代入する（0: 等しい、1: 大、-1: 小）',
+    parameters: [
+      {
+        name: '<string1>',
+        description: 'The first string to compare.',
+        descriptionJa: '比較する 1 つ目の文字列。',
+      },
+      {
+        name: '<string2>',
+        description: 'The second string to compare.',
+        descriptionJa: '比較する 2 つ目の文字列。',
+      },
+    ],
     returnsJa: '`result` … `<string1>` < `<string2>` で -1、等しいと 0、`<string1>` > `<string2>` で 1。',
     returns: '`result` … -1 if `<string1>` < `<string2>`, 0 if equal, 1 if `<string1>` > `<string2>`.',
     snippet: 'strcompare ${1:string1} ${2:string2}',
@@ -959,6 +1187,24 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'strsplit <strval> <separator> [<count>]',
     description: 'Splits <strval> by <separator> and stores parts in groupmatchstr1-9.',
     descriptionJa: '文字列 <strval> を区切り記号 <separator> で分割し、groupmatchstr1〜9 に返す',
+    parameters: [
+      {
+        name: '<strval>',
+        description: 'The string to split.',
+        descriptionJa: '分割する文字列。',
+      },
+      {
+        name: '<separator>',
+        description: 'The separator used to split the string.',
+        descriptionJa: '分割に使う区切り記号。',
+      },
+      {
+        name: '<count>',
+        description: 'The maximum number of pieces to split into.',
+        descriptionJa: '分割する最大個数。',
+        optional: true,
+      },
+    ],
     returnsJa: '区切り文字で分割した部分文字列を `groupmatchstr1`〜`groupmatchstr9` に格納。`result` … 実際に分割された個数（`<count>` 省略時に 9 を超えると 10）。',
     returns: 'Stores the split substrings in `groupmatchstr1` to `groupmatchstr9`. `result` … the number of splits (10 if more than 9 when `<count>` is omitted).',
     snippet: "strsplit ${1:strval} '${2:,}'",
@@ -968,6 +1214,24 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'strjoin <strvar> <separator> [<count>]',
     description: 'Concatenates groupmatchstr1-9 with <separator> and stores the result in <strvar>.',
     descriptionJa: 'groupmatchstr1〜9 を区切り記号 <separator> で連結し、文字列変数 <strvar> に格納する',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the joined result.',
+        descriptionJa: '連結結果を格納する文字列変数。',
+      },
+      {
+        name: '<separator>',
+        description: 'The separator inserted between the parts.',
+        descriptionJa: '各要素の間に挿入する区切り記号。',
+      },
+      {
+        name: '<count>',
+        description: 'The number of elements to join.',
+        descriptionJa: '連結する要素数。',
+        optional: true,
+      },
+    ],
     returnsJa: '`groupmatchstr1`〜`groupmatchstr9` を `<separator>` で連結し `<strvar>` に格納。',
     returns: 'Concatenates `groupmatchstr1` to `groupmatchstr9` with `<separator>` into `<strvar>`.',
     snippet: "strjoin ${1:strvar} '${2:,}'",
@@ -977,6 +1241,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'strtrim <strvar> <trimchars>',
     description: 'Removes all leading and trailing occurrences of <trimchars> from <strvar>.',
     descriptionJa: '文字列変数 <strvar> の先頭と末尾から <trimchars> で指定された文字をすべて削除する',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable to trim.',
+        descriptionJa: 'トリムする文字列変数。',
+      },
+      {
+        name: '<trimchars>',
+        description: 'The set of characters to remove from both ends.',
+        descriptionJa: '先頭と末尾から削除する文字の集合。',
+      },
+    ],
     returnsJa: 'トリム後の文字列を `<strvar>` に格納。',
     returns: 'Stores the trimmed string in `<strvar>`.',
     snippet: "strtrim ${1:strvar} ' '",
@@ -986,6 +1262,19 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'strspecial <strvar> [<strval>]',
     description: 'Converts special character sequences (like \\n, \\t) in the string to actual characters.',
     descriptionJa: '渡された文字列に含まれる特殊文字を変換する',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable holding the string to convert, which also receives the result.',
+        descriptionJa: '変換する文字列を保持し、結果を格納する文字列変数。',
+      },
+      {
+        name: '<strval>',
+        description: 'The source string to convert; if omitted, <strvar> is converted in place.',
+        descriptionJa: '変換元の文字列。省略時は <strvar> をそのまま変換する。',
+        optional: true,
+      },
+    ],
     returnsJa: '特殊文字へ変換した結果を `<strvar>` に格納。',
     returns: 'Stores the converted string in `<strvar>`.',
     snippet: 'strspecial ${1:strvar}',
@@ -995,6 +1284,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'tolower <strvar> <string>',
     description: 'Converts all alphabetic characters in <string> to lower-case and returns the result in <strvar>.',
     descriptionJa: '<string> に含まれるアルファベットを全て小文字にし、<strvar> に代入する',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the lower-cased string.',
+        descriptionJa: '小文字化した文字列を格納する文字列変数。',
+      },
+      {
+        name: '<string>',
+        description: 'The source string to convert.',
+        descriptionJa: '変換元の文字列。',
+      },
+    ],
     returnsJa: '小文字へ変換した結果を `<strvar>` に格納。',
     returns: 'Stores the lower-cased string in `<strvar>`.',
     snippet: 'tolower ${1:strvar} ${2:string}',
@@ -1004,6 +1305,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'toupper <strvar> <string>',
     description: 'Converts all alphabetic characters in <string> to upper-case and returns the result in <strvar>.',
     descriptionJa: '<string> に含まれるアルファベットを全て大文字にし、<strvar> に代入する',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the upper-cased string.',
+        descriptionJa: '大文字化した文字列を格納する文字列変数。',
+      },
+      {
+        name: '<string>',
+        description: 'The source string to convert.',
+        descriptionJa: '変換元の文字列。',
+      },
+    ],
     returnsJa: '大文字へ変換した結果を `<strvar>` に格納。',
     returns: 'Stores the upper-cased string in `<strvar>`.',
     snippet: 'toupper ${1:strvar} ${2:string}',
@@ -1013,6 +1326,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'int2str <strvar> <integer value>',
     description: 'Converts <integer value> to its decimal string expression and stores it in <strvar>.',
     descriptionJa: '整数値 <integer value> を10進表現の文字列に変換して文字列型変数 <strvar> に代入する',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the decimal string.',
+        descriptionJa: '10 進表現の文字列を格納する文字列変数。',
+      },
+      {
+        name: '<integer value>',
+        description: 'The integer value to convert.',
+        descriptionJa: '変換する整数値。',
+      },
+    ],
     returnsJa: '文字列へ変換した結果を `<strvar>` に格納。',
     returns: 'Stores the string representation in `<strvar>`.',
     snippet: 'int2str ${1:strvar} ${2:value}',
@@ -1022,6 +1347,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'str2int <intvar> <string>',
     description: 'Converts the decimal or hexadecimal <string> to its numeric value and stores it in <intvar>.',
     descriptionJa: '文字列 <string> を整数値に変換し、整数変数 <intvar> に代入する',
+    parameters: [
+      {
+        name: '<intvar>',
+        description: 'The integer variable that receives the converted value.',
+        descriptionJa: '変換結果を格納する整数変数。',
+      },
+      {
+        name: '<string>',
+        description: 'The decimal or hexadecimal string to convert.',
+        descriptionJa: '変換する 10 進または 16 進の文字列。',
+      },
+    ],
     returnsJa: '変換結果を `<intvar>` に格納。`result` … 変換成功で 1、失敗で 0。',
     returns: 'Stores the converted value in `<intvar>`. `result` … set to 1 on success, 0 on failure.',
     snippet: 'str2int ${1:intvar} ${2:string}',
@@ -1031,6 +1368,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'str2code <intvar> <string>',
     description: 'Copies the ASCII code of the first character of <string> to <intvar>.',
     descriptionJa: '文字列 <string> が1文字の場合、その ASCII コードを整数変数 <intvar> に格納する',
+    parameters: [
+      {
+        name: '<intvar>',
+        description: 'The integer variable that receives the ASCII code(s).',
+        descriptionJa: 'ASCII コードを格納する整数変数。',
+      },
+      {
+        name: '<string>',
+        description: 'The string (up to 4 characters) whose character codes are taken.',
+        descriptionJa: '文字コードを取り出す文字列（最大 4 文字）。',
+      },
+    ],
     returnsJa: 'ASCII コード（最大4文字分）を `<intvar>` に格納。',
     returns: 'Stores the ASCII code(s) (up to 4 characters) in `<intvar>`.',
     snippet: 'str2code ${1:intvar} ${2:string}',
@@ -1040,6 +1389,18 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'code2str <strvar> <ASCII code>',
     description: 'Converts an ASCII code value to its character and stores it in <strvar>.',
     descriptionJa: '整数値 <ASCII code> に対応する文字を文字列変数 <strvar> に格納する',
+    parameters: [
+      {
+        name: '<strvar>',
+        description: 'The string variable that receives the character(s).',
+        descriptionJa: '文字を格納する文字列変数。',
+      },
+      {
+        name: '<ASCII code>',
+        description: 'The ASCII code value to convert to a character.',
+        descriptionJa: '文字に変換する ASCII コード値。',
+      },
+    ],
     returnsJa: 'ASCII コードに対応する文字列を `<strvar>` に格納。',
     returns: 'Stores the characters for the given ASCII code(s) in `<strvar>`.',
     snippet: 'code2str ${1:strvar} ${2:code}',
@@ -1049,6 +1410,19 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'regexoption <option1> [<option2> ...]',
     description: 'Specifies the syntax, encoding, and options of the regular expression.',
     descriptionJa: 'strmatch, strreplace, waitregex で使用する正規表現の文法と文字エンコーディングを指定する',
+    parameters: [
+      {
+        name: '<option1>',
+        description: 'An option specifying the regular-expression syntax, encoding, or behavior.',
+        descriptionJa: '正規表現の文法・文字エンコーディング・動作を指定するオプション。',
+      },
+      {
+        name: '<option2>',
+        description: 'Additional options.',
+        descriptionJa: '追加のオプション。',
+        optional: true,
+      },
+    ],
   },
   // ── 数値演算 ─────────────────────────────────────────────────────────────────
   {
