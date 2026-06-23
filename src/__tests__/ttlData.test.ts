@@ -76,6 +76,44 @@ describe('TTL_COMMANDS', () => {
     expect(TTL_COMMANDS.length).toBeGreaterThanOrEqual(100);
     expect(TTL_COMMANDS.length).toBeLessThanOrEqual(300);
   });
+
+  it('parameters の各引数名がシグネチャに含まれる', () => {
+    // 引数名のタイポ・シグネチャとの不一致を検出する
+    const mismatches: string[] = [];
+    for (const command of TTL_COMMANDS) {
+      if (command.parameters === undefined) continue;
+      for (const param of command.parameters) {
+        if (!command.signature.includes(param.name)) {
+          mismatches.push(`${command.name}: "${param.name}" not in signature`);
+        }
+      }
+    }
+    expect(mismatches).toEqual([]);
+  });
+
+  it('parameters の各引数が空でない英語説明を持つ', () => {
+    const missing: string[] = [];
+    for (const command of TTL_COMMANDS) {
+      if (command.parameters === undefined) continue;
+      for (const param of command.parameters) {
+        if (param.description.trim() === '') {
+          missing.push(`${command.name}: "${param.name}"`);
+        }
+      }
+    }
+    expect(missing).toEqual([]);
+  });
+
+  it('parameters の引数名に重複がない', () => {
+    const duplicates: string[] = [];
+    for (const command of TTL_COMMANDS) {
+      if (command.parameters === undefined) continue;
+      const names = command.parameters.map(p => p.name);
+      const dup = names.filter((name, i) => names.indexOf(name) !== i);
+      if (dup.length > 0) duplicates.push(`${command.name}: ${dup.join(', ')}`);
+    }
+    expect(duplicates).toEqual([]);
+  });
 });
 
 describe('TTL_COMMANDS_MAP', () => {
@@ -329,7 +367,10 @@ describe('セキュリティ', () => {
     const hasCommandUri = TTL_COMMANDS.some(
       c =>
         c.description.includes('command:') ||
-        (c.descriptionJa?.includes('command:') ?? false),
+        (c.descriptionJa?.includes('command:') ?? false) ||
+        (c.parameters?.some(
+          p => p.description.includes('command:') || (p.descriptionJa?.includes('command:') ?? false),
+        ) ?? false),
     );
     expect(hasCommandUri).toBe(false);
   });
@@ -338,7 +379,12 @@ describe('セキュリティ', () => {
     const hasScript = TTL_COMMANDS.some(
       c =>
         /<script/i.test(c.description) ||
-        (c.descriptionJa !== undefined && /<script/i.test(c.descriptionJa)),
+        (c.descriptionJa !== undefined && /<script/i.test(c.descriptionJa)) ||
+        (c.parameters?.some(
+          p =>
+            /<script/i.test(p.description) ||
+            (p.descriptionJa !== undefined && /<script/i.test(p.descriptionJa)),
+        ) ?? false),
     );
     expect(hasScript).toBe(false);
   });

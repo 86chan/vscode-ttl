@@ -2,6 +2,18 @@
  * TTL (Tera Term Language) コマンド・キーワード定義
  */
 
+/** TTLコマンドの引数定義 */
+export interface TtlParameter {
+  /** 引数名（シグネチャ中の表記に合わせる。例: '<data1>'） */
+  readonly name: string;
+  /** 引数の説明（英語） */
+  readonly description: string;
+  /** 引数の説明（日本語） */
+  readonly descriptionJa?: string;
+  /** 省略可能な引数なら true */
+  readonly optional?: boolean;
+}
+
 /** TTLコマンドの定義 */
 export interface TtlCommand {
   /** コマンド名（小文字） */
@@ -12,6 +24,8 @@ export interface TtlCommand {
   readonly description: string;
   /** 日本語説明 */
   readonly descriptionJa?: string;
+  /** 引数の説明（任意。引数を取らないコマンドは省略） */
+  readonly parameters?: ReadonlyArray<TtlParameter>;
   /** 戻り値・関連システム変数の説明（英語） */
   readonly returns?: string;
   /** 戻り値・関連システム変数の説明（日本語） */
@@ -127,6 +141,19 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'send <data1> [<data2> ...]',
     description: 'Causes Tera Term to send characters to the host.',
     descriptionJa: 'ホストへ文字列または数値を送信',
+    parameters: [
+      {
+        name: '<data1>',
+        description: 'If a string, the string is sent to the host. If an integer, its lowest-order byte (0–255) is regarded as an ASCII code of the character, and the character is sent.',
+        descriptionJa: '文字列型の場合、文字列をホストへ送信する。整数型の場合は、その値の下位バイト(0-255)を ASCII コードとみなし、その文字を送信する。',
+      },
+      {
+        name: '<data2>',
+        description: 'Additional data items to send, in order.',
+        descriptionJa: '続けて送信するデータ。順に複数指定できる。',
+        optional: true,
+      },
+    ],
     snippet: "send '${1:text}'",
   },
   {
@@ -134,6 +161,20 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'sendln [<data1> [<data2> ...]]',
     description: 'Causes Tera Term to send characters followed by a new-line character to the host.',
     descriptionJa: '文字列と改行をホストへ送信',
+    parameters: [
+      {
+        name: '<data1>',
+        description: 'If a string, the string is sent to the host. If an integer, its lowest-order byte (0–255) is regarded as an ASCII code of the character, and the character is sent. A new-line is sent after the data.',
+        descriptionJa: '文字列型の場合、文字列をホストへ送信する。整数型の場合は、その値の下位バイト(0-255)を ASCII コードとみなし、その文字を送信する。送信後に改行が送られる。',
+        optional: true,
+      },
+      {
+        name: '<data2>',
+        description: 'Additional data items to send, in order.',
+        descriptionJa: '続けて送信するデータ。順に複数指定できる。',
+        optional: true,
+      },
+    ],
     snippet: "sendln '${1:text}'",
   },
   {
@@ -141,6 +182,19 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'sendbinary <data1> [<data2> ...]',
     description: 'Sends data to the host without encoding conversion.',
     descriptionJa: 'バイナリデータをホストへ送信（エンコード変換なし）',
+    parameters: [
+      {
+        name: '<data1>',
+        description: 'Data to send without encoding conversion. A string is sent as-is; an integer is sent as its lowest-order byte (0–255).',
+        descriptionJa: 'エンコード変換せずに送信するデータ。文字列はそのまま、整数は下位バイト(0-255)を送信する。',
+      },
+      {
+        name: '<data2>',
+        description: 'Additional data items to send, in order.',
+        descriptionJa: '続けて送信するデータ。順に複数指定できる。',
+        optional: true,
+      },
+    ],
   },
   {
     name: 'sendbreak',
@@ -153,12 +207,37 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'sendbroadcast <data1> [<data2> ...]',
     description: 'Causes Tera Term to broadcast characters to all terminals.',
     descriptionJa: 'すべての端末へブロードキャスト送信',
+    parameters: [
+      {
+        name: '<data1>',
+        description: 'If a string, the string is broadcast; if an integer, its lowest-order byte (0–255) is regarded as an ASCII code of the character.',
+        descriptionJa: '文字列型の場合は文字列を、整数型の場合は下位バイト(0-255)を ASCII コードとみなした文字をブロードキャスト送信する。',
+      },
+      {
+        name: '<data2>',
+        description: 'Additional data items to send, in order.',
+        descriptionJa: '続けて送信するデータ。順に複数指定できる。',
+        optional: true,
+      },
+    ],
   },
   {
     name: 'sendfile',
     signature: 'sendfile <filename> <binary flag>',
     description: 'Causes Tera Term to send the file <filename> to the host.',
     descriptionJa: '<filename> で指定されたファイルをホストへ送信',
+    parameters: [
+      {
+        name: '<filename>',
+        description: 'The file to be sent to the host. A relative path is treated as relative to the file-transfer directory.',
+        descriptionJa: '送信するファイル。相対パスの時はファイル転送用ディレクトリ相対として扱う。',
+      },
+      {
+        name: '<binary flag>',
+        description: 'Non-zero sends the file unmodified; zero converts new-line characters (and kanji) and strips control characters except TAB, LF, and CR.',
+        descriptionJa: '0 以外のときファイルの内容をそのまま送信する。0 のとき漢字・改行文字を変換して送信し、TAB・LF・CR 以外の制御文字は送信しない。',
+      },
+    ],
     snippet: "sendfile '${1:filename}' ${2:0}",
   },
   {
@@ -166,36 +245,123 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'sendkcode <key code> <repeat count>',
     description: 'Causes Tera Term to perform a function defined for a key or key combination.',
     descriptionJa: 'キーコード <key code> に割り当てられた機能を Tera Term で実行',
+    parameters: [
+      {
+        name: '<key code>',
+        description: 'A key code defined by KEYCODE.EXE.',
+        descriptionJa: 'KEYCODE.EXE によって定義されるキーコード。',
+      },
+      {
+        name: '<repeat count>',
+        description: 'The number of times the function is performed.',
+        descriptionJa: 'その機能を繰り返して実行する回数。',
+      },
+    ],
   },
   {
     name: 'sendlnbroadcast',
     signature: 'sendlnbroadcast <data1> [<data2> ...]',
     description: 'Broadcasts characters followed by a new-line character to all terminals.',
     descriptionJa: '文字列と改行をすべての端末へブロードキャスト送信',
+    parameters: [
+      {
+        name: '<data1>',
+        description: 'If a string, the string is broadcast; if an integer, its lowest-order byte (0–255) is regarded as an ASCII code of the character. A new-line is sent after the data.',
+        descriptionJa: '文字列型の場合は文字列を、整数型の場合は下位バイト(0-255)を ASCII コードとみなした文字をブロードキャスト送信する。送信後に改行が送られる。',
+      },
+      {
+        name: '<data2>',
+        description: 'Additional data items to send, in order.',
+        descriptionJa: '続けて送信するデータ。順に複数指定できる。',
+        optional: true,
+      },
+    ],
   },
   {
     name: 'sendlnmulticast',
     signature: 'sendlnmulticast <multicastname> <data1> [<data2> ...]',
     description: 'Multicasts characters followed by a new-line character to selected terminals.',
     descriptionJa: '文字列と改行を指定端末へマルチキャスト送信',
+    parameters: [
+      {
+        name: '<multicastname>',
+        description: 'The multicast name (configured by setmulticastname) identifying the target terminals.',
+        descriptionJa: 'setmulticastname コマンドで設定したマルチキャスト名。送信先の端末を指定する。',
+      },
+      {
+        name: '<data1>',
+        description: 'If a string, the string is sent; if an integer, its lowest-order byte (0–255) is regarded as an ASCII code of the character. A new-line is sent after the data.',
+        descriptionJa: '文字列型の場合は文字列を、整数型の場合は下位バイト(0-255)を ASCII コードとみなした文字を送信する。送信後に改行が送られる。',
+      },
+      {
+        name: '<data2>',
+        description: 'Additional data items to send, in order.',
+        descriptionJa: '続けて送信するデータ。順に複数指定できる。',
+        optional: true,
+      },
+    ],
   },
   {
     name: 'sendmulticast',
     signature: 'sendmulticast <multicastname> <data1> [<data2> ...]',
     description: 'Sends characters to the multicast terminal specified by <multicastname>.',
     descriptionJa: '<multicastname> で指定した端末へマルチキャスト送信',
+    parameters: [
+      {
+        name: '<multicastname>',
+        description: 'The multicast name (configured by setmulticastname) identifying the target terminals.',
+        descriptionJa: 'setmulticastname コマンドで設定したマルチキャスト名。送信先の端末を指定する。',
+      },
+      {
+        name: '<data1>',
+        description: 'If a string, the string is sent; if an integer, its lowest-order byte (0–255) is regarded as an ASCII code of the character.',
+        descriptionJa: '文字列型の場合は文字列を、整数型の場合は下位バイト(0-255)を ASCII コードとみなした文字を送信する。',
+      },
+      {
+        name: '<data2>',
+        description: 'Additional data items to send, in order.',
+        descriptionJa: '続けて送信するデータ。順に複数指定できる。',
+        optional: true,
+      },
+    ],
   },
   {
     name: 'sendtext',
     signature: 'sendtext <data1> [<data2> ...]',
     description: 'Sends characters to the host as text (without CR+LF conversion).',
     descriptionJa: 'テキストとしてホストへ文字を送信（CR+LF 変換なし）',
+    parameters: [
+      {
+        name: '<data1>',
+        description: 'Text to send to the host as-is, without CR+LF conversion. If an integer, its lowest-order byte (0–255) is regarded as an ASCII code of the character.',
+        descriptionJa: 'CR+LF 変換せずそのままホストへ送信するテキスト。整数型の場合は下位バイト(0-255)を ASCII コードとみなした文字を送信する。',
+      },
+      {
+        name: '<data2>',
+        description: 'Additional data items to send, in order.',
+        descriptionJa: '続けて送信するデータ。順に複数指定できる。',
+        optional: true,
+      },
+    ],
   },
   {
     name: 'dispstr',
     signature: 'dispstr <data1> [<data2> ...]',
     description: 'Causes Tera Term to display characters on the client terminal screen.',
     descriptionJa: '文字列または数値を端末画面に表示',
+    parameters: [
+      {
+        name: '<data1>',
+        description: 'If a string, the string is displayed on the terminal; if an integer, its lowest-order byte (0–255) is regarded as an ASCII code of the character.',
+        descriptionJa: '文字列型の場合は文字列を、整数型の場合は下位バイト(0-255)を ASCII コードとみなした文字を端末画面に表示する。',
+      },
+      {
+        name: '<data2>',
+        description: 'Additional data items to display, in order.',
+        descriptionJa: '続けて表示するデータ。順に複数指定できる。',
+        optional: true,
+      },
+    ],
     snippet: "dispstr '${1:text}'",
   },
   // ── 受信・待機 ───────────────────────────────────────────────────────────────
@@ -286,6 +452,13 @@ export const TTL_COMMANDS: ReadonlyArray<TtlCommand> = [
     signature: 'connect <command line parameters>',
     description: "Runs Tera Term with the given parameters and links it to MACRO, or connects to the host if already linked.",
     descriptionJa: 'Tera Term を起動してホストに接続し MACRO とリンク',
+    parameters: [
+      {
+        name: '<command line parameters>',
+        description: 'The command line parameters used when starting Tera Term, or the host to connect to if already linked. See the Tera Term / TTSSH command line documentation for the format.',
+        descriptionJa: 'Tera Term を起動する時のコマンドラインパラメータ。既にリンクされている場合は、ここで指定されるホストに接続する。',
+      },
+    ],
     returnsJa: '`result` … 0=Tera Term とリンクなし, 1=リンク済みだが未接続, 2=リンク・接続済み。',
     returns: '`result` … 0=not linked to Tera Term, 1=linked but not connected, 2=linked and connected.',
     snippet: "connect '${1:host}'",
