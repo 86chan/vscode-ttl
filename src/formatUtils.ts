@@ -10,10 +10,21 @@
 export interface FormatOptions {
   /** インデント1段分の文字列（例: 2スペースなら '  '、タブなら '\t'） */
   readonly indentUnit: string;
+  /** コメント内 markdown テーブルの桁揃え有効化 */
+  readonly alignCommentTables: boolean;
+  /** 演算子・カンマまわりの空白正規化有効化 */
+  readonly normalizeOperatorSpacing: boolean;
+  /** 連続する空行の許容上限（0 で無制限） */
+  readonly maxConsecutiveBlankLines: number;
 }
 
-/** デフォルトの整形オプション（半角スペース2つ） */
-export const DEFAULT_FORMAT_OPTIONS: FormatOptions = { indentUnit: '  ' };
+/** デフォルトの整形オプション（半角スペース2つ、全機能有効、連続空行は1行まで） */
+export const DEFAULT_FORMAT_OPTIONS: FormatOptions = {
+  indentUnit: '  ',
+  alignCommentTables: true,
+  normalizeOperatorSpacing: true,
+  maxConsecutiveBlankLines: 1,
+};
 
 /** ネストを1段深くするブロック開始キーワード（`if` を除く） */
 const BLOCK_OPEN_KEYWORDS = new Set(['for', 'while', 'do', 'until']);
@@ -319,29 +330,135 @@ function formatCommentTables(lines: readonly string[]): string[] {
 }
 
 /**
+ * 文字列を含まないコード片の演算子・カンマまわりの空白を正規化する
+ *
+ * @remarks
+ * - 連続する空白（タブ含む）を半角スペース1つに圧縮
+ * - カンマは前空白なし・後ろ空白1つに統一
+ * - 比較・代入演算子（`==` `<>` `!=` `<=` `>=` `=` `<` `>`）の両側に空白を1つ付与
+ * - 二項算術演算子（`+` `-` `*` `/` `%`）は、被演算子に隣接している明確な二項形のみ両側に空白を付与し、
+ *   単項のマイナス（`a = -1`）やコマンド引数の負数（`mpause -1`）、ブロックコメント記号は変更しない
+ *
+ * @param chunk - 文字列リテラルを含まないコード片
+ * @returns 正規化後のコード片
+ */
+function normalizeOperators(chunk: string): string {
+  return (
+    chunk
+      // 連続空白を1つに圧縮
+      .replace(/[ \t]+/g, ' ')
+      // カンマ: 前空白除去・後ろ空白1つ
+      .replace(/\s*,\s*/g, ', ')
+      // 比較・代入演算子: 両側に空白（長い記法を優先）
+      // 直前が算術記号等の場合は複合代入（+= など）とみなし対象外
+      .replace(/\s*(?<![-+*/%!<>])(<=|>=|<>|!=|==|=|<|>)\s*/g, ' $1 ')
+      // 二項の * / %: 被演算子に隣接する場合のみ（複合代入 *= /= %= や ** は除外）
+      .replace(/(?<=[\w)\]'])(?<![*/%])([*/%])(?![*/=%])\s*/g, ' $1 ')
+      // 二項の + -: 被演算子に隣接する場合のみ（++ -- += -= は除外、空白で離れた負数は対象外）
+      .replace(/(?<=[\w)\]'])(?<![+-])([+-])(?![+\-=])\s*/g, ' $1 ')
+      // 上記置換で生じた連続空白を再圧縮
+      .replace(/[ \t]+/g, ' ')
+  );
+}
+
+/**
+ * コード本体（文字列リテラルを保持）の空白を正規化する
+ *
+ * @remarks 文字列リテラル `'...'` は中身を一切変更せずそのまま保持し、
+ * 文字列以外の区間にのみ演算子正規化を適用する
+ *
+ * @param code - コメントを除いたコード本体
+ * @returns 正規化後のコード本体（前後の空白は除去）
+ */
+function normalizeCodeExpression(code: string): string {
+  let result = '';
+  let index = 0;
+  while (index < code.length) {
+    if (code[index] === "'") {
+      // 文字列リテラルは終端クォート（あれば）まで逐語的にコピー
+      let end = index + 1;
+      while (end < code.length && code[end] !== "'") end++;
+      if (end < code.length) end++;
+      result += code.slice(index, end);
+      index = end;
+      continue;
+    }
+    // 次のクォートまでを非文字列区間として正規化
+    let end = index;
+    while (end < code.length && code[end] !== "'") end++;
+    result += normalizeOperators(code.slice(index, end));
+    index = end;
+  }
+  return result.trim();
+}
+
+/**
+ * 行を文字列を考慮してコード部とコメント部（`;` 以降）に分割する
+ *
+ * @param line - 対象行
+ * @returns コード部とコメント部（コメントが無ければ空文字）
+ */
+function splitCodeAndComment(line: string): { readonly code: string; readonly comment: string } {
+  let inString = false;
+  for (let index = 0; index < line.length; index++) {
+    const char = line[index];
+    if (char === "'") {
+      inString = !inString;
+      continue;
+    }
+    if (!inString && char === ';') {
+      return { code: line.slice(0, index), comment: line.slice(index) };
+    }
+  }
+  return { code: line, comment: '' };
+}
+
+/**
+ * 1行（トリム済み本体）の演算子・カンマまわりの空白を正規化する
+ *
+ * @remarks コメント専用行・コード部が空の行は変更しない
+ *
+ * @param body - トリム済みの行本体
+ * @returns 正規化後の行本体
+ */
+function normalizeLineSpacing(body: string): string {
+  const { code, comment } = splitCodeAndComment(body);
+  if (code.trim().length === 0) return body;
+  const normalizedCode = normalizeCodeExpression(code);
+  // 行末コメントはコードとの間を半角スペース1つで区切る
+  return comment.length === 0 ? normalizedCode : `${normalizedCode} ${comment}`;
+}
+
+/**
  * TTL ソースコードを整形（再インデント）する
  *
  * @remarks
  * - 各行の前後の空白を除去し、ブロックのネスト深さに応じたインデントを付与する
- * - 空行は空行のまま保持する
+ * - 空行は空行のまま保持し、連続空行は `maxConsecutiveBlankLines` 行まで圧縮する
  * - ラベル定義行（:name）は常にインデント0に揃える
  * - 文字列・コメント内のキーワードはネスト計算に影響しない
- * - コメント内に書かれた markdown テーブルは桁揃えする（全角文字対応）
+ * - `alignCommentTables` 有効時はコメント内 markdown テーブルを桁揃えする（全角文字対応）
+ * - `normalizeOperatorSpacing` 有効時は演算子・カンマまわりの空白を正規化する
  *
  * @param text - 整形対象のソーステキスト
- * @param options - 整形オプション
+ * @param options - 整形オプション（未指定の項目は既定値で補完）
  * @returns 整形後のソーステキスト
  */
-export function formatTtl(text: string, options: FormatOptions = DEFAULT_FORMAT_OPTIONS): string {
+export function formatTtl(text: string, options: Partial<FormatOptions> = {}): string {
+  const resolved: FormatOptions = { ...DEFAULT_FORMAT_OPTIONS, ...options };
   const rawLines = text.split('\n');
   // CR（CRLF 由来）を退避してから論理行を整形する
   const carriageReturns = rawLines.map(rawLine => rawLine.endsWith('\r'));
-  const logicalLines = formatCommentTables(
-    rawLines.map((rawLine, index) => (carriageReturns[index] ? rawLine.slice(0, -1) : rawLine)),
+  const strippedLines = rawLines.map((rawLine, index) =>
+    carriageReturns[index] ? rawLine.slice(0, -1) : rawLine,
   );
+  const logicalLines = resolved.alignCommentTables
+    ? formatCommentTables(strippedLines)
+    : strippedLines;
 
   const formatted: string[] = [];
   let depth = 0;
+  let blankRun = 0;
 
   for (let index = 0; index < logicalLines.length; index++) {
     const hasCarriageReturn = carriageReturns[index];
@@ -350,18 +467,28 @@ export function formatTtl(text: string, options: FormatOptions = DEFAULT_FORMAT_
     const info = classifyLine(line);
 
     if (info.isBlank) {
+      // 上限を超える連続空行は削除（0 は無制限）
+      if (resolved.maxConsecutiveBlankLines > 0 && blankRun >= resolved.maxConsecutiveBlankLines) {
+        continue;
+      }
+      blankRun += 1;
       // 空行は完全に空（末尾空白なし）にする
       formatted.push(hasCarriageReturn ? '\r' : '');
       continue;
     }
+    blankRun = 0;
 
     if (info.dedentSelf) {
       depth = Math.max(0, depth - 1);
     }
 
     const effectiveDepth = info.isLabel ? 0 : depth;
-    const indent = options.indentUnit.repeat(effectiveDepth);
-    formatted.push(indent + info.trimmed + (hasCarriageReturn ? '\r' : ''));
+    const indent = resolved.indentUnit.repeat(effectiveDepth);
+    const body =
+      resolved.normalizeOperatorSpacing && !info.isLabel
+        ? normalizeLineSpacing(info.trimmed)
+        : info.trimmed;
+    formatted.push(indent + body + (hasCarriageReturn ? '\r' : ''));
 
     if (info.indentAfter) {
       depth += 1;
