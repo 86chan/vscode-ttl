@@ -340,7 +340,7 @@ function findSingleEqualsComparison(maskedLine: string, lineIndex: number): TtlD
  * @param b - 比較先の文字列
  * @returns 編集距離
  */
-function levenshtein(a: string, b: string): number {
+export function levenshtein(a: string, b: string): number {
   const rows = a.length + 1;
   const cols = b.length + 1;
   let previous = Array.from({ length: cols }, (_, index) => index);

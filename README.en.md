@@ -15,9 +15,10 @@
 - **Find All References** — list a label's definition and references (`goto`/`call`) (Shift+F12)
 - **Outline / Symbols** — labels and `include`s shown in breadcrumbs, outline, and symbol search (Ctrl+Shift+O)
 - **Include Links** — Ctrl+click the path in `include 'path'` to open the file. As in Tera Term, relative paths are resolved against the directory of the **top-level parent macro** (auto-detected by scanning the workspace; can be fixed via `ttl.includeRootDir`)
+- **Include Path Completion** — while typing `include '`, suggests folders and `.ttl` files under the resolution base directory; selecting a folder automatically re-triggers suggestions. When an included file cannot be found, it is flagged with a warning and a quick fix to replace it with a similarly named existing `.ttl` (`ttl.diagnostics.includeNotFound`)
 - **Run Macro (debug config)** — **TTL Macro (Tera Term)** appears in launch.json's "Add Configuration", and F5 / ▶ runs the current macro with Tera Term. Describe the connection (SSH / Telnet / serial) with a structured `connect` object ([usage](#running-macros))
 - **Code Formatting** — auto-indent based on block structures such as `if`/`for`/`while`/`do`, normalization of whitespace around operators and commas (`a=1` → `a = 1`, preserving strings, comments, and negatives), collapsing of consecutive blank lines, plus alignment of Markdown tables written inside comments (full-width aware) (Shift+Alt+F). The **TTL: Format all TTL files in workspace** command lets you pick files and format them in bulk
-- **Diagnostics (Errors/Warnings)** — detects invalid operators (`&&`, `++`, `+=`, etc.), assignments to system variables (e.g. `result`), a single `=` used for comparison (suggests `==`), unclosed blocks (missing `endif`/`next`, etc.), excessive nesting (default depth 2, configurable via `ttl.maxNestingDepth`), unknown commands (suggests the closest command), `goto`/`call` to undefined labels (includes resolved), and duplicate label definitions
+- **Diagnostics (Errors/Warnings)** — detects invalid operators (`&&`, `++`, `+=`, etc.), assignments to system variables (e.g. `result`), a single `=` used for comparison (suggests `==`), unclosed blocks (missing `endif`/`next`, etc.), excessive nesting (default depth 2, configurable via `ttl.maxNestingDepth`), unknown commands (suggests the closest command), `goto`/`call` to undefined labels (includes resolved), duplicate label definitions, and unresolved `include` targets (suggesting a similarly named existing file)
 
 ## Language Setting
 
@@ -38,7 +39,8 @@ Individual diagnostics can be toggled (all default `true`):
 ```json
 "ttl.diagnostics.undefinedLabel": true,
 "ttl.diagnostics.unknownCommand": true,
-"ttl.diagnostics.duplicateLabel": true
+"ttl.diagnostics.duplicateLabel": true,
+"ttl.diagnostics.includeNotFound": true
 ```
 
 Formatting behavior is configurable too. `maxConsecutiveBlankLines` is the maximum number of consecutive blank lines kept (0 disables collapsing):
