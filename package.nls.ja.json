@@ -60,5 +60,6 @@
   "ttl.config.requireLabelInSameFile": "goto/call のラベルを同じファイル内に定義することを要求します。有効にすると、インクルードファイルにしか存在しないラベルは受け付けられません。定義へ移動（F12）は現在のファイルのみを検索し、同じファイルに定義がない参照はエラーとして報告されます（エラー診断には ttl.diagnostics.undefinedLabel の有効化も必要です）。",
   "ttl.config.diagnostics.undefinedLabel": "goto/call が定義と一致しないラベルを参照している場合に警告します（インクルードは解決されます）。インクルードファイルが解決できない場合は自動的に抑制されます。",
   "ttl.config.diagnostics.unknownCommand": "行が不明なコマンドで始まっている場合に、最も近い既知のコマンドを提案して警告します。",
-  "ttl.config.diagnostics.duplicateLabel": "同じラベルが複数回定義されている場合に警告します。"
+  "ttl.config.diagnostics.duplicateLabel": "同じラベルが複数回定義されている場合に警告します。",
+  "ttl.config.diagnostics.includeNotFound": "インクルード先のファイルが解決できない（存在しない）場合に警告します。似た名前の既存 .ttl へ置換するクイックフィックスを提供します。"
 }

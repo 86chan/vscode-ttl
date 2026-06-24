@@ -60,5 +60,6 @@
   "ttl.config.requireLabelInSameFile": "Require goto/call labels to be defined in the same file. When enabled, labels found only in included files are NOT accepted: go-to-definition (F12) searches the current file only, and references without a same-file definition are reported as errors (the error diagnostic also requires ttl.diagnostics.undefinedLabel to be enabled).",
   "ttl.config.diagnostics.undefinedLabel": "Warn when goto/call references a label with no matching definition (includes are resolved). Suppressed automatically when an included file cannot be resolved.",
   "ttl.config.diagnostics.unknownCommand": "Warn when a line starts with an unknown command, suggesting the closest known command.",
-  "ttl.config.diagnostics.duplicateLabel": "Warn when the same label is defined more than once."
+  "ttl.config.diagnostics.duplicateLabel": "Warn when the same label is defined more than once.",
+  "ttl.config.diagnostics.includeNotFound": "Warn when an included file cannot be resolved (does not exist). Offers a quick fix to replace it with a similarly named existing .ttl."
 }

@@ -498,6 +498,11 @@
           "type": "boolean",
           "default": true,
           "description": "%ttl.config.diagnostics.duplicateLabel%"
+        },
+        "ttl.diagnostics.includeNotFound": {
+          "type": "boolean",
+          "default": true,
+          "description": "%ttl.config.diagnostics.includeNotFound%"
         }
       }
     }

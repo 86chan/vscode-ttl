@@ -10,6 +10,11 @@ import {
   resolveDocHeaderTriggerStart,
   TTL_IDENTIFIER_PATTERN,
 } from './completionUtils';
+import {
+  type IncludePathContext,
+  rankSimilarPaths,
+  resolveIncludePathContext,
+} from './includePathUtils';
 import { analyzeTtl, DEFAULT_MAX_NESTING_DEPTH, type TtlDiagnostic } from './diagnosticsUtils';
 import {
   buildConnectArgs,
@@ -211,7 +216,7 @@ class TtlCompletionProvider implements vscode.CompletionItemProvider {
   provideCompletionItems(
     document: vscode.TextDocument,
     position: vscode.Position,
-  ): vscode.CompletionItem[] {
+  ): vscode.ProviderResult<vscode.CompletionItem[]> {
     // `///` トリガ時はドキュメントヘッダスニペットのみを提示し、入力したスラッシュを置換する
     const lineTextBeforeCursor = document
       .lineAt(position.line)
@@ -223,6 +228,12 @@ class TtlCompletionProvider implements vscode.CompletionItemProvider {
         position,
       );
       return this.buildDocHeaderItems(range);
+    }
+
+    // include 'path' 入力中はパス候補（フォルダ・.ttl）のみを提示する
+    const includeContext = resolveIncludePathContext(lineTextBeforeCursor);
+    if (includeContext !== undefined) {
+      return this.buildIncludePathItems(document, position, includeContext);
     }
 
     const language = resolveDisplayLanguage();
@@ -249,6 +260,66 @@ class TtlCompletionProvider implements vscode.CompletionItemProvider {
       item.range = range;
       return item;
     });
+  }
+
+  /**
+   * include パス補完候補（フォルダ・.ttl ファイル）の生成
+   *
+   * @remarks
+   * 解決基準ディレクトリ（resolveIncludeBaseDir）配下の入力済みディレクトリを列挙し、
+   * フォルダと .ttl ファイルを候補化する。フォルダ選択時は再サジェストを発火し、
+   * 自己 include を避けるため対象ドキュメント自身は除外する。
+   *
+   * @param document - 対象ドキュメント
+   * @param position - カーソル位置
+   * @param context - include パス入力文脈
+   * @returns 補完候補（読み取り失敗時は空配列）
+   */
+  private async buildIncludePathItems(
+    document: vscode.TextDocument,
+    position: vscode.Position,
+    context: IncludePathContext,
+  ): Promise<vscode.CompletionItem[]> {
+    const baseDir = await resolveIncludeBaseDir(document);
+    const directory = nodePath.resolve(baseDir, context.directoryPart);
+
+    let entries: readonly nodeFs.Dirent[];
+    try {
+      entries = await nodeFs.promises.readdir(directory, { withFileTypes: true });
+    } catch {
+      // ディレクトリが存在しない／読み取れない場合は候補なし
+      return [];
+    }
+
+    // namePart を置換範囲とし、入力済みのファイル名部分を確実に上書きする
+    const replaceRange = new vscode.Range(
+      new vscode.Position(position.line, context.replaceStart),
+      position,
+    );
+    const ownFsPath = document.uri.fsPath;
+
+    const items: vscode.CompletionItem[] = [];
+    for (const entry of entries) {
+      if (entry.isDirectory()) {
+        const item = new vscode.CompletionItem(entry.name, vscode.CompletionItemKind.Folder);
+        // フォルダ選択後はそのまま下位を続けて補完できるよう区切り文字を付与し再サジェスト
+        item.insertText = `${entry.name}/`;
+        item.range = replaceRange;
+        item.command = { command: 'editor.action.triggerSuggest', title: 'Suggest' };
+        items.push(item);
+        continue;
+      }
+
+      if (!entry.isFile() || nodePath.extname(entry.name).toLowerCase() !== '.ttl') continue;
+      // 自己 include を避けるため対象ドキュメント自身は候補から除外
+      if (nodePath.resolve(directory, entry.name) === ownFsPath) continue;
+
+      const item = new vscode.CompletionItem(entry.name, vscode.CompletionItemKind.File);
+      item.insertText = entry.name;
+      item.range = replaceRange;
+      items.push(item);
+    }
+    return items;
   }
 
   private buildCommandItems(language: 'ja' | 'en'): vscode.CompletionItem[] {
@@ -921,6 +992,7 @@ async function refreshDiagnostics(
   const checkDuplicateLabel = config.get<boolean>('diagnostics.duplicateLabel', true);
   const undefinedLabelEnabled = config.get<boolean>('diagnostics.undefinedLabel', true);
   const requireLabelInSameFile = config.get<boolean>('requireLabelInSameFile', false);
+  const checkIncludeNotFound = config.get<boolean>('diagnostics.includeNotFound', true);
 
   const text = document.getText();
   const version = document.version;
@@ -930,12 +1002,16 @@ async function refreshDiagnostics(
     ? await collectIncludedLabels(document.uri, text)
     : { labels: new Set<string>(), complete: true };
 
+  // include 先の存在チェックは FS アクセスを伴うため analyzeTtl とは分けて合成する
+  const includeDiagnostics = checkIncludeNotFound
+    ? await findMissingIncludeDiagnostics(document, text)
+    : [];
+
   // 非同期処理中にドキュメントが変更された場合は破棄（後続のイベントで再解析される）
   if (document.version !== version) return;
 
-  collection.set(
-    document.uri,
-    analyzeTtl(text, {
+  collection.set(document.uri, [
+    ...analyzeTtl(text, {
       maxNestingDepth,
       externalLabels,
       // include 解決が不完全なときは誤検知を避けるため undefined-label を抑制
@@ -945,7 +1021,111 @@ async function refreshDiagnostics(
       checkUnknownCommand,
       checkDuplicateLabel,
     }).map(toVscodeDiagnostic),
+    ...includeDiagnostics,
+  ]);
+}
+
+/** include 先未検出を示す診断コード */
+const INCLUDE_NOT_FOUND_CODE = 'include-not-found' as const;
+
+/**
+ * 解決先が存在しない include 文の診断を収集
+ *
+ * @remarks
+ * 解決基準ディレクトリ（resolveIncludeBaseDir）で各 include を解決し、実体が無いものを
+ * 警告として報告する。範囲は引用符内のパス文字列部分のみとする。
+ *
+ * @param document - 対象ドキュメント
+ * @param text - ドキュメント全文
+ * @returns 未検出 include の診断配列
+ */
+async function findMissingIncludeDiagnostics(
+  document: vscode.TextDocument,
+  text: string,
+): Promise<vscode.Diagnostic[]> {
+  const baseDir = await resolveIncludeBaseDir(document);
+  const directives = extractIncludeDirectives(text);
+
+  const checks = await Promise.all(
+    directives.map(async include => {
+      const target = resolveIncludeTarget(baseDir, include.path);
+      try {
+        await nodeFs.promises.access(target);
+        return undefined;
+      } catch {
+        const range = new vscode.Range(
+          new vscode.Position(include.line, include.startCharacter),
+          new vscode.Position(include.line, include.endCharacter),
+        );
+        const diagnostic = new vscode.Diagnostic(
+          range,
+          `include 先が見つかりません: '${include.path}'`,
+          vscode.DiagnosticSeverity.Warning,
+        );
+        diagnostic.source = 'ttl';
+        diagnostic.code = INCLUDE_NOT_FOUND_CODE;
+        return diagnostic;
+      }
+    }),
   );
+
+  return checks.filter((diagnostic): diagnostic is vscode.Diagnostic => diagnostic !== undefined);
+}
+
+/** クイックフィックスで提示する類似 include 候補の最大件数 */
+const INCLUDE_FIX_SUGGESTION_LIMIT = 3;
+
+/**
+ * include 未検出診断に対するクイックフィックスプロバイダ
+ *
+ * @remarks include-not-found 診断に対し、似た名前の既存 .ttl への置換アクションを提供する
+ */
+class TtlIncludeCodeActionProvider implements vscode.CodeActionProvider {
+  /** 提供するコードアクション種別 */
+  static readonly providedCodeActionKinds = [vscode.CodeActionKind.QuickFix] as const;
+
+  /**
+   * include 未検出診断に対する置換アクションの提供
+   *
+   * @param document - 対象ドキュメント
+   * @param _range - 対象範囲（未使用、診断は context から取得）
+   * @param context - 対象範囲に紐づく診断を含むコンテキスト
+   * @returns 類似パスへの置換クイックフィックス配列
+   */
+  async provideCodeActions(
+    document: vscode.TextDocument,
+    _range: vscode.Range | vscode.Selection,
+    context: vscode.CodeActionContext,
+  ): Promise<vscode.CodeAction[]> {
+    const targets = context.diagnostics.filter(
+      diagnostic => diagnostic.code === INCLUDE_NOT_FOUND_CODE,
+    );
+    if (targets.length === 0) return [];
+
+    const baseDir = await resolveIncludeBaseDir(document);
+    // ワークスペース内の全 .ttl を基準ディレクトリ相対のパス候補へ変換（区切りは / に正規化）
+    const files = await vscode.workspace.findFiles('**/*.ttl');
+    const candidates = files
+      .map(uri => nodePath.relative(baseDir, uri.fsPath))
+      .filter(relative => relative.length > 0 && !relative.startsWith('..'))
+      .map(relative => relative.split(nodePath.sep).join('/'));
+
+    const actions: vscode.CodeAction[] = [];
+    for (const diagnostic of targets) {
+      const typed = document.getText(diagnostic.range);
+      for (const suggestion of rankSimilarPaths(typed, candidates, INCLUDE_FIX_SUGGESTION_LIMIT)) {
+        const action = new vscode.CodeAction(
+          `'${suggestion}' に置換`,
+          vscode.CodeActionKind.QuickFix,
+        );
+        action.diagnostics = [diagnostic];
+        action.edit = new vscode.WorkspaceEdit();
+        action.edit.replace(document.uri, diagnostic.range, suggestion);
+        actions.push(action);
+      }
+    }
+    return actions;
+  }
 }
 
 /** TTL デバッグ構成の type 識別子 */
@@ -1169,12 +1349,21 @@ export function activate(context: vscode.ExtensionContext): void {
   }
 
   context.subscriptions.push(
-    vscode.languages.registerCompletionItemProvider(selector, new TtlCompletionProvider(), '/'),
+    vscode.languages.registerCompletionItemProvider(
+      selector,
+      new TtlCompletionProvider(),
+      '/',
+      '\\',
+      "'",
+    ),
     vscode.languages.registerHoverProvider(selector, new TtlHoverProvider()),
     vscode.languages.registerDefinitionProvider(selector, new TtlDefinitionProvider()),
     vscode.languages.registerReferenceProvider(selector, new TtlReferenceProvider()),
     vscode.languages.registerDocumentSymbolProvider(selector, new TtlDocumentSymbolProvider()),
     vscode.languages.registerDocumentLinkProvider(selector, new TtlDocumentLinkProvider()),
+    vscode.languages.registerCodeActionsProvider(selector, new TtlIncludeCodeActionProvider(), {
+      providedCodeActionKinds: TtlIncludeCodeActionProvider.providedCodeActionKinds,
+    }),
     vscode.languages.registerRenameProvider(selector, new TtlRenameProvider()),
     vscode.languages.registerDocumentFormattingEditProvider(selector, new TtlFormattingProvider()),
     vscode.commands.registerCommand('ttl.formatWorkspace', () => formatWorkspaceCommand()),
