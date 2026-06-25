@@ -985,6 +985,9 @@ async function refreshDiagnostics(
   collection: vscode.DiagnosticCollection,
 ): Promise<void> {
   if (document.languageId !== TTL_LANGUAGE_ID) return;
+  // git(ステージング/差分)や untitled など実体のない読み取り専用ドキュメントは
+  // 実ファイルシステム基準の include 解決と整合しないため診断対象外とする。
+  if (document.uri.scheme !== 'file') return;
 
   const config = vscode.workspace.getConfiguration('ttl');
   const maxNestingDepth = config.get<number>('maxNestingDepth', DEFAULT_MAX_NESTING_DEPTH);
